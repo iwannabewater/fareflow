@@ -103,6 +103,8 @@ vercel inspect <deployment-url>
 vercel logs --environment production --since 30m --level error --json --no-branch
 ```
 
+GitHub Actions deployments pass Git metadata to Vercel. Vercel rejects Git-authored production deployments if the author email is not allowed to deploy to the target team, so the workflow pins deployment metadata to the Vercel account email used by this project.
+
 Release smoke checks:
 
 1. Generate or receive a Supabase magic link and confirm that it returns to `/` without `auth=confirm_failed`.

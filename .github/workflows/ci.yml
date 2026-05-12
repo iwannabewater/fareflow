@@ -41,7 +41,11 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      - run: pnpm dlx vercel@53.4.0 deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+      - run: >
+          pnpm dlx vercel@53.4.0 deploy --prod --yes
+          --meta githubCommitAuthorEmail=iwannabewater@gmail.com
+          --meta githubCommitAuthorName=iwannabewater
+          --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
