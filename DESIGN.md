@@ -1,0 +1,58 @@
+# FareFlow Design System
+
+## Visual Theme and Atmosphere
+
+FareFlow uses a travel-led utility direction: warm paper canvas, passport blue accents, mint success states, and dark ink totals. The app should feel like a fast native ledger, not a marketing site.
+
+## Color Palette and Roles
+
+- Canvas `oklch(0.977 0.009 88)`: page background.
+- Canvas strong `oklch(0.944 0.012 88)`: adjacent panels and rows.
+- Ink `oklch(0.255 0.018 172)`: primary text and main actions.
+- Passport blue `oklch(0.34 0.105 224)`: navigation and travel cues.
+- Mint `oklch(0.31 0.075 158)`: healthy sync/ready states.
+- Tomato `oklch(0.36 0.09 38)`: food and warm category accents.
+- Stamp `oklch(0.31 0.064 82)`: offline and pending states.
+
+## Typography Rules
+
+Use Geist Sans for interface text and Geist Mono only for technical timestamps or IDs. Numbers that change or align in rows use tabular figures. Keep letter spacing at the browser default so compact mobile regions stay readable.
+
+## Component Styling
+
+Buttons are rounded-full for primary bottom actions and 12-16px radius for controls. Touch targets are at least 44px. Sheets open from the bottom on mobile with a large top radius and no centered modal pattern.
+
+## Layout Principles
+
+Mobile first: current trip, sync state, total, list, bottom action. Desktop adds a left rail and right status panel without changing the mobile workflow.
+
+Authentication appears once per visible layout: in the desktop left rail, or in the mobile content stack. Do not duplicate the same sign-in form across the desktop support panel and rail.
+
+## Depth and Elevation
+
+Light mode uses background-color steps plus a minimum `0 1px 3px rgba(35,42,40,0.10)` shadow. Avoid nested cards; repeated expenses are rows.
+
+## Do's and Don'ts
+
+- Do keep add/edit flows in bottom drawers.
+- Do show offline and pending states inline.
+- Do preserve exchange-rate snapshots with each expense.
+- Do not use purple-blue gradients.
+- Do not add decorative blobs or glass panels.
+- Do not hide cloud sync failures behind generic errors.
+
+## Responsive Behavior
+
+At mobile widths, the add expense action is fixed above the safe-area inset. At large widths, the same action moves to the header and support information appears in side panels.
+
+Trip selection must reserve space for a 44px icon well, two-line trip text, and the chevron. At narrow mobile widths the sync badge may collapse to icon-only with an accessible label so the product name and primary actions do not crowd each other.
+
+## Localization
+
+English is the default interface language. Simplified Chinese is available from the in-app language control and is persisted on-device. Dates and currency use `Intl.*` formatting for the active locale; product names and currency codes remain untranslated where precision matters.
+
+## Agent Prompt Guide
+
+- Create a FareFlow row on `{canvas-strong}` with `16px` radius, `0 1px 3px rgba(35,42,40,0.10)`, text `{ink}`, muted text `{ink-muted}`, and a 44px icon well.
+- Create a primary mobile action at height `48px`, rounded-full, background `{ink}`, text `{canvas}`, active `scale(0.95)`.
+- Create a pending-sync badge with background `{stamp-100}`, text `{stamp-900}`, height `20px`, rounded-full, tabular count if numeric.
