@@ -94,3 +94,18 @@ export const seedExpenses: Expense[] = [
     lastError: null,
   },
 ];
+
+const seedTripClientIds = new Set(seedTrips.map((trip) => trip.clientId));
+const seedExpenseClientIds = new Set(
+  seedExpenses.map((expense) => expense.clientId),
+);
+
+export function isSeedTrip(trip: Pick<Trip, "clientId">): boolean {
+  return seedTripClientIds.has(trip.clientId);
+}
+
+export function isSeedExpense(
+  expense: Pick<Expense, "clientId">,
+): boolean {
+  return seedExpenseClientIds.has(expense.clientId);
+}

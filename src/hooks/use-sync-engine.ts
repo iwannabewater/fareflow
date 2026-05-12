@@ -5,12 +5,16 @@ import { useEffect, useState } from "react";
 import type { SyncSummary } from "@/lib/domain/schema";
 import { syncPendingRecords } from "@/lib/sync/sync-engine";
 
-export function useSyncEngine() {
+export function useSyncEngine({ enabled = true }: { enabled?: boolean } = {}) {
   const queryClient = useQueryClient();
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSummary, setLastSummary] = useState<SyncSummary | null>(null);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     let cancelled = false;
 
     async function runSync() {
@@ -51,8 +55,7 @@ export function useSyncEngine() {
       window.removeEventListener("online", handleOnline);
       window.clearInterval(interval);
     };
-  }, [queryClient]);
+  }, [enabled, queryClient]);
 
   return { isSyncing, lastSummary };
 }
-

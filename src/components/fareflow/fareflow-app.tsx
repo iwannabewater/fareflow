@@ -17,7 +17,6 @@ import { SyncStrip } from "@/components/fareflow/sync-strip";
 import { TripDrawer } from "@/components/fareflow/trip-drawer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -59,7 +58,7 @@ export function FareFlowApp() {
               <PlaneTakeoff className="size-5" aria-hidden="true" />
             </div>
             <div>
-              <p className="text-xl font-semibold">
+              <p className="font-casual text-xl font-bold">
                 {t.appName}
               </p>
               <p className="text-sm text-ink-muted">{t.tagline}</p>
@@ -67,7 +66,7 @@ export function FareFlowApp() {
           </div>
           <div className="mt-6 grid gap-4">
             <AuthPanel />
-            <TripDrawer />
+            <TripDrawer onTripCreated={(trip) => setSelectedTripId(trip.id)} />
           </div>
         </aside>
 
@@ -79,7 +78,7 @@ export function FareFlowApp() {
                   <PlaneTakeoff className="size-5" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-base font-semibold min-[430px]:text-lg">
+                  <p className="font-casual truncate text-base font-bold min-[430px]:text-lg">
                     {t.appName}
                   </p>
                   <p className="hidden text-xs text-ink-muted min-[430px]:block">
@@ -97,7 +96,7 @@ export function FareFlowApp() {
                 <LanguageToggle copy={t} onToggle={toggleLocale} />
                 <SyncStrip />
                 <div className="lg:hidden">
-                  <TripDrawer />
+                  <TripDrawer onTripCreated={(trip) => setSelectedTripId(trip.id)} />
                 </div>
               </div>
             </div>
@@ -189,10 +188,10 @@ function TripPicker({
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger
         aria-label={copy.home.selectTrip}
-        className="h-auto min-h-16 w-full rounded-[1.35rem] bg-canvas-strong px-3 py-2.5 text-left shadow-[0_1px_3px_rgba(35,42,40,0.10)] transition-shadow hover:shadow-[0_8px_20px_rgba(35,42,40,0.10)]"
+        className="h-auto min-h-16 w-full rounded-2xl bg-canvas-strong px-3.5 py-3 text-left shadow-[0_1px_3px_rgba(35,42,40,0.10)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(35,42,40,0.10)]"
       >
-        <div className="flex min-w-0 flex-1 items-center gap-3 pr-2">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-passport-50 text-passport-900">
+        <div className="flex min-w-0 flex-1 items-center gap-3 pr-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-passport-50 text-passport-900">
             <MapPinned className="size-5" aria-hidden="true" />
           </span>
           <span className="min-w-0">
@@ -236,20 +235,25 @@ function SummaryPanel({
   copy: FareFlowCopy;
   locale: Locale;
 }) {
+  const totalSizeClass =
+    total.length > 12 ? "text-4xl" : "text-5xl lg:text-[3rem]";
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-      className="overflow-hidden rounded-[1.65rem] bg-ink text-canvas shadow-[0_18px_44px_rgba(35,42,40,0.22)]"
+      className="overflow-hidden rounded-[1.45rem] bg-ink text-canvas shadow-[0_18px_44px_rgba(35,42,40,0.22)]"
     >
-      <div className="grid gap-6 p-5 sm:grid-cols-[1fr_auto] sm:items-end lg:p-7">
-        <div>
+      <div className="grid min-w-0 gap-5 p-5 lg:p-7">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 text-canvas/70">
             <CircleDollarSign className="size-4" aria-hidden="true" />
             <span className="text-sm">{copy.home.tripTotal}</span>
           </div>
-          <p className="mt-3 text-5xl font-semibold leading-none tabular-nums lg:text-6xl">
+          <p
+            className={`mt-3 max-w-full font-semibold leading-[0.96] tabular-nums [overflow-wrap:anywhere] ${totalSizeClass}`}
+          >
             {total}
           </p>
           <p className="mt-3 max-w-md text-sm leading-6 text-canvas/70">
@@ -258,7 +262,7 @@ function SummaryPanel({
               : copy.home.noTripSelected}
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:w-48">
+        <div className="grid max-w-sm grid-cols-2 gap-2">
           <Metric label={copy.home.items} value={String(count)} />
           <Metric label={copy.home.pending} value={String(pending)} />
         </div>
@@ -269,8 +273,8 @@ function SummaryPanel({
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-white/[0.08] px-3 py-3">
-      <p className="text-xs text-canvas/60">{label}</p>
+    <div className="rounded-xl bg-white/[0.08] px-3 py-3">
+      <p className="font-casual text-xs text-canvas/60">{label}</p>
       <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
     </div>
   );
@@ -303,7 +307,7 @@ function ExpenseTimeline({
     return (
       <div className="grid place-items-center rounded-[1.65rem] bg-canvas-strong px-6 py-14 text-center shadow-[0_1px_3px_rgba(35,42,40,0.10)]">
         <ReceiptText className="size-8 text-ink-muted" aria-hidden="true" />
-        <h2 className="mt-4 text-xl font-semibold">
+        <h2 className="font-casual mt-4 text-xl font-bold">
           {copy.home.noExpensesTitle}
         </h2>
         <p className="mt-2 max-w-sm text-sm leading-6 text-ink-muted">
@@ -319,7 +323,7 @@ function ExpenseTimeline({
         <h2 className="text-lg font-semibold">
           {copy.home.expenses}
         </h2>
-        <Badge className="rounded-full bg-canvas-strong text-ink">
+        <Badge className="font-casual rounded-full bg-canvas-strong text-ink">
           {copy.home.itemCount(expenses.length)}
         </Badge>
       </div>
@@ -359,7 +363,7 @@ function ExpenseRow({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="grid grid-cols-[2.75rem_1fr_auto] items-center gap-3 rounded-2xl bg-canvas-strong p-3 shadow-[0_1px_3px_rgba(35,42,40,0.10)]"
+      className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3 rounded-2xl bg-canvas-strong p-3 shadow-[0_1px_3px_rgba(35,42,40,0.10)] sm:grid-cols-[2.75rem_minmax(0,1fr)_minmax(7rem,auto)] sm:items-center"
     >
       <div className={`flex size-11 items-center justify-center rounded-xl ${meta.tone}`}>
         <Icon className="size-5" aria-hidden="true" />
@@ -382,12 +386,12 @@ function ExpenseRow({
           <span>{copy.categories[expense.category]}</span>
         </div>
       </div>
-      <div className="text-right">
-        <p className="font-semibold tabular-nums">
+      <div className="col-start-2 min-w-0 text-left sm:col-start-auto sm:text-right">
+        <p className="font-semibold tabular-nums [overflow-wrap:anywhere]">
           {formatMoney(expense.amount, expense.currency, copy.localeCode)}
         </p>
         {expense.currency !== baseCurrency ? (
-          <p className="mt-1 text-xs text-ink-muted tabular-nums">
+          <p className="mt-1 text-xs text-ink-muted tabular-nums [overflow-wrap:anywhere]">
             {formatMoney(expense.baseAmount, baseCurrency, copy.localeCode)}
           </p>
         ) : null}
@@ -413,7 +417,7 @@ function TripHealthPanel({
         <Clock3 className="size-4 text-passport-900" aria-hidden="true" />
         {copy.home.tripState}
       </div>
-      <ScrollArea className="mt-4 h-44 pr-3">
+      <div className="mt-4 pr-1">
         <dl className="grid gap-4 text-sm">
           <Info
             label={copy.home.destination}
@@ -423,7 +427,7 @@ function TripHealthPanel({
           <Info label={copy.home.currentTotal} value={total} />
           <Info label={copy.home.pendingSync} value={String(pending)} />
         </dl>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
@@ -432,7 +436,7 @@ function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-xs text-ink-muted">{label}</dt>
-      <dd className="mt-1 font-medium">{value}</dd>
+      <dd className="mt-1 font-medium [overflow-wrap:anywhere]">{value}</dd>
     </div>
   );
 }

@@ -11,7 +11,7 @@ import {
   normalizeRate,
   parseMajorToMinor,
 } from "@/lib/domain/money";
-import { localUserId, seedExpenses } from "@/lib/domain/seed";
+import { isSeedExpense, localUserId, seedExpenses } from "@/lib/domain/seed";
 import { listPendingExpenses } from "@/lib/offline/outbox";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { fetchExpenses } from "@/lib/sync/remote";
@@ -25,6 +25,10 @@ export function useExpenses(tripId: string | null) {
       !isSupabaseConfigured() && tripId
         ? seedExpenses.filter((expense) => expense.tripId === tripId)
         : undefined,
+    select: (expenses) =>
+      isSupabaseConfigured()
+        ? expenses.filter((expense) => !isSeedExpense(expense))
+        : expenses,
     queryFn: async () => {
       if (!tripId) {
         return [];

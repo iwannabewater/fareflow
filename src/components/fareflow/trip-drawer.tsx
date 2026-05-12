@@ -25,12 +25,17 @@ import {
   createTripInputSchema,
   currencyCodes,
   type CreateTripInput,
+  type Trip,
 } from "@/lib/domain/schema";
 import { currencyMeta } from "@/lib/domain/money";
 import { useCreateTrip } from "@/hooks/use-trips";
 import { translateValidationError, useCopy } from "@/lib/i18n";
 
-export function TripDrawer() {
+export function TripDrawer({
+  onTripCreated,
+}: {
+  onTripCreated?: (trip: Trip) => void;
+}) {
   const { t } = useCopy();
   const [open, setOpen] = useState(false);
   const mutation = useCreateTrip();
@@ -50,7 +55,12 @@ export function TripDrawer() {
   });
 
   async function onSubmit(input: CreateTripInput) {
-    await mutation.mutateAsync(input);
+    const trip = await mutation.mutateAsync(input).catch(() => null);
+    if (!trip) {
+      return;
+    }
+
+    onTripCreated?.(trip);
     form.reset({
       title: "",
       destination: "",
@@ -62,7 +72,15 @@ export function TripDrawer() {
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (nextOpen) {
+          mutation.reset();
+        }
+      }}
+    >
       <SheetTrigger asChild>
         <Button
           type="button"
@@ -197,6 +215,13 @@ export function TripDrawer() {
             >
               {mutation.isPending ? t.common.saving : t.trip.create}
             </Button>
+            {mutation.isError ? (
+              <p className="text-sm text-destructive" role="alert">
+                {mutation.error instanceof Error
+                  ? mutation.error.message
+                  : t.trip.createFailed}
+              </p>
+            ) : null}
           </form>
         </div>
       </SheetContent>

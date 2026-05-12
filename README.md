@@ -11,6 +11,8 @@ FareFlow is a mobile-first travel expense PWA. It captures expenses instantly, k
 - Dexie for the local outbox and persisted query cache
 - `@ducanh2912/next-pwa` for Workbox service worker generation
 - English and Simplified Chinese UI with persisted in-app language switching
+- Self-hosted LXGW WenKai, ZCOOL KuaiLe, Alegreya, and Comic Neue fonts
+- Vercel Web Analytics through `@vercel/analytics`
 - Vercel CLI and Wrangler-compatible deployment runbook
 
 ## Development
@@ -40,7 +42,7 @@ This runs ESLint, TypeScript, Vitest, and a production build. Production and dev
 
 Apply `supabase/migrations/20260512123000_initial_fareflow_schema.sql`. The migration creates `trips`, `expenses`, a private `receipts` Storage bucket, RLS policies, and `(user_id, client_id)` uniqueness for idempotent offline retries.
 
-Supabase magic links are confirmed at `/auth/confirm`. The app handles the default hash-session callback, PKCE `code` callbacks, and `token_hash` callbacks.
+Supabase magic links are confirmed at `/auth/confirm`. The app handles the default hash-session callback, PKCE `code` callbacks, and `token_hash` callbacks. The confirmation route refreshes the shared auth cache before returning to the app so newly signed-in users immediately see their cloud-backed trips.
 
 ## Deployment
 

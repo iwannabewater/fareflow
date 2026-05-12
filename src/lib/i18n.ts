@@ -35,7 +35,7 @@ export const dictionaries = {
     switchLanguageAria: "Switch language to Chinese",
     localeCode: "en-US",
     appName: "FareFlow",
-    tagline: "Offline travel ledger",
+    tagline: "Travel expense companion",
     common: {
       backToApp: "Back to FareFlow",
       notSet: "Not set",
@@ -48,6 +48,9 @@ export const dictionaries = {
       send: "Send magic link",
       sent: "Magic link sent. Check your inbox.",
       fallbackError: "We could not send a sign-in link.",
+      rateLimit:
+        "Too many sign-in emails were requested. Wait a bit before trying again.",
+      retryAfter: (seconds: number) => `Try again in ${seconds}s`,
       localDemo: "Local demo mode",
       localDemoDescription:
         "Add Supabase env vars to enable auth, RLS, and cloud sync.",
@@ -78,7 +81,7 @@ export const dictionaries = {
     home: {
       currentJourney: "Current journey",
       firstTripTitle: "Set up your first trip",
-      createTripPrompt: "Create a trip to start tracking offline expenses.",
+      createTripPrompt: "Create a trip to start tracking expenses.",
       selectTrip: "Select trip",
       tripTotal: "Trip total",
       noTripSelected: "No trip selected",
@@ -86,7 +89,7 @@ export const dictionaries = {
       pending: "Pending",
       noExpensesTitle: "No expenses yet",
       noExpensesDescription:
-        "Add the first cost before boarding or while offline in the air.",
+        "Add the first cost before boarding, during transit, or at arrival.",
       expenses: "Expenses",
       itemCount: (count: number) => `${count} items`,
       tripState: "Trip state",
@@ -98,7 +101,8 @@ export const dictionaries = {
     trip: {
       trigger: "Trip",
       newTitle: "New trip",
-      description: "Trips can be drafted offline and synced before expenses.",
+      description:
+        "Trips are saved on this device first and synced when cloud is available.",
       name: "Trip name",
       namePlaceholder: "Lisbon work week…",
       destination: "Destination",
@@ -107,6 +111,7 @@ export const dictionaries = {
       end: "End",
       baseCurrency: "Base currency",
       create: "Create trip",
+      createFailed: "Trip could not be saved.",
     },
     expense: {
       trigger: "Add expense",
@@ -121,6 +126,7 @@ export const dictionaries = {
       note: "Note",
       notePlaceholder: "Airport taxi…",
       save: "Save expense",
+      saveFailed: "Expense could not be saved.",
       selectTripFirst: "Select a trip before adding an expense.",
     },
     categories: {
@@ -160,7 +166,7 @@ export const dictionaries = {
     switchLanguageAria: "切换为英文",
     localeCode: "zh-CN",
     appName: "FareFlow",
-    tagline: "离线旅行账本",
+    tagline: "旅行记账伙伴",
     common: {
       backToApp: "返回 FareFlow",
       notSet: "未设置",
@@ -173,6 +179,8 @@ export const dictionaries = {
       send: "发送登录链接",
       sent: "登录链接已发送，请检查邮箱。",
       fallbackError: "登录链接发送失败。",
+      rateLimit: "登录邮件请求过于频繁，请稍后再试。",
+      retryAfter: (seconds: number) => `${seconds} 秒后可重试`,
       localDemo: "本地演示模式",
       localDemoDescription:
         "添加 Supabase 环境变量后即可启用登录、RLS 和云端同步。",
@@ -203,14 +211,14 @@ export const dictionaries = {
     home: {
       currentJourney: "当前旅程",
       firstTripTitle: "创建第一段旅程",
-      createTripPrompt: "创建旅程后即可开始记录离线支出。",
+      createTripPrompt: "创建旅程后即可开始记录旅行支出。",
       selectTrip: "选择旅程",
       tripTotal: "旅程总额",
       noTripSelected: "尚未选择旅程",
       items: "笔数",
       pending: "待同步",
       noExpensesTitle: "还没有支出",
-      noExpensesDescription: "登机前或飞行离线时，都可以先记录第一笔花费。",
+      noExpensesDescription: "登机前、转场中或抵达后，都可以先记录第一笔花费。",
       expenses: "支出记录",
       itemCount: (count: number) => `${count} 笔`,
       tripState: "旅程状态",
@@ -222,7 +230,7 @@ export const dictionaries = {
     trip: {
       trigger: "旅程",
       newTitle: "新建旅程",
-      description: "旅程可先离线草稿保存，再同步到云端。",
+      description: "旅程会先保存到本机，云端可用时自动同步。",
       name: "旅程名称",
       namePlaceholder: "里斯本工作周…",
       destination: "目的地",
@@ -231,6 +239,7 @@ export const dictionaries = {
       end: "结束",
       baseCurrency: "基准货币",
       create: "创建旅程",
+      createFailed: "旅程保存失败。",
     },
     expense: {
       trigger: "添加支出",
@@ -245,6 +254,7 @@ export const dictionaries = {
       note: "备注",
       notePlaceholder: "机场出租车…",
       save: "保存支出",
+      saveFailed: "支出保存失败。",
       selectTripFirst: "请先选择一个旅程。",
     },
     categories: {

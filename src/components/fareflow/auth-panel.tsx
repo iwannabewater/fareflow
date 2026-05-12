@@ -1,11 +1,17 @@
 "use client";
 
 import { LogOut, Mail, ShieldCheck } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthSession } from "@/hooks/use-auth-session";
 import { useCopy } from "@/lib/i18n";
+import {
+  getAuthErrorMessage,
+  isAuthRateLimitError,
+} from "@/lib/supabase/auth-errors";
+
+const AUTH_EMAIL_COOLDOWN_MS = 60_000;
 
 export function AuthPanel() {
   const auth = useAuthSession();
@@ -15,6 +21,27 @@ export function AuthPanel() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [retryAt, setRetryAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const retrySeconds =
+    retryAt && retryAt > now ? Math.ceil((retryAt - now) / 1000) : 0;
+  const isCoolingDown = retrySeconds > 0;
+
+  useEffect(() => {
+    if (!retryAt) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      const current = Date.now();
+      setNow(current);
+      if (current >= retryAt) {
+        setRetryAt(null);
+      }
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [retryAt]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -25,12 +52,14 @@ export function AuthPanel() {
     try {
       await auth.signInWithEmail(email);
       setMessage(t.auth.sent);
+      setRetryAt(Date.now() + AUTH_EMAIL_COOLDOWN_MS);
     } catch (signInError) {
-      setError(
-        signInError instanceof Error
-          ? signInError.message
-          : t.auth.fallbackError,
-      );
+      const rawMessage =
+        signInError instanceof Error ? signInError.message : "";
+      if (rawMessage && isAuthRateLimitError(rawMessage)) {
+        setRetryAt(Date.now() + AUTH_EMAIL_COOLDOWN_MS);
+      }
+      setError(getAuthErrorMessage(signInError, t));
     } finally {
       setIsSubmitting(false);
     }
@@ -80,7 +109,7 @@ export function AuthPanel() {
     >
       <label
         htmlFor={emailInputId}
-        className="text-xs font-medium uppercase text-ink-muted"
+        className="font-casual text-xs font-bold uppercase text-ink-muted"
       >
         {t.auth.label}
       </label>
@@ -100,7 +129,7 @@ export function AuthPanel() {
         <Button
           type="submit"
           className="h-11 rounded-xl bg-ink px-3 text-canvas active:scale-95"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isCoolingDown}
           aria-label={t.auth.send}
         >
           <Mail className="size-4" aria-hidden="true" />
@@ -109,6 +138,11 @@ export function AuthPanel() {
       </div>
       {message ? <p className="mt-2 text-xs text-mint-900">{message}</p> : null}
       {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
+      {isCoolingDown ? (
+        <p className="mt-2 text-xs text-ink-muted">
+          {t.auth.retryAfter(retrySeconds)}
+        </p>
+      ) : null}
     </form>
   );
 }

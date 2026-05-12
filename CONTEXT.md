@@ -10,6 +10,7 @@ FareFlow is a mobile-first travel expense PWA. Supabase is the source of truth f
 - Exchange-rate snapshot: the rate saved with each Expense so totals remain stable when market rates change.
 - Outbox: local Dexie records with `pending` or `failed` sync state. It is not a source of truth.
 - Sync engine: the Module that owns online/offline branching, retries, and Supabase upserts.
+- Authenticated online: the only state that may claim cloud connectivity in the UI. A network connection without a Supabase user is treated as local capture until login completes.
 
 ## Architecture Terms
 
@@ -18,4 +19,3 @@ FareFlow is a mobile-first travel expense PWA. Supabase is the source of truth f
 - Seam: where an interface lives.
 - Adapter: a concrete thing satisfying an interface at a seam.
 - Depth: leverage at the interface.
-

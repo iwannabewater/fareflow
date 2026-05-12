@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CreateTripInput, Trip } from "@/lib/domain/schema";
-import { localUserId, seedTrips } from "@/lib/domain/seed";
+import { isSeedTrip, localUserId, seedTrips } from "@/lib/domain/seed";
 import { listPendingTrips } from "@/lib/offline/outbox";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { fetchTrips } from "@/lib/sync/remote";
@@ -12,6 +12,8 @@ export function useTrips() {
   return useQuery({
     queryKey: ["trips"],
     initialData: isSupabaseConfigured() ? undefined : seedTrips,
+    select: (trips) =>
+      isSupabaseConfigured() ? trips.filter((trip) => !isSeedTrip(trip)) : trips,
     queryFn: async () => {
       const [remoteTrips, pendingTrips] = await Promise.all([
         fetchTrips(),
@@ -53,6 +55,16 @@ export function useCreateTrip() {
     },
     onError: (_error, _input, context) => {
       queryClient.setQueryData(["trips"], context?.previous);
+    },
+    onSuccess: (savedTrip) => {
+      queryClient.setQueryData<Trip[]>(["trips"], (current = []) => {
+        const withoutOptimistic = current.filter(
+          (trip) => trip.clientId !== savedTrip.clientId,
+        );
+        return [savedTrip, ...withoutOptimistic].sort((a, b) =>
+          b.startDate.localeCompare(a.startDate),
+        );
+      });
     },
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: ["trips"] });

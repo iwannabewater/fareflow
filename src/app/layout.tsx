@@ -1,24 +1,21 @@
 import type { Metadata } from "next";
 import type { Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import "@fontsource/alegreya/400.css";
+import "@fontsource/alegreya/600.css";
+import "@fontsource/alegreya/700.css";
+import "@fontsource/comic-neue/400.css";
+import "@fontsource/comic-neue/700.css";
+import "@fontsource/zcool-kuaile/chinese-simplified.css";
+import "lxgw-wenkai-webfont/lxgwwenkai-regular.css";
+import "lxgw-wenkai-webfont/lxgwwenkai-bold.css";
 import "./globals.css";
 import { AppProviders } from "@/lib/query/providers";
 import { Analytics } from "@vercel/analytics/next";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
   title: "FareFlow",
   description:
-    "A mobile-first travel expense PWA with offline capture and Supabase sync.",
+    "A mobile-first travel expense PWA with local-first capture and Supabase sync.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
@@ -48,7 +45,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en">
       <body className="min-h-svh">
         <a
           href="#main-content"

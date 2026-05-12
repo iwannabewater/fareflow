@@ -41,6 +41,21 @@ export async function getRemoteUser(): Promise<User | null> {
   return data.user;
 }
 
+export async function hasRemoteSession(): Promise<boolean> {
+  if (!isSupabaseConfigured()) {
+    return false;
+  }
+
+  const supabase = getSupabaseBrowserClient();
+  const { data, error } = await supabase.auth.getSession();
+
+  if (error) {
+    return false;
+  }
+
+  return Boolean(data.session);
+}
+
 export async function fetchTrips(): Promise<Trip[]> {
   if (!isSupabaseConfigured()) {
     return seedTrips;
@@ -48,7 +63,7 @@ export async function fetchTrips(): Promise<Trip[]> {
 
   const user = await getRemoteUser();
   if (!user) {
-    return seedTrips;
+    return [];
   }
 
   const supabase = getSupabaseBrowserClient();
@@ -71,7 +86,7 @@ export async function fetchExpenses(tripId: string): Promise<Expense[]> {
 
   const user = await getRemoteUser();
   if (!user) {
-    return seedExpenses.filter((expense) => expense.tripId === tripId);
+    return [];
   }
 
   const supabase = getSupabaseBrowserClient();
@@ -139,4 +154,3 @@ async function requireRemoteUser(): Promise<User> {
 
   return user;
 }
-

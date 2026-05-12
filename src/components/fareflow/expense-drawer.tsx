@@ -66,7 +66,11 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
   }, [form, selectedCurrency, trip]);
 
   async function onSubmit(input: CreateExpenseInput) {
-    await mutation.mutateAsync(input);
+    const expense = await mutation.mutateAsync(input).catch(() => null);
+    if (!expense) {
+      return;
+    }
+
     form.reset({
       amountMajor: "",
       currency: trip?.baseCurrency ?? "USD",
@@ -79,7 +83,15 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (nextOpen) {
+          mutation.reset();
+        }
+      }}
+    >
       <SheetTrigger asChild>
         <Button
           type="button"
@@ -232,6 +244,13 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
             >
               {mutation.isPending ? t.common.saving : t.expense.save}
             </Button>
+            {mutation.isError ? (
+              <p className="text-sm text-destructive" role="alert">
+                {mutation.error instanceof Error
+                  ? mutation.error.message
+                  : t.expense.saveFailed}
+              </p>
+            ) : null}
           </form>
         </div>
       </SheetContent>

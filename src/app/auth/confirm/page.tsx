@@ -1,6 +1,7 @@
 "use client";
 
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -17,6 +18,7 @@ type ConfirmState =
 export default function AuthConfirmPage() {
   const { t } = useCopy();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const didConfirm = useRef(false);
   const [state, setState] = useState<ConfirmState>({ status: "checking" });
 
@@ -71,6 +73,13 @@ export default function AuthConfirmPage() {
           }
         }
 
+        const { data: userData } = await supabase.auth.getUser();
+        queryClient.setQueryData(["auth-user"], userData.user ?? null);
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["trips"] }),
+          queryClient.invalidateQueries({ queryKey: ["expenses"] }),
+        ]);
+
         if (!isMounted) {
           return;
         }
@@ -97,7 +106,7 @@ export default function AuthConfirmPage() {
     return () => {
       isMounted = false;
     };
-  }, [router, t.confirm.fallbackError, t.confirm.missingToken]);
+  }, [queryClient, router, t.confirm.fallbackError, t.confirm.missingToken]);
 
   return (
     <main className="grid min-h-svh place-items-center bg-canvas px-5 text-ink">

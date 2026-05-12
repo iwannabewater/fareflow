@@ -12,10 +12,9 @@ export function makeQueryClient() {
         retry: 1,
       },
       mutations: {
-        networkMode: "online",
+        networkMode: "always",
         retry: 2,
       },
     },
   });
 }
-

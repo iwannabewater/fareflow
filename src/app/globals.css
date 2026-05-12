@@ -7,9 +7,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
-  --font-heading: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--fareflow-serious-font);
+  --font-heading: var(--fareflow-serious-font);
+  --font-casual: var(--fareflow-casual-font);
+  --font-mono: var(--fareflow-mono-font);
   --color-canvas: var(--canvas);
   --color-canvas-strong: var(--canvas-strong);
   --color-ink: var(--ink);
@@ -68,6 +69,9 @@
 }
 
 :root {
+  --fareflow-serious-font: "Alegreya", "LXGW WenKai", ui-serif, Georgia, serif;
+  --fareflow-casual-font: "Comic Neue", "ZCOOL KuaiLe", ui-rounded, "Comic Sans MS", cursive;
+  --fareflow-mono-font: "Alegreya", "LXGW WenKai", ui-monospace, "SFMono-Regular", monospace;
   --canvas: oklch(0.977 0.009 88);
   --canvas-strong: oklch(0.944 0.012 88);
   --ink: oklch(0.255 0.018 172);
@@ -118,6 +122,17 @@
   --sidebar-accent-foreground: var(--passport-900);
   --sidebar-border: oklch(0.84 0.018 88);
   --sidebar-ring: var(--passport-900);
+}
+
+html:lang(zh),
+html:lang(zh-CN) {
+  --fareflow-serious-font: "LXGW WenKai", "Alegreya", ui-serif, Georgia, serif;
+  --fareflow-casual-font: "ZCOOL KuaiLe", "Comic Neue", ui-rounded, "Comic Sans MS", cursive;
+}
+
+html:lang(en) {
+  --fareflow-serious-font: "Alegreya", "LXGW WenKai", ui-serif, Georgia, serif;
+  --fareflow-casual-font: "Comic Neue", "ZCOOL KuaiLe", ui-rounded, "Comic Sans MS", cursive;
 }
 
 .dark {
@@ -180,6 +195,7 @@
   h2,
   h3 {
     text-wrap: balance;
+    letter-spacing: 0;
   }
   p {
     text-wrap: pretty;

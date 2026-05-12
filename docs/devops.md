@@ -109,8 +109,10 @@ Release smoke checks:
 
 1. Generate or receive a Supabase magic link and confirm that it returns to `/` without `auth=confirm_failed`.
 2. Verify one visible login form on desktop and one visible login form on mobile.
-3. Toggle the language switch and confirm Chinese copy fits at `390px` width.
-4. Confirm `/manifest.webmanifest` and `/sw.js` return `200`.
+3. Confirm logged-out production state starts without seeded trips and the sync badge reads Offline/离线.
+4. Create two trips in a row and confirm the newly created trip becomes selected each time.
+5. Toggle the language switch and confirm Chinese copy fits at `390px` width.
+6. Confirm `/manifest.webmanifest`, `/sw.js`, and Vercel Web Analytics requests load successfully.
 
 ## Cloudflare
 

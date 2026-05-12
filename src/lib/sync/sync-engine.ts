@@ -12,6 +12,7 @@ import {
   markTripSynced,
 } from "@/lib/offline/outbox";
 import {
+  hasRemoteSession,
   RemoteAuthRequiredError,
   RemoteUnavailableError,
   upsertRemoteExpense,
@@ -21,6 +22,12 @@ import {
 export async function saveTrip(trip: Trip): Promise<Trip> {
   if (!navigator.onLine) {
     await enqueueTrip(trip, "Waiting for network");
+    return { ...trip, syncStatus: "pending" };
+  }
+
+  if (!(await hasRemoteSession())) {
+    const error = new RemoteAuthRequiredError();
+    await enqueueTrip(trip, error.message);
     return { ...trip, syncStatus: "pending" };
   }
 
@@ -39,6 +46,16 @@ export async function saveExpense(expense: Expense): Promise<Expense> {
   if (!navigator.onLine) {
     await enqueueExpense(expense, "Waiting for network");
     return { ...expense, syncStatus: "pending", lastError: null };
+  }
+
+  if (!(await hasRemoteSession())) {
+    const error = new RemoteAuthRequiredError();
+    await enqueueExpense(expense, error.message);
+    return {
+      ...expense,
+      syncStatus: "pending",
+      lastError: error.message,
+    };
   }
 
   try {
