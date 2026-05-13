@@ -9,6 +9,7 @@ FareFlow is a mobile-first travel expense PWA. It captures expenses instantly, k
 - Supabase Auth/Postgres/Storage-ready schema with RLS
 - TanStack Query v5 for cache, optimistic mutations, and retry orchestration
 - Dexie for the local outbox and persisted query cache
+- CNY-first trip defaults with Beijing calendar dates for date-only capture
 - `@ducanh2912/next-pwa` for Workbox service worker generation
 - English and Simplified Chinese UI with persisted in-app language switching
 - Self-hosted LXGW WenKai, ZCOOL KuaiLe, Alegreya, and Comic Neue fonts

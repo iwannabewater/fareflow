@@ -27,6 +27,10 @@ import {
   type CreateTripInput,
   type Trip,
 } from "@/lib/domain/schema";
+import {
+  DEFAULT_BASE_CURRENCY,
+  getAppDateInputValue,
+} from "@/lib/domain/defaults";
 import { currencyMeta } from "@/lib/domain/money";
 import { useCreateTrip } from "@/hooks/use-trips";
 import { translateValidationError, useCopy } from "@/lib/i18n";
@@ -41,13 +45,7 @@ export function TripDrawer({
   const mutation = useCreateTrip();
   const form = useForm<CreateTripInput>({
     resolver: zodResolver(createTripInputSchema),
-    defaultValues: {
-      title: "",
-      destination: "",
-      baseCurrency: "USD",
-      startDate: new Date().toISOString().slice(0, 10),
-      endDate: "",
-    },
+    defaultValues: getTripDefaults(),
   });
   const baseCurrency = useWatch({
     control: form.control,
@@ -61,13 +59,7 @@ export function TripDrawer({
     }
 
     onTripCreated?.(trip);
-    form.reset({
-      title: "",
-      destination: "",
-      baseCurrency: "USD",
-      startDate: new Date().toISOString().slice(0, 10),
-      endDate: "",
-    });
+    form.reset(getTripDefaults());
     setOpen(false);
   }
 
@@ -78,6 +70,7 @@ export function TripDrawer({
         setOpen(nextOpen);
         if (nextOpen) {
           mutation.reset();
+          form.reset(getTripDefaults());
         }
       }}
     >
@@ -227,6 +220,16 @@ export function TripDrawer({
       </SheetContent>
     </Sheet>
   );
+}
+
+function getTripDefaults(): CreateTripInput {
+  return {
+    title: "",
+    destination: "",
+    baseCurrency: DEFAULT_BASE_CURRENCY,
+    startDate: getAppDateInputValue(),
+    endDate: "",
+  };
 }
 
 function FormRow({

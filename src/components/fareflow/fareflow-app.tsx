@@ -7,6 +7,7 @@ import {
   Clock3,
   Languages,
   MapPinned,
+  Route,
   PlaneTakeoff,
   ReceiptText,
 } from "lucide-react";
@@ -17,6 +18,10 @@ import { SyncStrip } from "@/components/fareflow/sync-strip";
 import { TripDrawer } from "@/components/fareflow/trip-drawer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DEFAULT_BASE_CURRENCY,
+  formatAppDate,
+} from "@/lib/domain/defaults";
 import {
   Select,
   SelectContent,
@@ -113,6 +118,12 @@ export function FareFlowApp() {
                 <ExpenseDrawer trip={selectedTrip} />
               </div>
             </div>
+            <TripQuickList
+              trips={trips.data ?? []}
+              selectedTripId={selectedTrip?.id ?? null}
+              onSelect={setSelectedTripId}
+              copy={t}
+            />
           </header>
 
           <div className="grid flex-1 gap-5 px-4 py-5 pb-28 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-8 lg:pb-8">
@@ -132,7 +143,7 @@ export function FareFlowApp() {
               <ExpenseTimeline
                 expenses={expenses.data ?? []}
                 isLoading={expenses.isLoading}
-                baseCurrency={selectedTrip?.baseCurrency ?? "USD"}
+                baseCurrency={selectedTrip?.baseCurrency ?? DEFAULT_BASE_CURRENCY}
                 copy={t}
                 locale={locale}
               />
@@ -154,6 +165,66 @@ export function FareFlowApp() {
         </section>
       </div>
     </main>
+  );
+}
+
+function TripQuickList({
+  trips,
+  selectedTripId,
+  onSelect,
+  copy,
+}: {
+  trips: Trip[];
+  selectedTripId: string | null;
+  onSelect: (id: string) => void;
+  copy: FareFlowCopy;
+}) {
+  if (trips.length < 2) {
+    return null;
+  }
+
+  return (
+    <div
+      className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:-mx-8 lg:px-8 [&::-webkit-scrollbar]:hidden"
+      aria-label={copy.home.tripList}
+    >
+      {trips.map((trip) => {
+        const isSelected = trip.id === selectedTripId;
+        return (
+          <button
+            key={trip.clientId}
+            type="button"
+            className={`flex min-w-[11.75rem] max-w-[14rem] items-center gap-2 rounded-2xl px-3 py-2 text-left shadow-[0_1px_3px_rgba(35,42,40,0.10)] transition-[background-color,box-shadow,transform] duration-200 active:scale-[0.98] ${
+              isSelected
+                ? "bg-ink text-canvas shadow-[0_10px_26px_rgba(35,42,40,0.18)]"
+                : "bg-canvas-strong text-ink hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(35,42,40,0.10)]"
+            }`}
+            aria-pressed={isSelected}
+            onClick={() => onSelect(trip.id)}
+          >
+            <span
+              className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${
+                isSelected ? "bg-canvas/12 text-canvas" : "bg-passport-50 text-passport-900"
+              }`}
+            >
+              <Route className="size-4" aria-hidden="true" />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold">
+                {trip.title}
+              </span>
+              <span
+                className={`mt-0.5 block truncate text-xs ${
+                  isSelected ? "text-canvas/70" : "text-ink-muted"
+                }`}
+              >
+                {trip.destination} · {trip.baseCurrency}
+              </span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -423,7 +494,10 @@ function TripHealthPanel({
             label={copy.home.destination}
             value={trip?.destination ?? copy.common.notSet}
           />
-          <Info label={copy.home.baseCurrency} value={trip?.baseCurrency ?? "USD"} />
+          <Info
+            label={copy.home.baseCurrency}
+            value={trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY}
+          />
           <Info label={copy.home.currentTotal} value={total} />
           <Info label={copy.home.pendingSync} value={String(pending)} />
         </dl>
@@ -446,7 +520,7 @@ function summarizeExpenses(
   trip: Trip | null,
   locale: Locale,
 ) {
-  const baseCurrency = trip?.baseCurrency ?? "USD";
+  const baseCurrency = trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY;
   const totalMinor = expenses.reduce(
     (total, expense) => total + expense.baseAmount,
     0,
@@ -461,12 +535,7 @@ function summarizeExpenses(
 }
 
 function formatDateLabel(value: string, locale: Locale) {
-  return new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(`${value}T00:00:00.000Z`));
+  return formatAppDate(value, locale === "zh" ? "zh-CN" : "en");
 }
 
 function LanguageToggle({

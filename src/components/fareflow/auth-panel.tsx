@@ -27,6 +27,12 @@ export function AuthPanel() {
     retryAt && retryAt > now ? Math.ceil((retryAt - now) / 1000) : 0;
   const isCoolingDown = retrySeconds > 0;
 
+  function startCooldown() {
+    const sentAt = Date.now();
+    setNow(sentAt);
+    setRetryAt(sentAt + AUTH_EMAIL_COOLDOWN_MS);
+  }
+
   useEffect(() => {
     if (!retryAt) {
       return;
@@ -52,12 +58,12 @@ export function AuthPanel() {
     try {
       await auth.signInWithEmail(email);
       setMessage(t.auth.sent);
-      setRetryAt(Date.now() + AUTH_EMAIL_COOLDOWN_MS);
+      startCooldown();
     } catch (signInError) {
       const rawMessage =
         signInError instanceof Error ? signInError.message : "";
       if (rawMessage && isAuthRateLimitError(rawMessage)) {
-        setRetryAt(Date.now() + AUTH_EMAIL_COOLDOWN_MS);
+        startCooldown();
       }
       setError(getAuthErrorMessage(signInError, t));
     } finally {

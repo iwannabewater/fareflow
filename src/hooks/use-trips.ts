@@ -28,9 +28,7 @@ export function useTrips() {
         byClientId.set(trip.clientId, trip);
       }
 
-      return [...byClientId.values()].sort((a, b) =>
-        b.startDate.localeCompare(a.startDate),
-      );
+      return sortTrips([...byClientId.values()]);
     },
   });
 }
@@ -61,9 +59,7 @@ export function useCreateTrip() {
         const withoutOptimistic = current.filter(
           (trip) => trip.clientId !== savedTrip.clientId,
         );
-        return [savedTrip, ...withoutOptimistic].sort((a, b) =>
-          b.startDate.localeCompare(a.startDate),
-        );
+        return sortTrips([savedTrip, ...withoutOptimistic]);
       });
     },
     onSettled: async () => {
@@ -76,6 +72,22 @@ export function useCreateTrip() {
     mutateAsync: (input: CreateTripInput) =>
       mutation.mutateAsync(buildTrip(input, "pending")),
   };
+}
+
+export function sortTrips(trips: Trip[]): Trip[] {
+  return [...trips].sort((a, b) => {
+    const byStartDate = b.startDate.localeCompare(a.startDate);
+    if (byStartDate !== 0) {
+      return byStartDate;
+    }
+
+    const byCreatedAt = b.createdAt.localeCompare(a.createdAt);
+    if (byCreatedAt !== 0) {
+      return byCreatedAt;
+    }
+
+    return b.clientId.localeCompare(a.clientId);
+  });
 }
 
 function buildTrip(input: CreateTripInput, syncStatus: Trip["syncStatus"]): Trip {

@@ -47,9 +47,11 @@ At mobile widths, the add expense action is fixed above the safe-area inset. At 
 
 Trip selection must reserve space for a 44px icon well, two-line trip text, and the chevron. At narrow mobile widths the sync badge may collapse to icon-only with an accessible label so the product name and primary actions do not crowd each other.
 
+When multiple Trips exist, the current Trip must not be the only visible journey. Show a compact, horizontally scrollable Trip switcher directly under the picker so users can see that prior Trips were preserved and can switch without opening the menu.
+
 ## Localization
 
-English is the default interface language. Simplified Chinese is available from the in-app language control and is persisted on-device. Dates and currency use `Intl.*` formatting for the active locale; product names and currency codes remain untranslated where precision matters.
+English is the default interface language. Simplified Chinese is available from the in-app language control and is persisted on-device. Dates and currency use `Intl.*` formatting for the active locale; date inputs use the Beijing calendar date and new Trips default to CNY. Product names and currency codes remain untranslated where precision matters.
 
 ## Agent Prompt Guide
 

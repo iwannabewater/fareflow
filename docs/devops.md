@@ -111,8 +111,10 @@ Release smoke checks:
 2. Verify one visible login form on desktop and one visible login form on mobile.
 3. Confirm logged-out production state starts without seeded trips and the sync badge reads Offline/离线.
 4. Create two trips in a row and confirm the newly created trip becomes selected each time.
-5. Toggle the language switch and confirm Chinese copy fits at `390px` width.
-6. Confirm `/manifest.webmanifest`, `/sw.js`, and Vercel Web Analytics requests load successfully.
+5. Confirm both trips remain visible in the compact trip switcher and in the picker.
+6. Confirm new Trip and Expense forms default to CNY and the Beijing calendar date.
+7. Toggle the language switch and confirm Chinese copy fits at `390px` width.
+8. Confirm `/manifest.webmanifest`, `/sw.js`, and Vercel Web Analytics requests load successfully.
 
 ## Cloudflare
 

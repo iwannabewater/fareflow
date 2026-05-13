@@ -4,6 +4,10 @@ import {
   formatMoney,
   parseMajorToMinor,
 } from "@/lib/domain/money";
+import {
+  DEFAULT_BASE_CURRENCY,
+  getAppDateInputValue,
+} from "@/lib/domain/defaults";
 
 describe("money helpers", () => {
   it("parses currency minor units without floating point drift", () => {
@@ -30,5 +34,15 @@ describe("money helpers", () => {
 
   it("formats minor amounts as localized currency", () => {
     expect(formatMoney(1118, "USD")).toBe("$11.18");
+  });
+
+  it("uses RMB as the product default currency", () => {
+    expect(DEFAULT_BASE_CURRENCY).toBe("CNY");
+  });
+
+  it("derives date input values from Beijing time", () => {
+    expect(getAppDateInputValue(new Date("2026-05-13T16:01:00.000Z"))).toBe(
+      "2026-05-14",
+    );
   });
 });

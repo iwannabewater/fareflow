@@ -1,7 +1,7 @@
 "use client";
 
 import type { EmailOtpType } from "@supabase/supabase-js";
-import { useQueryClient } from "@tanstack/react-query";
+import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -29,6 +29,7 @@ export default function AuthConfirmPage() {
 
     didConfirm.current = true;
     let isMounted = true;
+    let fallbackTimer: number | null = null;
 
     async function confirmSession() {
       const callback = parseAuthCallbackUrl(window.location.href);
@@ -75,10 +76,7 @@ export default function AuthConfirmPage() {
 
         const { data: userData } = await supabase.auth.getUser();
         queryClient.setQueryData(["auth-user"], userData.user ?? null);
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["trips"] }),
-          queryClient.invalidateQueries({ queryKey: ["expenses"] }),
-        ]);
+        void refreshFareFlowQueries(queryClient);
 
         if (!isMounted) {
           return;
@@ -86,6 +84,12 @@ export default function AuthConfirmPage() {
 
         setState({ status: "success", next });
         router.replace(next);
+        router.refresh();
+        fallbackTimer = window.setTimeout(() => {
+          if (window.location.pathname === "/auth/confirm") {
+            window.location.replace(next);
+          }
+        }, 1500);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -105,6 +109,9 @@ export default function AuthConfirmPage() {
 
     return () => {
       isMounted = false;
+      if (fallbackTimer) {
+        window.clearTimeout(fallbackTimer);
+      }
     };
   }, [queryClient, router, t.confirm.fallbackError, t.confirm.missingToken]);
 
@@ -161,4 +168,11 @@ export default function AuthConfirmPage() {
       </section>
     </main>
   );
+}
+
+async function refreshFareFlowQueries(queryClient: QueryClient) {
+  await Promise.allSettled([
+    queryClient.invalidateQueries({ queryKey: ["trips"] }),
+    queryClient.invalidateQueries({ queryKey: ["expenses"] }),
+  ]);
 }

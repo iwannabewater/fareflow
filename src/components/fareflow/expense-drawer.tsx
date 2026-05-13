@@ -30,6 +30,10 @@ import {
   type CreateExpenseInput,
   type Trip,
 } from "@/lib/domain/schema";
+import {
+  DEFAULT_BASE_CURRENCY,
+  getAppDateInputValue,
+} from "@/lib/domain/defaults";
 import { currencyMeta } from "@/lib/domain/money";
 import { useCreateExpense } from "@/hooks/use-expenses";
 import { translateValidationError, useCopy } from "@/lib/i18n";
@@ -40,14 +44,7 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
   const mutation = useCreateExpense(trip);
   const form = useForm<CreateExpenseInput>({
     resolver: zodResolver(createExpenseInputSchema),
-    defaultValues: {
-      amountMajor: "",
-      currency: trip?.baseCurrency ?? "USD",
-      exchangeRate: "1",
-      category: "food",
-      note: "",
-      expenseDate: new Date().toISOString().slice(0, 10),
-    },
+    defaultValues: getExpenseDefaults(trip),
   });
 
   const selectedCurrency = useWatch({
@@ -65,20 +62,19 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
     }
   }, [form, selectedCurrency, trip]);
 
+  useEffect(() => {
+    if (!open) {
+      form.reset(getExpenseDefaults(trip));
+    }
+  }, [form, open, trip]);
+
   async function onSubmit(input: CreateExpenseInput) {
     const expense = await mutation.mutateAsync(input).catch(() => null);
     if (!expense) {
       return;
     }
 
-    form.reset({
-      amountMajor: "",
-      currency: trip?.baseCurrency ?? "USD",
-      exchangeRate: "1",
-      category: "food",
-      note: "",
-      expenseDate: new Date().toISOString().slice(0, 10),
-    });
+    form.reset(getExpenseDefaults(trip));
     setOpen(false);
   }
 
@@ -89,6 +85,7 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
         setOpen(nextOpen);
         if (nextOpen) {
           mutation.reset();
+          form.reset(getExpenseDefaults(trip));
         }
       }}
     >
@@ -256,6 +253,17 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
       </SheetContent>
     </Sheet>
   );
+}
+
+function getExpenseDefaults(trip: Trip | null): CreateExpenseInput {
+  return {
+    amountMajor: "",
+    currency: trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY,
+    exchangeRate: "1",
+    category: "food",
+    note: "",
+    expenseDate: getAppDateInputValue(),
+  };
 }
 
 function CurrencySelect({
