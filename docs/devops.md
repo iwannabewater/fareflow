@@ -66,6 +66,8 @@ Supabase GitHub integration is authorized through the Dashboard OAuth flow, not 
 
 ## Vercel
 
+The Vercel project is connected to `iwannabewater/fareflow`. Pushes to `main` are deployed by Vercel Git Integration after GitHub Actions verification passes. GitHub Actions intentionally runs verification only; do not add a second CLI production deploy job unless the Git Integration is disabled.
+
 Preview deployment:
 
 ```bash
@@ -78,6 +80,8 @@ Production deployment:
 ```bash
 vercel deploy --prod
 ```
+
+Use direct CLI production deployment only as a manual fallback. Normal production releases should come from the Vercel Git deployment for `main`.
 
 Environment variables:
 
@@ -103,7 +107,7 @@ vercel inspect <deployment-url>
 vercel logs --environment production --since 30m --level error --json --no-branch
 ```
 
-GitHub Actions deployments pass Git metadata to Vercel. Vercel rejects Git-authored production deployments if the author email is not allowed to deploy to the target team, so the workflow pins deployment metadata to the Vercel account email used by this project.
+If a future workflow reintroduces CLI deployments, confirm `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` are valid repository secrets before relying on it for production.
 
 Release smoke checks:
 
