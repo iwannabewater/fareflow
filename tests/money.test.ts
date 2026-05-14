@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   convertToBaseMinor,
   formatMoney,
+  minorToMajorText,
   parseMajorToMinor,
 } from "@/lib/domain/money";
 import {
@@ -34,6 +35,12 @@ describe("money helpers", () => {
 
   it("formats minor amounts as localized currency", () => {
     expect(formatMoney(1118, "USD")).toBe("$11.18");
+  });
+
+  it("converts minor units to fixed major text by currency exponent", () => {
+    expect(minorToMajorText(1118, "USD")).toBe("11.18");
+    expect(minorToMajorText(1118, "CNY")).toBe("11.18");
+    expect(minorToMajorText(1118, "JPY")).toBe("1118");
   });
 
   it("uses RMB as the product default currency", () => {

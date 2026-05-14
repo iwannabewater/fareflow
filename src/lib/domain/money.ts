@@ -77,6 +77,26 @@ export function formatMoney(
   }).format(Number(snapshot));
 }
 
+export function minorToMajorText(
+  amount: number,
+  currency: CurrencyCode,
+): string {
+  if (!Number.isSafeInteger(amount)) {
+    throw new Error("Amount is out of range");
+  }
+
+  const exponent = currencyMeta[currency].exponent;
+  if (exponent === 0) {
+    return String(amount);
+  }
+
+  const sign = amount < 0 ? "-" : "";
+  const absoluteText = String(Math.abs(amount)).padStart(exponent + 1, "0");
+  const major = absoluteText.slice(0, -exponent);
+  const fractional = absoluteText.slice(-exponent);
+  return `${sign}${major}.${fractional}`;
+}
+
 export function convertToBaseMinor(options: {
   amount: number;
   currency: CurrencyCode;

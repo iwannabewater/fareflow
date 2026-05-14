@@ -1,3 +1,4 @@
+import { formatMoney, minorToMajorText } from "@/lib/domain/money";
 import { expenseCategories, type Expense, type Trip } from "@/lib/domain/schema";
 
 export type CategoryTotal = {
@@ -78,7 +79,11 @@ export function buildTripAnalytics(expenses: Expense[]): TripAnalytics {
   };
 }
 
-export function expensesToCsv(expenses: Expense[], trip: Trip | null): string {
+export function expensesToCsv(
+  expenses: Expense[],
+  trip: Trip | null,
+  locale = "zh-CN",
+): string {
   const header = [
     "trip_title",
     "trip_destination",
@@ -86,9 +91,15 @@ export function expensesToCsv(expenses: Expense[], trip: Trip | null): string {
     "category",
     "note",
     "amount",
+    "amount_major",
+    "amount_minor",
     "currency",
     "base_amount",
+    "base_amount_major",
+    "base_amount_minor",
     "base_currency",
+    "formatted_amount",
+    "formatted_base_amount",
     "exchange_rate",
     "sync_status",
   ];
@@ -99,10 +110,16 @@ export function expensesToCsv(expenses: Expense[], trip: Trip | null): string {
     expense.expenseDate,
     expense.category,
     expense.note ?? "",
+    minorToMajorText(expense.amount, expense.currency),
+    minorToMajorText(expense.amount, expense.currency),
     String(expense.amount),
     expense.currency,
+    minorToMajorText(expense.baseAmount, expense.baseCurrency),
+    minorToMajorText(expense.baseAmount, expense.baseCurrency),
     String(expense.baseAmount),
     expense.baseCurrency,
+    formatMoney(expense.amount, expense.currency, locale),
+    formatMoney(expense.baseAmount, expense.baseCurrency, locale),
     expense.exchangeRate,
     expense.syncStatus,
   ]);

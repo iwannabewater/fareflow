@@ -613,7 +613,7 @@ function ExportCsvButton({
       className="h-9 rounded-full bg-canvas px-3 text-xs text-ink shadow-[0_1px_3px_rgba(35,42,40,0.10)] active:scale-95"
       disabled={!trip || expenses.length === 0}
       aria-label={copy.home.exportCsvAria}
-      onClick={() => exportExpenses(trip, expenses)}
+      onClick={() => exportExpenses(trip, expenses, copy.localeCode)}
     >
       <Download className="size-3.5" aria-hidden="true" />
       {copy.home.exportCsv}
@@ -621,8 +621,12 @@ function ExportCsvButton({
   );
 }
 
-function exportExpenses(trip: Trip | null, expenses: Expense[]) {
-  const csv = expensesToCsv(expenses, trip);
+function exportExpenses(
+  trip: Trip | null,
+  expenses: Expense[],
+  locale: string,
+) {
+  const csv = expensesToCsv(expenses, trip, locale);
   const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
