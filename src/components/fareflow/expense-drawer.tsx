@@ -55,6 +55,8 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
     control: form.control,
     name: "category",
   });
+  const amountExponent = currencyMeta[selectedCurrency].exponent;
+  const amountExample = amountExponent === 0 ? "0" : `0.${"0".repeat(amountExponent)}`;
 
   useEffect(() => {
     if (trip && selectedCurrency === trip.baseCurrency) {
@@ -122,6 +124,7 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
           >
             <Field
               label={t.expense.amount}
+              helper={t.expense.amountHelper(selectedCurrency, amountExponent)}
               error={translateValidationError(
                 form.formState.errors.amountMajor?.message,
                 t,
@@ -132,7 +135,10 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
                   inputMode="decimal"
                   aria-label={t.expense.amount}
                   autoComplete="off"
-                  placeholder={t.expense.amountPlaceholder}
+                  placeholder={t.expense.amountPlaceholder(
+                    selectedCurrency,
+                    amountExample,
+                  )}
                   className="h-12 rounded-xl bg-white text-[1.35rem] font-semibold tabular-nums"
                   {...form.register("amountMajor")}
                 />
@@ -295,10 +301,12 @@ function CurrencySelect({
 
 function Field({
   label,
+  helper,
   error,
   children,
 }: {
   label: string;
+  helper?: string;
   error?: string;
   children: React.ReactNode;
 }) {
@@ -311,6 +319,11 @@ function Field({
         ) : null}
       </span>
       {children}
+      {helper ? (
+        <span className="text-xs font-normal leading-5 text-ink-muted">
+          {helper}
+        </span>
+      ) : null}
     </label>
   );
 }

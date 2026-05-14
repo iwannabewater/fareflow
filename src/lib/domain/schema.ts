@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { currencyMeta } from "@/lib/domain/money";
 
 export const currencyCodes = [
   "USD",
@@ -91,7 +92,8 @@ export const createExpenseInputSchema = z.object({
   amountMajor: z
     .string()
     .trim()
-    .regex(/^\d+(\.\d{1,3})?$/, "Use a valid amount"),
+    .min(1, "Use a valid amount")
+    .regex(/^\d+(\.\d+)?$/, "Use a valid amount"),
   currency: z.enum(currencyCodes),
   exchangeRate: z
     .string()
@@ -100,6 +102,28 @@ export const createExpenseInputSchema = z.object({
   category: z.enum(expenseCategories),
   note: z.string().trim().max(180).optional(),
   expenseDate: z.string().date("Use a valid date"),
+}).superRefine((value, context) => {
+  const [major, fractional = ""] = value.amountMajor.split(".");
+  if (Number.parseInt(major, 10) === 0 && !/[1-9]/.test(fractional)) {
+    context.addIssue({
+      code: "custom",
+      message: "Amount must be greater than zero",
+      path: ["amountMajor"],
+    });
+    return;
+  }
+
+  const exponent = currencyMeta[value.currency].exponent;
+  if (fractional.length > exponent) {
+    context.addIssue({
+      code: "custom",
+      message:
+        exponent === 0
+          ? "Currency does not support decimal amounts"
+          : "Too many decimal places for currency",
+      path: ["amountMajor"],
+    });
+  }
 });
 
 export type CreateExpenseInput = z.infer<typeof createExpenseInputSchema>;
@@ -109,4 +133,3 @@ export type SyncSummary = {
   synced: number;
   failed: number;
 };
-

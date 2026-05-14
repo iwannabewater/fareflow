@@ -130,7 +130,12 @@ export const dictionaries = {
       newTitle: "New expense",
       description: "Saved locally first; synced to Supabase when available.",
       amount: "Amount",
-      amountPlaceholder: "42.80…",
+      amountPlaceholder: (currency: CurrencyCode, example: string) =>
+        `${example} ${currency}`,
+      amountHelper: (currency: CurrencyCode, decimals: number) =>
+        decimals === 0
+          ? `${currency} uses whole amounts only.`
+          : `${currency} supports up to ${decimals} decimal places.`,
       currency: "Currency",
       date: "Date",
       rate: "Rate",
@@ -168,6 +173,11 @@ export const dictionaries = {
       "End date must be after the start date":
         "End date must be after the start date",
       "Use a valid amount": "Use a valid amount",
+      "Amount must be greater than zero": "Amount must be greater than zero",
+      "Currency does not support decimal amounts":
+        "This currency does not support decimal amounts",
+      "Too many decimal places for currency":
+        "Too many decimal places for this currency",
       "Use a valid rate": "Use a valid rate",
       "Use a valid date": "Use a valid date",
     },
@@ -269,7 +279,12 @@ export const dictionaries = {
       newTitle: "新增支出",
       description: "先保存到本机；网络可用时自动同步到 Supabase。",
       amount: "金额",
-      amountPlaceholder: "42.80…",
+      amountPlaceholder: (currency: CurrencyCode, example: string) =>
+        `${example} ${currency}`,
+      amountHelper: (currency: CurrencyCode, decimals: number) =>
+        decimals === 0
+          ? `${currency} 只能输入整数金额。`
+          : `${currency} 最多支持 ${decimals} 位小数。`,
       currency: "币种",
       date: "日期",
       rate: "汇率",
@@ -306,6 +321,9 @@ export const dictionaries = {
       "Use a valid end date": "请选择有效的结束日期",
       "End date must be after the start date": "结束日期不能早于开始日期",
       "Use a valid amount": "请输入有效金额",
+      "Amount must be greater than zero": "金额必须大于 0",
+      "Currency does not support decimal amounts": "该币种不支持小数金额",
+      "Too many decimal places for currency": "该币种的小数位数过多",
       "Use a valid rate": "请输入有效汇率",
       "Use a valid date": "请选择有效日期",
     },

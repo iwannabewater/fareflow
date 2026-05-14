@@ -41,5 +41,52 @@ describe("input schemas", () => {
 
     expect(parsed.success).toBe(true);
   });
-});
 
+  it("validates amount decimals with the selected currency exponent", () => {
+    expect(
+      createExpenseInputSchema.safeParse({
+        amountMajor: "1840.50",
+        currency: "JPY",
+        exchangeRate: "0.047",
+        category: "food",
+        note: "Tonkatsu",
+        expenseDate: "2026-06-02",
+      }).success,
+    ).toBe(false);
+
+    expect(
+      createExpenseInputSchema.safeParse({
+        amountMajor: "17.42",
+        currency: "USD",
+        exchangeRate: "7.18",
+        category: "food",
+        note: "Coffee",
+        expenseDate: "2026-06-02",
+      }).success,
+    ).toBe(true);
+
+    expect(
+      createExpenseInputSchema.safeParse({
+        amountMajor: "17.421",
+        currency: "CNY",
+        exchangeRate: "1",
+        category: "food",
+        note: "Coffee",
+        expenseDate: "2026-06-02",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects zero expense amounts before submit parsing", () => {
+    const parsed = createExpenseInputSchema.safeParse({
+      amountMajor: "0.00",
+      currency: "CNY",
+      exchangeRate: "1",
+      category: "food",
+      note: "Coffee",
+      expenseDate: "2026-06-02",
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+});
