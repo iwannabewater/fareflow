@@ -43,6 +43,19 @@ vi.mock("@/hooks/use-trips", () => ({
     isError: false,
     error: null,
   }),
+  useUpdateTrip: () => ({
+    mutateAsync: vi.fn(),
+    reset: vi.fn(),
+    isPending: false,
+    isError: false,
+    error: null,
+  }),
+  useDeleteTrip: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+    isError: false,
+    error: null,
+  }),
 }));
 
 vi.mock("@/hooks/use-expenses", () => ({

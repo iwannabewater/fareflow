@@ -23,6 +23,14 @@ export async function enqueueTrip(
 ) {
   const db = getOfflineDb();
   const existing = await db.pendingTrips.get(trip.clientId);
+  if (existing?.operation === "create" && operation === "delete") {
+    await db.transaction("rw", db.pendingTrips, db.pendingExpenses, async () => {
+      await db.pendingTrips.delete(trip.clientId);
+      await db.pendingExpenses.where("tripId").equals(trip.id).delete();
+    });
+    return;
+  }
+
   await db.pendingTrips.put({
     ...trip,
     operation: normalizeOperation(existing?.operation, operation),
@@ -32,6 +40,9 @@ export async function enqueueTrip(
     nextRetryAt: null,
     queuedAt: existing?.queuedAt ?? new Date().toISOString(),
   });
+  if (operation === "delete") {
+    await db.pendingExpenses.where("tripId").equals(trip.id).delete();
+  }
 }
 
 export async function enqueueExpense(

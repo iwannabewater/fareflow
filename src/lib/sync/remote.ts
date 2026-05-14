@@ -11,6 +11,7 @@ import {
   expenseToUpdate,
   tripFromRow,
   tripToInsert,
+  tripToUpdate,
 } from "@/lib/supabase/mappers";
 
 export class RemoteAuthRequiredError extends Error {
@@ -135,6 +136,41 @@ export async function upsertRemoteTrip(trip: Trip): Promise<Trip> {
   }
 
   return tripFromRow(data);
+}
+
+export async function updateRemoteTrip(trip: Trip): Promise<Trip> {
+  const user = await requireRemoteUser();
+  const supabase = getSupabaseBrowserClient();
+  const payload = tripToUpdate({ ...trip, userId: user.id });
+
+  const { data, error } = await supabase
+    .from("trips")
+    .update(payload)
+    .eq("client_id", trip.clientId)
+    .eq("user_id", user.id)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw classifySupabaseError(error);
+  }
+
+  return tripFromRow(data);
+}
+
+export async function deleteRemoteTrip(trip: Trip): Promise<void> {
+  const user = await requireRemoteUser();
+  const supabase = getSupabaseBrowserClient();
+
+  const { error } = await supabase
+    .from("trips")
+    .delete()
+    .eq("client_id", trip.clientId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    throw classifySupabaseError(error);
+  }
 }
 
 export async function upsertRemoteExpense(expense: Expense): Promise<Expense> {

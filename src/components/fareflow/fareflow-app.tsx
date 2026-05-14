@@ -46,7 +46,7 @@ import {
   useTripSelectionStore,
 } from "@/lib/trips/selection";
 import { useDeleteExpense, useExpenses } from "@/hooks/use-expenses";
-import { useTrips } from "@/hooks/use-trips";
+import { useDeleteTrip, useTrips } from "@/hooks/use-trips";
 
 export function FareFlowApp() {
   const { locale, t, toggleLocale } = useCopy();
@@ -149,6 +149,7 @@ export function FareFlowApp() {
               onSelect={setSelectedTripId}
               copy={t}
             />
+            <TripManageActions trip={selectedTrip} copy={t} />
           </header>
 
           <div className="grid flex-1 gap-5 px-4 py-5 pb-28 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-8 lg:pb-8">
@@ -216,6 +217,87 @@ export function FareFlowApp() {
         </section>
       </div>
     </main>
+  );
+}
+
+function TripManageActions({
+  trip,
+  copy,
+}: {
+  trip: Trip | null;
+  copy: FareFlowCopy;
+}) {
+  const deleteMutation = useDeleteTrip();
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+
+  if (!trip) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3 rounded-2xl bg-canvas-strong p-2 shadow-[0_1px_3px_rgba(35,42,40,0.10)]">
+      <div className="flex flex-wrap items-center gap-2">
+        <TripDrawer
+          trip={trip}
+          trigger={
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-10 rounded-full bg-canvas px-3 text-ink"
+            >
+              <Pencil className="size-4" aria-hidden="true" />
+              {copy.trip.editTrigger}
+            </Button>
+          }
+        />
+        <Button
+          type="button"
+          variant="destructive"
+          className="h-10 rounded-full px-3"
+          onClick={() => setIsConfirmingDelete(true)}
+          aria-label={copy.trip.deleteAria}
+        >
+          <Trash2 className="size-4" aria-hidden="true" />
+          {copy.trip.delete}
+        </Button>
+      </div>
+      {isConfirmingDelete ? (
+        <div className="mt-3 rounded-xl bg-stamp-50 p-3 text-sm text-stamp-900">
+          <p className="font-medium">{copy.trip.deleteConfirmTitle}</p>
+          <p className="mt-1 leading-5 text-stamp-800">
+            {copy.trip.deleteConfirmDescription}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="destructive"
+              className="h-9 rounded-full px-4"
+              disabled={deleteMutation.isPending}
+              onClick={() =>
+                void deleteMutation.mutateAsync(trip).then(() => {
+                  setIsConfirmingDelete(false);
+                })
+              }
+            >
+              {copy.trip.confirmDelete}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-9 rounded-full bg-canvas px-4 text-stamp-900"
+              onClick={() => setIsConfirmingDelete(false)}
+            >
+              {copy.trip.cancelDelete}
+            </Button>
+          </div>
+          {deleteMutation.isError ? (
+            <p className="mt-2 text-xs text-destructive" role="alert">
+              {copy.trip.deleteFailed}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

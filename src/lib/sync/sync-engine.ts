@@ -19,7 +19,9 @@ import {
   RemoteUnavailableError,
   RemoteValidationError,
   deleteRemoteExpense,
+  deleteRemoteTrip,
   updateRemoteExpense,
+  updateRemoteTrip,
   upsertRemoteExpense,
   upsertRemoteTrip,
 } from "@/lib/sync/remote";
@@ -45,6 +47,54 @@ export async function saveTrip(trip: Trip): Promise<Trip> {
     if (shouldQueue(error)) {
       await enqueueTrip(trip, getErrorMessage(error));
       return { ...trip, syncStatus: "pending" };
+    }
+    throw error;
+  }
+}
+
+export async function updateTrip(trip: Trip): Promise<Trip> {
+  if (!navigator.onLine) {
+    const error = new RemoteNetworkUnavailableError();
+    await enqueueTrip(trip, error.message, "update");
+    return { ...trip, syncStatus: "pending" };
+  }
+
+  try {
+    if (!(await hasRemoteSession())) {
+      const error = new RemoteAuthRequiredError();
+      await enqueueTrip(trip, error.message, "update");
+      return { ...trip, syncStatus: "pending" };
+    }
+
+    return await updateRemoteTrip(trip);
+  } catch (error) {
+    if (shouldQueue(error)) {
+      await enqueueTrip(trip, getErrorMessage(error), "update");
+      return { ...trip, syncStatus: "pending" };
+    }
+    throw error;
+  }
+}
+
+export async function deleteTrip(trip: Trip): Promise<void> {
+  if (!navigator.onLine) {
+    const error = new RemoteNetworkUnavailableError();
+    await enqueueTrip(trip, error.message, "delete");
+    return;
+  }
+
+  try {
+    if (!(await hasRemoteSession())) {
+      const error = new RemoteAuthRequiredError();
+      await enqueueTrip(trip, error.message, "delete");
+      return;
+    }
+
+    await deleteRemoteTrip(trip);
+  } catch (error) {
+    if (shouldQueue(error)) {
+      await enqueueTrip(trip, getErrorMessage(error), "delete");
+      return;
     }
     throw error;
   }
@@ -171,7 +221,13 @@ async function runSyncPendingRecords({
 
     attempted += 1;
     try {
-      await upsertRemoteTrip({ ...trip, syncStatus: "syncing" });
+      if (trip.operation === "delete") {
+        await deleteRemoteTrip(trip);
+      } else if (trip.operation === "update") {
+        await updateRemoteTrip({ ...trip, syncStatus: "syncing" });
+      } else {
+        await upsertRemoteTrip({ ...trip, syncStatus: "syncing" });
+      }
       await markTripSynced(trip.clientId);
       synced += 1;
     } catch (error) {

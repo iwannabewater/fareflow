@@ -9,6 +9,7 @@ import type { Database } from "@/lib/supabase/types";
 
 type TripRow = Database["public"]["Tables"]["trips"]["Row"];
 type TripInsert = Database["public"]["Tables"]["trips"]["Insert"];
+type TripUpdate = Database["public"]["Tables"]["trips"]["Update"];
 type ExpenseRow = Database["public"]["Tables"]["expenses"]["Row"];
 type ExpenseInsert = Database["public"]["Tables"]["expenses"]["Insert"];
 type ExpenseUpdate = Database["public"]["Tables"]["expenses"]["Update"];
@@ -39,6 +40,16 @@ export function tripToInsert(trip: Trip): TripInsert {
     start_date: trip.startDate,
     end_date: trip.endDate,
     created_at: trip.createdAt,
+  };
+}
+
+export function tripToUpdate(trip: Trip): TripUpdate {
+  return {
+    title: trip.title,
+    destination: trip.destination,
+    base_currency: trip.baseCurrency,
+    start_date: trip.startDate,
+    end_date: trip.endDate,
   };
 }
 

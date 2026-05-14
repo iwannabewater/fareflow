@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MapPinned, Plus } from "lucide-react";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -32,34 +33,50 @@ import {
   getAppDateInputValue,
 } from "@/lib/domain/defaults";
 import { currencyMeta } from "@/lib/domain/money";
-import { useCreateTrip } from "@/hooks/use-trips";
+import { useCreateTrip, useUpdateTrip } from "@/hooks/use-trips";
 import { translateValidationError, useCopy } from "@/lib/i18n";
 
 export function TripDrawer({
+  trip,
+  trigger,
   onTripCreated,
+  onTripUpdated,
 }: {
+  trip?: Trip;
+  trigger?: ReactNode;
   onTripCreated?: (trip: Trip) => void;
+  onTripUpdated?: (trip: Trip) => void;
 }) {
   const { t } = useCopy();
   const [open, setOpen] = useState(false);
-  const mutation = useCreateTrip();
+  const createMutation = useCreateTrip();
+  const updateMutation = useUpdateTrip();
+  const mutation = trip ? updateMutation : createMutation;
   const form = useForm<CreateTripInput>({
     resolver: zodResolver(createTripInputSchema),
-    defaultValues: getTripDefaults(),
+    defaultValues: getTripDefaults(trip),
   });
+  const isEditing = Boolean(trip);
   const baseCurrency = useWatch({
     control: form.control,
     name: "baseCurrency",
   });
 
   async function onSubmit(input: CreateTripInput) {
-    const trip = await mutation.mutateAsync(input).catch(() => null);
-    if (!trip) {
+    const savedTrip = await (isEditing && trip
+      ? updateMutation.mutateAsync({ trip, values: input })
+      : createMutation.mutateAsync(input)
+    ).catch(() => null);
+    if (!savedTrip) {
       return;
     }
 
-    onTripCreated?.(trip);
-    form.reset(getTripDefaults());
+    if (isEditing) {
+      onTripUpdated?.(savedTrip);
+    } else {
+      onTripCreated?.(savedTrip);
+    }
+    form.reset(getTripDefaults(trip));
     setOpen(false);
   }
 
@@ -70,19 +87,21 @@ export function TripDrawer({
         setOpen(nextOpen);
         if (nextOpen) {
           mutation.reset();
-          form.reset(getTripDefaults());
+          form.reset(getTripDefaults(trip));
         }
       }}
     >
       <SheetTrigger asChild>
-        <Button
-          type="button"
-          variant="secondary"
-          className="h-11 rounded-full bg-canvas-strong px-3 text-ink shadow-[0_1px_3px_rgba(35,42,40,0.12)] active:scale-95 min-[430px]:px-4"
-        >
-          <Plus className="size-4" aria-hidden="true" />
-          {t.trip.trigger}
-        </Button>
+        {trigger ?? (
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-11 rounded-full bg-canvas-strong px-3 text-ink shadow-[0_1px_3px_rgba(35,42,40,0.12)] active:scale-95 min-[430px]:px-4"
+          >
+            <Plus className="size-4" aria-hidden="true" />
+            {t.trip.trigger}
+          </Button>
+        )}
       </SheetTrigger>
       <SheetContent
         side="bottom"
@@ -94,10 +113,10 @@ export function TripDrawer({
               <MapPinned className="size-5" aria-hidden="true" />
             </div>
             <SheetTitle className="text-2xl font-semibold">
-              {t.trip.newTitle}
+              {isEditing ? t.trip.editTitle : t.trip.newTitle}
             </SheetTitle>
             <SheetDescription className="text-ink-muted">
-              {t.trip.description}
+              {isEditing ? t.trip.editDescription : t.trip.description}
             </SheetDescription>
           </SheetHeader>
 
@@ -206,13 +225,19 @@ export function TripDrawer({
               className="mt-2 h-12 rounded-full bg-ink text-canvas active:scale-95"
               disabled={mutation.isPending}
             >
-              {mutation.isPending ? t.common.saving : t.trip.create}
+              {mutation.isPending
+                ? t.common.saving
+                : isEditing
+                  ? t.trip.update
+                  : t.trip.create}
             </Button>
             {mutation.isError ? (
               <p className="text-sm text-destructive" role="alert">
                 {mutation.error instanceof Error
                   ? mutation.error.message
-                  : t.trip.createFailed}
+                  : isEditing
+                    ? t.trip.updateFailed
+                    : t.trip.createFailed}
               </p>
             ) : null}
           </form>
@@ -222,7 +247,17 @@ export function TripDrawer({
   );
 }
 
-function getTripDefaults(): CreateTripInput {
+function getTripDefaults(trip?: Trip): CreateTripInput {
+  if (trip) {
+    return {
+      title: trip.title,
+      destination: trip.destination,
+      baseCurrency: trip.baseCurrency,
+      startDate: trip.startDate,
+      endDate: trip.endDate ?? "",
+    };
+  }
+
   return {
     title: "",
     destination: "",

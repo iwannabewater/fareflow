@@ -44,6 +44,8 @@ const remote = vi.hoisted(() => {
     RemoteValidationError,
     hasRemoteSession: vi.fn(),
     upsertRemoteTrip: vi.fn(),
+    updateRemoteTrip: vi.fn(),
+    deleteRemoteTrip: vi.fn(),
     upsertRemoteExpense: vi.fn(),
     updateRemoteExpense: vi.fn(),
     deleteRemoteExpense: vi.fn(),
@@ -94,6 +96,8 @@ describe("syncPendingRecords", () => {
     });
     remote.hasRemoteSession.mockReset();
     remote.upsertRemoteTrip.mockReset();
+    remote.updateRemoteTrip.mockReset();
+    remote.deleteRemoteTrip.mockReset();
     remote.upsertRemoteExpense.mockReset();
     remote.updateRemoteExpense.mockReset();
     remote.deleteRemoteExpense.mockReset();
@@ -230,6 +234,35 @@ describe("syncPendingRecords", () => {
     expect(remote.updateRemoteExpense).toHaveBeenCalledTimes(1);
     expect(remote.deleteRemoteExpense).toHaveBeenCalledTimes(1);
     expect(remote.upsertRemoteExpense).not.toHaveBeenCalled();
+  });
+
+  it("syncs pending trip updates and deletes with their operation semantics", async () => {
+    const { syncPendingRecords } = await import("@/lib/sync/sync-engine");
+    await enqueueTrip({ ...baseTrip, title: "Updated Tokyo" }, null, "update");
+    await enqueueTrip(
+      {
+        ...baseTrip,
+        id: "00000000-0000-4000-8000-000000000002",
+        clientId: "00000000-0000-4000-8000-000000000102",
+      },
+      null,
+      "delete",
+    );
+    remote.updateRemoteTrip.mockResolvedValue({
+      ...baseTrip,
+      title: "Updated Tokyo",
+      syncStatus: "synced",
+    });
+    remote.deleteRemoteTrip.mockResolvedValue(undefined);
+
+    await expect(syncPendingRecords()).resolves.toEqual({
+      attempted: 2,
+      synced: 2,
+      failed: 0,
+    });
+    expect(remote.updateRemoteTrip).toHaveBeenCalledTimes(1);
+    expect(remote.deleteRemoteTrip).toHaveBeenCalledTimes(1);
+    expect(remote.upsertRemoteTrip).not.toHaveBeenCalled();
   });
 });
 
