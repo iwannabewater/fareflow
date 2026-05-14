@@ -5,13 +5,17 @@ import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuthSession } from "@/hooks/use-auth-session";
+import {
+  getMagicLinkGuardDecision,
+  markMagicLinkRateLimited,
+  markMagicLinkSent,
+  normalizeAuthEmail,
+} from "@/lib/auth/magic-link-guard";
 import { useCopy } from "@/lib/i18n";
 import {
   getAuthErrorMessage,
   isAuthRateLimitError,
 } from "@/lib/supabase/auth-errors";
-
-const AUTH_EMAIL_COOLDOWN_MS = 60_000;
 
 export function AuthPanel() {
   const auth = useAuthSession();
@@ -27,10 +31,9 @@ export function AuthPanel() {
     retryAt && retryAt > now ? Math.ceil((retryAt - now) / 1000) : 0;
   const isCoolingDown = retrySeconds > 0;
 
-  function startCooldown() {
-    const sentAt = Date.now();
-    setNow(sentAt);
-    setRetryAt(sentAt + AUTH_EMAIL_COOLDOWN_MS);
+  function startCooldown(nextRetryAt: number) {
+    setNow(Date.now());
+    setRetryAt(nextRetryAt);
   }
 
   useEffect(() => {
@@ -51,19 +54,30 @@ export function AuthPanel() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const normalizedEmail = normalizeAuthEmail(email);
+    const guardDecision = getMagicLinkGuardDecision(normalizedEmail);
+    if (guardDecision.status === "wait") {
+      setError(null);
+      setMessage(t.auth.recentLink);
+      startCooldown(guardDecision.retryAt);
+      return;
+    }
+
     setError(null);
     setMessage(null);
     setIsSubmitting(true);
 
     try {
-      await auth.signInWithEmail(email);
+      await auth.signInWithEmail(normalizedEmail);
       setMessage(t.auth.sent);
-      startCooldown();
+      startCooldown(markMagicLinkSent(normalizedEmail));
     } catch (signInError) {
       const rawMessage =
         signInError instanceof Error ? signInError.message : "";
       if (rawMessage && isAuthRateLimitError(rawMessage)) {
-        startCooldown();
+        setMessage(t.auth.recentLink);
+        startCooldown(markMagicLinkRateLimited(normalizedEmail));
+        return;
       }
       setError(getAuthErrorMessage(signInError, t));
     } finally {

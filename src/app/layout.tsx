@@ -15,7 +15,7 @@ import { Analytics } from "@vercel/analytics/next";
 export const metadata: Metadata = {
   title: "FareFlow",
   description:
-    "A mobile-first travel expense PWA with local-first capture and Supabase sync.",
+    "一款移动优先的旅行支出 PWA，支持本地优先记录和 Supabase 同步。",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
@@ -45,13 +45,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="zh-CN">
       <body className="min-h-svh">
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-ink focus:px-4 focus:py-3 focus:text-canvas"
         >
-          Skip to main content
+          跳到主内容
         </a>
         <AppProviders>{children}</AppProviders>
         <Analytics />

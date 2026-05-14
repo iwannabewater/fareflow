@@ -51,7 +51,7 @@ When multiple Trips exist, the current Trip must not be the only visible journey
 
 ## Localization
 
-English is the default interface language. Simplified Chinese is available from the in-app language control and is persisted on-device. Dates and currency use `Intl.*` formatting for the active locale; date inputs use the Beijing calendar date and new Trips default to CNY. Product names and currency codes remain untranslated where precision matters.
+Simplified Chinese is the default interface language. English is available from the in-app language control and is persisted on-device. Dates and currency use `Intl.*` formatting for the active locale; date inputs use the Beijing calendar date and new Trips default to CNY. Product names and currency codes remain untranslated where precision matters.
 
 ## Agent Prompt Guide
 

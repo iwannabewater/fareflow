@@ -17,6 +17,6 @@ describe("auth error mapping", () => {
         new Error("email rate limit exceeded"),
         dictionaries.zh,
       ),
-    ).toBe("登录邮件请求过于频繁，请稍后再试。");
+    ).toBe("邮件服务正在冷却，请先使用最新登录邮件，稍后可重新发送。");
   });
 });

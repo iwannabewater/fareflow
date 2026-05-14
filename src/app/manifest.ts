@@ -4,8 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "FareFlow",
     short_name: "FareFlow",
-    description:
-      "A mobile-first travel expense PWA with offline capture and Supabase sync.",
+    description: "移动优先的旅行支出 PWA，支持离线记录和 Supabase 同步。",
     start_url: "/",
     scope: "/",
     display: "standalone",

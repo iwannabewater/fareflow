@@ -11,7 +11,7 @@ FareFlow is a mobile-first travel expense PWA. It captures expenses instantly, k
 - Dexie for the local outbox and persisted query cache
 - CNY-first trip defaults with Beijing calendar dates for date-only capture
 - `@ducanh2912/next-pwa` for Workbox service worker generation
-- English and Simplified Chinese UI with persisted in-app language switching
+- Simplified Chinese default UI with persisted in-app English switching
 - Self-hosted LXGW WenKai, ZCOOL KuaiLe, Alegreya, and Comic Neue fonts
 - Vercel Web Analytics through `@vercel/analytics`
 - Vercel CLI and Wrangler-compatible deployment runbook

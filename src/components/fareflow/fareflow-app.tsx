@@ -2,16 +2,19 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  BarChart3,
   CalendarDays,
+  ChevronDown,
   CircleDollarSign,
   Clock3,
+  Download,
   Languages,
   MapPinned,
   Route,
   PlaneTakeoff,
   ReceiptText,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { AuthPanel } from "@/components/fareflow/auth-panel";
 import { ExpenseDrawer } from "@/components/fareflow/expense-drawer";
 import { SyncStrip } from "@/components/fareflow/sync-strip";
@@ -22,13 +25,12 @@ import {
   DEFAULT_BASE_CURRENCY,
   formatAppDate,
 } from "@/lib/domain/defaults";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  buildTripAnalytics,
+  expensesToCsv,
+  type TripAnalytics,
+} from "@/lib/domain/analytics";
 import { categoryMeta } from "@/lib/domain/categories";
 import { formatMoney } from "@/lib/domain/money";
 import type { Expense, Trip } from "@/lib/domain/schema";
@@ -46,10 +48,12 @@ export function FareFlowApp() {
     null;
   const expenses = useExpenses(selectedTrip?.id ?? null);
 
-  const summary = useMemo(
-    () => summarizeExpenses(expenses.data ?? [], selectedTrip, locale),
-    [expenses.data, selectedTrip, locale],
+  const analytics = useMemo(
+    () => buildTripAnalytics(expenses.data ?? []),
+    [expenses.data],
   );
+  const baseCurrency = selectedTrip?.baseCurrency ?? DEFAULT_BASE_CURRENCY;
+  const total = formatMoney(analytics.total, baseCurrency, t.localeCode);
 
   return (
     <main
@@ -134,16 +138,23 @@ export function FareFlowApp() {
             <section className="grid content-start gap-5">
               <SummaryPanel
                 trip={selectedTrip}
-                total={summary.total}
-                count={summary.count}
-                pending={summary.pending}
+                total={total}
+                count={analytics.count}
+                pending={analytics.pending}
+                copy={t}
+                locale={locale}
+              />
+              <TripInsightsPanel
+                trip={selectedTrip}
+                expenses={expenses.data ?? []}
+                analytics={analytics}
                 copy={t}
                 locale={locale}
               />
               <ExpenseTimeline
                 expenses={expenses.data ?? []}
                 isLoading={expenses.isLoading}
-                baseCurrency={selectedTrip?.baseCurrency ?? DEFAULT_BASE_CURRENCY}
+                baseCurrency={baseCurrency}
                 copy={t}
                 locale={locale}
               />
@@ -152,8 +163,8 @@ export function FareFlowApp() {
             <aside className="hidden content-start gap-4 lg:grid">
               <TripHealthPanel
                 trip={selectedTrip}
-                total={summary.total}
-                pending={summary.pending}
+                total={total}
+                pending={analytics.pending}
                 copy={t}
               />
             </aside>
@@ -241,6 +252,36 @@ function TripPicker({
   onValueChange: (value: string) => void;
   copy: FareFlowCopy;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function onPointerDown(event: PointerEvent) {
+      if (!pickerRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isOpen]);
+
   if (isLoading) {
     return <Skeleton className="h-16 rounded-[1.35rem] bg-canvas-strong" />;
   }
@@ -256,10 +297,15 @@ function TripPicker({
   const selectedTrip = trips.find((trip) => trip.id === value) ?? trips[0];
 
   return (
-    <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger
+    <div ref={pickerRef} className="relative">
+      <button
+        type="button"
         aria-label={copy.home.selectTrip}
-        className="h-auto min-h-16 w-full rounded-2xl bg-canvas-strong px-3.5 py-3 text-left shadow-[0_1px_3px_rgba(35,42,40,0.10)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(35,42,40,0.10)]"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={listboxId}
+        className="flex h-auto min-h-16 w-full items-center justify-between rounded-2xl bg-canvas-strong px-3.5 py-3 text-left shadow-[0_1px_3px_rgba(35,42,40,0.10)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(35,42,40,0.10)] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        onClick={() => setIsOpen((current) => !current)}
       >
         <div className="flex min-w-0 flex-1 items-center gap-3 pr-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-passport-50 text-passport-900">
@@ -274,20 +320,70 @@ function TripPicker({
             </span>
           </span>
         </div>
-      </SelectTrigger>
-      <SelectContent>
-        {trips.map((trip) => (
-          <SelectItem key={trip.id} value={trip.id}>
-            <span className="flex flex-col">
-              <span>{trip.title}</span>
-              <span className="text-xs text-muted-foreground">
-                {trip.destination} · {trip.baseCurrency}
-              </span>
-            </span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        <ChevronDown
+          className={`size-4 shrink-0 text-ink-muted transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+          aria-hidden="true"
+        />
+      </button>
+      <AnimatePresence>
+        {isOpen ? (
+          <motion.div
+            id={listboxId}
+            role="listbox"
+            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl bg-popover p-1 text-popover-foreground shadow-[0_18px_46px_rgba(35,42,40,0.18)] ring-1 ring-ink/10"
+          >
+            {trips.map((trip) => {
+              const isSelected = trip.id === selectedTrip.id;
+              return (
+                <button
+                  key={trip.id}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors ${
+                    isSelected
+                      ? "bg-ink text-canvas"
+                      : "text-ink hover:bg-canvas-strong"
+                  }`}
+                  onClick={() => {
+                    onValueChange(trip.id);
+                    setIsOpen(false);
+                  }}
+                >
+                  <span
+                    className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${
+                      isSelected
+                        ? "bg-canvas/12 text-canvas"
+                        : "bg-passport-50 text-passport-900"
+                    }`}
+                  >
+                    <Route className="size-4" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold">
+                      {trip.title}
+                    </span>
+                    <span
+                      className={`mt-0.5 block truncate text-xs ${
+                        isSelected ? "text-canvas/70" : "text-ink-muted"
+                      }`}
+                    >
+                      {trip.destination} · {trip.baseCurrency}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -340,6 +436,212 @@ function SummaryPanel({
       </div>
     </motion.section>
   );
+}
+
+function TripInsightsPanel({
+  trip,
+  expenses,
+  analytics,
+  copy,
+  locale,
+}: {
+  trip: Trip | null;
+  expenses: Expense[];
+  analytics: TripAnalytics;
+  copy: FareFlowCopy;
+  locale: Locale;
+}) {
+  const baseCurrency = trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY;
+  const topCategory = analytics.categoryTotals[0] ?? null;
+  const maxCategoryTotal = topCategory?.total ?? 0;
+  const maxDailyTotal = Math.max(
+    ...analytics.dailyTotals.map((item) => item.total),
+    0,
+  );
+  const visibleDailyTotals = analytics.dailyTotals.slice(-7);
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1], delay: 0.04 }}
+      className="rounded-[1.45rem] bg-canvas-strong p-4 shadow-[0_1px_3px_rgba(35,42,40,0.10)] lg:p-5"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-medium text-ink">
+            <BarChart3 className="size-4 text-passport-900" aria-hidden="true" />
+            {copy.home.dashboard}
+          </div>
+          <p className="mt-1 text-xs leading-5 text-ink-muted">
+            {topCategory
+              ? `${copy.home.topCategory}: ${copy.categories[topCategory.category]}`
+              : copy.home.noAnalytics}
+          </p>
+        </div>
+        <ExportCsvButton trip={trip} expenses={expenses} copy={copy} />
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-y border-ink/8 py-3 min-[520px]:grid-cols-3">
+        <InsightMetric
+          label={copy.home.averageDaily}
+          value={formatMoney(analytics.averagePerDay, baseCurrency, copy.localeCode)}
+        />
+        <InsightMetric
+          label={copy.home.largestExpense}
+          value={
+            analytics.largestExpense
+              ? formatMoney(
+                  analytics.largestExpense.baseAmount,
+                  baseCurrency,
+                  copy.localeCode,
+                )
+              : formatMoney(0, baseCurrency, copy.localeCode)
+          }
+        />
+        <InsightMetric
+          label={copy.home.pendingSync}
+          value={String(analytics.pending)}
+        />
+      </div>
+
+      {analytics.count === 0 ? null : (
+        <div className="mt-4 grid gap-5 xl:grid-cols-2">
+          <div>
+            <h3 className="text-sm font-semibold">
+              {copy.home.categoryBreakdown}
+            </h3>
+            <div className="mt-3 grid gap-2.5">
+              {analytics.categoryTotals.map((item) => (
+                <BreakdownRow
+                  key={item.category}
+                  label={copy.categories[item.category]}
+                  value={formatMoney(item.total, baseCurrency, copy.localeCode)}
+                  ratio={maxCategoryTotal > 0 ? item.total / maxCategoryTotal : 0}
+                  tone={categoryMeta[item.category].tone}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold">{copy.home.dailyTrend}</h3>
+            <div className="mt-3 flex h-28 items-end gap-2">
+              {visibleDailyTotals.map((item) => (
+                <div
+                  key={item.date}
+                  className="flex min-w-0 flex-1 flex-col items-center gap-2"
+                >
+                  <div className="flex h-20 w-full items-end rounded-full bg-canvas/70 p-1">
+                    <div
+                      className="w-full rounded-full bg-passport-900"
+                      style={{
+                        height: `${Math.max(
+                          10,
+                          maxDailyTotal > 0 ? (item.total / maxDailyTotal) * 100 : 0,
+                        )}%`,
+                      }}
+                      aria-label={`${formatDateLabel(item.date, locale)} ${formatMoney(
+                        item.total,
+                        baseCurrency,
+                        copy.localeCode,
+                      )}`}
+                    />
+                  </div>
+                  <span className="max-w-full truncate text-[0.68rem] text-ink-muted">
+                    {formatShortDateLabel(item.date, locale)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </motion.section>
+  );
+}
+
+function InsightMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-xs text-ink-muted">{label}</p>
+      <p className="mt-1 truncate text-lg font-semibold tabular-nums">{value}</p>
+    </div>
+  );
+}
+
+function BreakdownRow({
+  label,
+  value,
+  ratio,
+  tone,
+}: {
+  label: string;
+  value: string;
+  ratio: number;
+  tone: string;
+}) {
+  return (
+    <div className="grid gap-1.5">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="truncate text-ink">{label}</span>
+        <span className="shrink-0 font-medium tabular-nums">{value}</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-canvas">
+        <div
+          className={`h-full rounded-full ${tone}`}
+          style={{ width: `${Math.max(6, ratio * 100)}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ExportCsvButton({
+  trip,
+  expenses,
+  copy,
+}: {
+  trip: Trip | null;
+  expenses: Expense[];
+  copy: FareFlowCopy;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="secondary"
+      className="h-9 rounded-full bg-canvas px-3 text-xs text-ink shadow-[0_1px_3px_rgba(35,42,40,0.10)] active:scale-95"
+      disabled={!trip || expenses.length === 0}
+      aria-label={copy.home.exportCsvAria}
+      onClick={() => exportExpenses(trip, expenses)}
+    >
+      <Download className="size-3.5" aria-hidden="true" />
+      {copy.home.exportCsv}
+    </Button>
+  );
+}
+
+function exportExpenses(trip: Trip | null, expenses: Expense[]) {
+  const csv = expensesToCsv(expenses, trip);
+  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${fileNamePart(trip?.title ?? "fareflow")}-expenses.csv`;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function fileNamePart(value: string): string {
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fff]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return normalized || "fareflow";
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -515,27 +817,16 @@ function Info({ label, value }: { label: string; value: string }) {
   );
 }
 
-function summarizeExpenses(
-  expenses: Expense[],
-  trip: Trip | null,
-  locale: Locale,
-) {
-  const baseCurrency = trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY;
-  const totalMinor = expenses.reduce(
-    (total, expense) => total + expense.baseAmount,
-    0,
-  );
-
-  return {
-    total: formatMoney(totalMinor, baseCurrency, locale === "zh" ? "zh-CN" : "en-US"),
-    count: expenses.length,
-    pending: expenses.filter((expense) => expense.syncStatus !== "synced")
-      .length,
-  };
-}
-
 function formatDateLabel(value: string, locale: Locale) {
   return formatAppDate(value, locale === "zh" ? "zh-CN" : "en");
+}
+
+function formatShortDateLabel(value: string, locale: Locale) {
+  return new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en", {
+    month: "numeric",
+    day: "numeric",
+    timeZone: "Asia/Shanghai",
+  }).format(new Date(`${value}T00:00:00+08:00`));
 }
 
 function LanguageToggle({

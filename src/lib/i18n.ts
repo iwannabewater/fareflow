@@ -17,7 +17,7 @@ type LocaleState = {
 export const useLocaleStore = create<LocaleState>()(
   persist(
     (set, get) => ({
-      locale: "en",
+      locale: "zh",
       setLocale: (locale) => set({ locale }),
       toggleLocale: () => set({ locale: get().locale === "en" ? "zh" : "en" }),
     }),
@@ -47,9 +47,11 @@ export const dictionaries = {
       placeholder: "you@example.com",
       send: "Send magic link",
       sent: "Magic link sent. Check your inbox.",
+      recentLink:
+        "A fresh sign-in link was already sent. Use the newest email, or resend after the timer.",
       fallbackError: "We could not send a sign-in link.",
       rateLimit:
-        "Too many sign-in emails were requested. Wait a bit before trying again.",
+        "The sign-in email provider is cooling down. Use the newest email, or resend shortly.",
       retryAfter: (seconds: number) => `Try again in ${seconds}s`,
       localDemo: "Local demo mode",
       localDemoDescription:
@@ -98,6 +100,15 @@ export const dictionaries = {
       baseCurrency: "Base currency",
       currentTotal: "Current total",
       pendingSync: "Pending sync",
+      dashboard: "Dashboard",
+      averageDaily: "Daily average",
+      largestExpense: "Largest expense",
+      categoryBreakdown: "Category breakdown",
+      dailyTrend: "Daily trend",
+      topCategory: "Top category",
+      exportCsv: "Export CSV",
+      exportCsvAria: "Export current trip expenses as CSV",
+      noAnalytics: "Add expenses to unlock trip insights.",
     },
     trip: {
       trigger: "Trip",
@@ -179,9 +190,10 @@ export const dictionaries = {
       placeholder: "you@example.com",
       send: "发送登录链接",
       sent: "登录链接已发送，请检查邮箱。",
+      recentLink: "新的登录链接已经发出，请使用邮箱里的最新邮件；倒计时结束后可重新发送。",
       fallbackError: "登录链接发送失败。",
-      rateLimit: "登录邮件请求过于频繁，请稍后再试。",
-      retryAfter: (seconds: number) => `${seconds} 秒后可重试`,
+      rateLimit: "邮件服务正在冷却，请先使用最新登录邮件，稍后可重新发送。",
+      retryAfter: (seconds: number) => `${seconds} 秒后可重新发送`,
       localDemo: "本地演示模式",
       localDemoDescription:
         "添加 Supabase 环境变量后即可启用登录、RLS 和云端同步。",
@@ -228,6 +240,15 @@ export const dictionaries = {
       baseCurrency: "基准货币",
       currentTotal: "当前总额",
       pendingSync: "待同步",
+      dashboard: "数据看板",
+      averageDaily: "日均支出",
+      largestExpense: "最大单笔",
+      categoryBreakdown: "分类占比",
+      dailyTrend: "每日走势",
+      topCategory: "最高分类",
+      exportCsv: "导出 CSV",
+      exportCsvAria: "导出当前旅程支出 CSV",
+      noAnalytics: "记录支出后即可查看旅程洞察。",
     },
     trip: {
       trigger: "旅程",

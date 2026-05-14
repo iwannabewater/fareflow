@@ -86,10 +86,10 @@ export function TripDrawer({
       </SheetTrigger>
       <SheetContent
         side="bottom"
-        className="max-h-[88svh] overscroll-contain rounded-t-3xl border-0 bg-canvas p-0 text-ink shadow-[0_-12px_36px_rgba(35,42,40,0.18)]"
+        className="max-h-[94svh] overflow-y-auto overscroll-contain rounded-t-3xl border-0 bg-canvas p-0 text-ink shadow-[0_-12px_36px_rgba(35,42,40,0.18)]"
       >
-        <div className="mx-auto flex w-full max-w-xl flex-col px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5">
-          <SheetHeader className="text-left">
+        <div className="mx-auto flex w-full max-w-xl flex-col px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 min-[390px]:px-5">
+          <SheetHeader className="px-0 py-0 text-left">
             <div className="flex size-11 items-center justify-center rounded-2xl bg-mint-100 text-mint-900">
               <MapPinned className="size-5" aria-hidden="true" />
             </div>
@@ -136,7 +136,7 @@ export function TripDrawer({
               />
             </FormRow>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 min-[460px]:grid-cols-2">
               <FormRow
                 label={t.trip.start}
                 error={translateValidationError(
