@@ -17,6 +17,10 @@ import {
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { AuthPanel } from "@/components/fareflow/auth-panel";
 import { ExpenseDrawer } from "@/components/fareflow/expense-drawer";
+import {
+  InlineRecoveryPanel,
+  StorageHealthBanner,
+} from "@/components/fareflow/recovery";
 import { SyncStrip } from "@/components/fareflow/sync-strip";
 import { TripDrawer } from "@/components/fareflow/trip-drawer";
 import { Badge } from "@/components/ui/badge";
@@ -151,6 +155,15 @@ export function FareFlowApp() {
             </div>
 
             <section className="grid content-start gap-5">
+              <StorageHealthBanner copy={t} />
+              {trips.isError ? (
+                <InlineRecoveryPanel
+                  title={t.recovery.queryErrorTitle}
+                  description={t.recovery.queryErrorDescription}
+                  actionLabel={t.common.retry}
+                  onAction={() => void trips.refetch()}
+                />
+              ) : null}
               <SummaryPanel
                 trip={selectedTrip}
                 total={total}
@@ -166,13 +179,22 @@ export function FareFlowApp() {
                 copy={t}
                 locale={locale}
               />
-              <ExpenseTimeline
-                expenses={expenses.data ?? []}
-                isLoading={expenses.isLoading}
-                baseCurrency={baseCurrency}
-                copy={t}
-                locale={locale}
-              />
+              {expenses.isError ? (
+                <InlineRecoveryPanel
+                  title={t.recovery.queryErrorTitle}
+                  description={t.recovery.queryErrorDescription}
+                  actionLabel={t.common.retry}
+                  onAction={() => void expenses.refetch()}
+                />
+              ) : (
+                <ExpenseTimeline
+                  expenses={expenses.data ?? []}
+                  isLoading={expenses.isLoading}
+                  baseCurrency={baseCurrency}
+                  copy={t}
+                  locale={locale}
+                />
+              )}
             </section>
 
             <aside className="hidden content-start gap-4 lg:grid">

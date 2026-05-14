@@ -40,7 +40,29 @@ export const dictionaries = {
       backToApp: "Back to FareFlow",
       notSet: "Not set",
       saving: "Saving…",
+      retry: "Retry",
+      reload: "Reload",
       close: "Close",
+    },
+    recovery: {
+      offlineTitle: "FareFlow is offline",
+      offlineDescription:
+        "Your cached trips and pending expenses stay on this device. Reconnect to sync them with Supabase.",
+      offlineAction: "Return to ledger",
+      loadingTitle: "Preparing your travel ledger",
+      loadingDescription: "FareFlow is checking local records and sync state.",
+      notFoundTitle: "This page is not in the itinerary",
+      notFoundDescription:
+        "The page may have moved, or the link may no longer be valid.",
+      appErrorTitle: "FareFlow hit a recoverable error",
+      appErrorDescription:
+        "Your local records are still on this device. Retry the view or return to the ledger.",
+      queryErrorTitle: "Could not load the latest records",
+      queryErrorDescription:
+        "Check your connection or Supabase status, then retry.",
+      storageErrorTitle: "Offline storage is unavailable",
+      storageErrorDescription:
+        "FareFlow needs IndexedDB for offline capture. Enable browser storage or retry in a normal browser session.",
     },
     auth: {
       label: "Supabase magic link",
@@ -197,7 +219,27 @@ export const dictionaries = {
       backToApp: "返回 FareFlow",
       notSet: "未设置",
       saving: "保存中…",
+      retry: "重试",
+      reload: "重新加载",
       close: "关闭",
+    },
+    recovery: {
+      offlineTitle: "FareFlow 当前离线",
+      offlineDescription:
+        "已缓存的旅程和待同步支出会保留在本机；网络恢复后将继续同步到 Supabase。",
+      offlineAction: "返回账本",
+      loadingTitle: "正在准备你的旅行账本",
+      loadingDescription: "FareFlow 正在检查本机记录和同步状态。",
+      notFoundTitle: "这页不在行程里",
+      notFoundDescription: "页面可能已移动，或这个链接已经失效。",
+      appErrorTitle: "FareFlow 遇到可恢复错误",
+      appErrorDescription:
+        "本机记录仍保留在设备上。你可以重试当前视图，或返回账本。",
+      queryErrorTitle: "无法载入最新记录",
+      queryErrorDescription: "请检查网络或 Supabase 状态，然后重试。",
+      storageErrorTitle: "离线存储不可用",
+      storageErrorDescription:
+        "FareFlow 需要 IndexedDB 才能离线记录。请开启浏览器存储，或在普通浏览会话中重试。",
     },
     auth: {
       label: "邮箱登录链接",

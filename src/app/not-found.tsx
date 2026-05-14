@@ -5,20 +5,19 @@ import { Button } from "@/components/ui/button";
 import { FullPageRecovery } from "@/components/fareflow/recovery";
 import { useCopy } from "@/lib/i18n";
 
-export default function OfflinePage() {
+export default function NotFound() {
   const { t, toggleLocale } = useCopy();
 
   return (
     <FullPageRecovery
-      icon="offline"
-      title={t.recovery.offlineTitle}
-      description={t.recovery.offlineDescription}
+      title={t.recovery.notFoundTitle}
+      description={t.recovery.notFoundDescription}
       action={
         <Link
           href="/"
           className="inline-flex h-12 items-center justify-center rounded-full bg-ink px-5 text-sm font-medium text-canvas"
         >
-          {t.recovery.offlineAction}
+          {t.common.backToApp}
         </Link>
       }
       secondaryAction={
