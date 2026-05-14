@@ -108,10 +108,14 @@ export const dictionaries = {
     },
     home: {
       currentJourney: "Current journey",
+      actionCenter: "Current trip action center",
       firstTripTitle: "Set up your first trip",
       createTripPrompt: "Create a trip to start tracking expenses.",
       selectTrip: "Select trip",
       tripTotal: "Trip total",
+      todaySpend: "Today",
+      budgetRemaining: "Budget",
+      budgetPlaceholder: "Reserved",
       noTripSelected: "No trip selected",
       items: "Items",
       pending: "Pending",
@@ -119,6 +123,7 @@ export const dictionaries = {
       noExpensesDescription:
         "Add the first cost before boarding, during transit, or at arrival.",
       expenses: "Expenses",
+      recentExpenses: "Recent expenses",
       itemCount: (count: number) => `${count} items`,
       tripList: "Saved trips",
       tripState: "Trip state",
@@ -180,6 +185,7 @@ export const dictionaries = {
         decimals === 0
           ? `${currency} uses whole amounts only.`
           : `${currency} supports up to ${decimals} decimal places.`,
+      amountPreview: "Preview",
       currency: "Currency",
       date: "Date",
       rate: "Rate",
@@ -311,16 +317,21 @@ export const dictionaries = {
     },
     home: {
       currentJourney: "当前旅程",
+      actionCenter: "当前旅程行动台",
       firstTripTitle: "创建第一段旅程",
       createTripPrompt: "创建旅程后即可开始记录旅行支出。",
       selectTrip: "选择旅程",
       tripTotal: "旅程总额",
+      todaySpend: "今日支出",
+      budgetRemaining: "预算",
+      budgetPlaceholder: "预留",
       noTripSelected: "尚未选择旅程",
       items: "笔数",
       pending: "待同步",
       noExpensesTitle: "还没有支出",
       noExpensesDescription: "登机前、转场中或抵达后，都可以先记录第一笔花费。",
       expenses: "支出记录",
+      recentExpenses: "最近支出",
       itemCount: (count: number) => `${count} 笔`,
       tripList: "已保存旅程",
       tripState: "旅程状态",
@@ -379,6 +390,7 @@ export const dictionaries = {
         decimals === 0
           ? `${currency} 只能输入整数金额。`
           : `${currency} 最多支持 ${decimals} 位小数。`,
+      amountPreview: "预览",
       currency: "币种",
       date: "日期",
       rate: "汇率",

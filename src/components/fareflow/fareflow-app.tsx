@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import {
   DEFAULT_BASE_CURRENCY,
   formatAppDate,
+  getAppDateInputValue,
 } from "@/lib/domain/defaults";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -75,6 +76,15 @@ export function FareFlowApp() {
   );
   const baseCurrency = selectedTrip?.baseCurrency ?? DEFAULT_BASE_CURRENCY;
   const total = formatMoney(analytics.total, baseCurrency, t.localeCode);
+  const todayDate = getAppDateInputValue();
+  const todayTotal = useMemo(
+    () =>
+      (expenses.data ?? [])
+        .filter((expense) => expense.expenseDate === todayDate)
+        .reduce((sum, expense) => sum + expense.baseAmount, 0),
+    [expenses.data, todayDate],
+  );
+  const todaySpend = formatMoney(todayTotal, baseCurrency, t.localeCode);
 
   return (
     <main
@@ -170,6 +180,7 @@ export function FareFlowApp() {
               <SummaryPanel
                 trip={selectedTrip}
                 total={total}
+                todaySpend={todaySpend}
                 count={analytics.count}
                 pending={analytics.pending}
                 copy={t}
@@ -512,6 +523,7 @@ function TripPicker({
 function SummaryPanel({
   trip,
   total,
+  todaySpend,
   count,
   pending,
   copy,
@@ -519,6 +531,7 @@ function SummaryPanel({
 }: {
   trip: Trip | null;
   total: string;
+  todaySpend: string;
   count: number;
   pending: number;
   copy: FareFlowCopy;
@@ -538,7 +551,7 @@ function SummaryPanel({
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-canvas/70">
             <CircleDollarSign className="size-4" aria-hidden="true" />
-            <span className="text-sm">{copy.home.tripTotal}</span>
+            <span className="text-sm">{copy.home.actionCenter}</span>
           </div>
           <p
             className={`mt-3 max-w-full font-semibold leading-[0.96] tabular-nums [overflow-wrap:anywhere] ${totalSizeClass}`}
@@ -551,9 +564,15 @@ function SummaryPanel({
               : copy.home.noTripSelected}
           </p>
         </div>
-        <div className="grid max-w-sm grid-cols-2 gap-2">
+        <div className="grid max-w-xl grid-cols-2 gap-2 min-[520px]:grid-cols-4">
+          <Metric label={copy.home.tripTotal} value={total} compact />
+          <Metric label={copy.home.todaySpend} value={todaySpend} compact />
           <Metric label={copy.home.items} value={String(count)} />
           <Metric label={copy.home.pending} value={String(pending)} />
+          <Metric
+            label={copy.home.budgetRemaining}
+            value={copy.home.budgetPlaceholder}
+          />
         </div>
       </div>
     </motion.section>
@@ -770,11 +789,25 @@ function fileNamePart(value: string): string {
   return normalized || "fareflow";
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({
+  label,
+  value,
+  compact = false,
+}: {
+  label: string;
+  value: string;
+  compact?: boolean;
+}) {
   return (
     <div className="rounded-xl bg-white/[0.08] px-3 py-3">
       <p className="font-casual text-xs text-canvas/60">{label}</p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
+      <p
+        className={`mt-1 font-semibold tabular-nums [overflow-wrap:anywhere] ${
+          compact ? "text-base" : "text-2xl"
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }
@@ -822,7 +855,7 @@ function ExpenseTimeline({
     <section className="grid gap-3">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">
-          {copy.home.expenses}
+          {copy.home.recentExpenses}
         </h2>
         <Badge className="font-casual rounded-full bg-canvas-strong text-ink">
           {copy.home.itemCount(expenses.length)}

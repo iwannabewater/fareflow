@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ExpenseDrawer } from "@/components/fareflow/expense-drawer";
 import type { Expense, Trip } from "@/lib/domain/schema";
+import { useExpensePreferencesStore } from "@/lib/expenses/preferences";
 
 const mutateAsync = vi.fn();
 const updateMutateAsync = vi.fn();
@@ -59,6 +60,11 @@ const baseExpense: Expense = {
 
 describe("ExpenseDrawer", () => {
   beforeEach(() => {
+    window.localStorage.clear();
+    useExpensePreferencesStore.setState({
+      recentCurrency: null,
+      recentCategory: null,
+    });
     mutateAsync.mockReset();
     updateMutateAsync.mockReset();
   });
@@ -100,6 +106,28 @@ describe("ExpenseDrawer", () => {
       "0.00 CNY",
     );
     expect(screen.getByText("CNY 最多支持 2 位小数。")).toBeInTheDocument();
+  });
+
+  it("shows an amount preview and remembers recent defaults after save", async () => {
+    mutateAsync.mockResolvedValue(baseExpense);
+
+    render(<ExpenseDrawer trip={baseTrip} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "添加支出" }));
+    fireEvent.change(screen.getByLabelText("金额"), {
+      target: { value: "12.34" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "交通" }));
+
+    expect(screen.getByText("预览")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "保存支出" }));
+
+    await waitFor(() => {
+      expect(useExpensePreferencesStore.getState().recentCurrency).toBe("CNY");
+      expect(useExpensePreferencesStore.getState().recentCategory).toBe(
+        "transport",
+      );
+    });
   });
 
   it("opens in edit mode with the existing expense values", async () => {

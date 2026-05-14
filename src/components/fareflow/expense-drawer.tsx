@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, ReceiptText } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,8 +36,15 @@ import {
   DEFAULT_BASE_CURRENCY,
   getAppDateInputValue,
 } from "@/lib/domain/defaults";
-import { currencyMeta, minorToMajorText } from "@/lib/domain/money";
+import {
+  convertToBaseMinor,
+  currencyMeta,
+  formatMoney,
+  minorToMajorText,
+  parseMajorToMinor,
+} from "@/lib/domain/money";
 import { useCreateExpense, useUpdateExpense } from "@/hooks/use-expenses";
+import { useExpensePreferencesStore } from "@/lib/expenses/preferences";
 import { translateValidationError, useCopy } from "@/lib/i18n";
 
 type EditableExpense = Pick<
@@ -64,9 +71,21 @@ export function ExpenseDrawer({
   const createMutation = useCreateExpense(trip);
   const updateMutation = useUpdateExpense(trip);
   const mutation = expense ? updateMutation : createMutation;
+  const recentCurrency = useExpensePreferencesStore(
+    (state) => state.recentCurrency,
+  );
+  const recentCategory = useExpensePreferencesStore(
+    (state) => state.recentCategory,
+  );
+  const rememberExpenseDefaults = useExpensePreferencesStore(
+    (state) => state.rememberExpenseDefaults,
+  );
   const form = useForm<CreateExpenseInput>({
     resolver: zodResolver(createExpenseInputSchema),
-    defaultValues: getExpenseDefaults(trip, expense),
+    defaultValues: getExpenseDefaults(trip, expense, {
+      currency: recentCurrency,
+      category: recentCategory,
+    }),
   });
   const isEditing = Boolean(expense);
 
@@ -78,8 +97,27 @@ export function ExpenseDrawer({
     control: form.control,
     name: "category",
   });
+  const amountMajor = useWatch({
+    control: form.control,
+    name: "amountMajor",
+  });
+  const exchangeRate = useWatch({
+    control: form.control,
+    name: "exchangeRate",
+  });
   const amountExponent = currencyMeta[selectedCurrency].exponent;
   const amountExample = amountExponent === 0 ? "0" : `0.${"0".repeat(amountExponent)}`;
+  const amountPreview = useMemo(
+    () =>
+      buildAmountPreview({
+        amountMajor,
+        currency: selectedCurrency,
+        exchangeRate,
+        trip,
+        locale: t.localeCode,
+      }),
+    [amountMajor, exchangeRate, selectedCurrency, t.localeCode, trip],
+  );
 
   useEffect(() => {
     if (trip && selectedCurrency === trip.baseCurrency) {
@@ -89,9 +127,14 @@ export function ExpenseDrawer({
 
   useEffect(() => {
     if (!open) {
-      form.reset(getExpenseDefaults(trip, expense));
+      form.reset(
+        getExpenseDefaults(trip, expense, {
+          currency: recentCurrency,
+          category: recentCategory,
+        }),
+      );
     }
-  }, [expense, form, open, trip]);
+  }, [expense, form, open, recentCategory, recentCurrency, trip]);
 
   async function onSubmit(input: CreateExpenseInput) {
     const savedExpense = await (isEditing && expense
@@ -102,7 +145,16 @@ export function ExpenseDrawer({
       return;
     }
 
-    form.reset(getExpenseDefaults(trip, expense));
+    rememberExpenseDefaults({
+      currency: input.currency,
+      category: input.category,
+    });
+    form.reset(
+      getExpenseDefaults(trip, expense, {
+        currency: input.currency,
+        category: input.category,
+      }),
+    );
     setOpen(false);
   }
 
@@ -113,7 +165,12 @@ export function ExpenseDrawer({
         setOpen(nextOpen);
         if (nextOpen) {
           mutation.reset();
-          form.reset(getExpenseDefaults(trip, expense));
+          form.reset(
+            getExpenseDefaults(trip, expense, {
+              currency: recentCurrency,
+              category: recentCategory,
+            }),
+          );
         }
       }}
     >
@@ -160,7 +217,7 @@ export function ExpenseDrawer({
             >
               <div className="grid grid-cols-[1fr_7rem] gap-2">
                 <Input
-                  inputMode="decimal"
+                  inputMode={amountExponent === 0 ? "numeric" : "decimal"}
                   aria-label={t.expense.amount}
                   autoComplete="off"
                   placeholder={t.expense.amountPlaceholder(
@@ -180,6 +237,12 @@ export function ExpenseDrawer({
                 />
               </div>
             </Field>
+            {amountPreview ? (
+              <div className="rounded-xl bg-passport-50 px-3 py-2 text-sm text-passport-900">
+                <span className="font-medium">{t.expense.amountPreview}</span>{" "}
+                <span className="tabular-nums">{amountPreview}</span>
+              </div>
+            ) : null}
 
             <div className="grid grid-cols-1 gap-3 min-[460px]:grid-cols-2">
               <Field
@@ -222,6 +285,32 @@ export function ExpenseDrawer({
                 t,
               )}
             >
+              <div className="mb-2 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {expenseCategories.map((category) => {
+                  const Icon = categoryMeta[category].icon;
+                  const isSelected = selectedCategory === category;
+                  return (
+                    <button
+                      key={category}
+                      type="button"
+                      className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm transition-colors ${
+                        isSelected
+                          ? "bg-ink text-canvas"
+                          : "bg-canvas-strong text-ink hover:bg-passport-50"
+                      }`}
+                      onClick={() =>
+                        form.setValue("category", category, {
+                          shouldValidate: true,
+                        })
+                      }
+                      aria-pressed={isSelected}
+                    >
+                      <Icon className="size-4" aria-hidden="true" />
+                      {t.categories[category]}
+                    </button>
+                  );
+                })}
+              </div>
               <Select
                 value={selectedCategory}
                 onValueChange={(value) =>
@@ -298,6 +387,10 @@ export function ExpenseDrawer({
 function getExpenseDefaults(
   trip: Trip | null,
   expense?: EditableExpense,
+  preferences: {
+    currency: CreateExpenseInput["currency"] | null;
+    category: CreateExpenseInput["category"] | null;
+  } = { currency: null, category: null },
 ): CreateExpenseInput {
   if (expense) {
     return {
@@ -312,12 +405,48 @@ function getExpenseDefaults(
 
   return {
     amountMajor: "",
-    currency: trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY,
+    currency: preferences.currency ?? trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY,
     exchangeRate: "1",
-    category: "food",
+    category: preferences.category ?? "food",
     note: "",
     expenseDate: getAppDateInputValue(),
   };
+}
+
+function buildAmountPreview({
+  amountMajor,
+  currency,
+  exchangeRate,
+  trip,
+  locale,
+}: {
+  amountMajor: string;
+  currency: CreateExpenseInput["currency"];
+  exchangeRate: string;
+  trip: Trip | null;
+  locale: string;
+}) {
+  if (!trip || !amountMajor.trim()) {
+    return null;
+  }
+
+  try {
+    const amount = parseMajorToMinor(amountMajor, currency);
+    const baseAmount = convertToBaseMinor({
+      amount,
+      currency,
+      baseCurrency: trip.baseCurrency,
+      exchangeRate,
+    });
+    const formattedAmount = formatMoney(amount, currency, locale);
+    const formattedBaseAmount = formatMoney(baseAmount, trip.baseCurrency, locale);
+
+    return currency === trip.baseCurrency
+      ? formattedAmount
+      : `${formattedAmount} ≈ ${formattedBaseAmount}`;
+  } catch {
+    return null;
+  }
 }
 
 function CurrencySelect({
