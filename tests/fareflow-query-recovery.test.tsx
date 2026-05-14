@@ -35,6 +35,19 @@ vi.mock("@/hooks/use-expenses", () => ({
     isError: false,
     error: null,
   }),
+  useUpdateExpense: () => ({
+    mutateAsync: vi.fn(),
+    reset: vi.fn(),
+    isPending: false,
+    isError: false,
+    error: null,
+  }),
+  useDeleteExpense: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+    isError: false,
+    error: null,
+  }),
 }));
 
 vi.mock("@/hooks/use-auth-session", () => ({

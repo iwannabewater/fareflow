@@ -2,6 +2,7 @@ import type { Persister } from "@tanstack/react-query-persist-client";
 import type { Expense, Trip } from "@/lib/domain/schema";
 import {
   getOfflineDb,
+  type OutboxOperation,
   type PendingExpenseRecord,
   type PendingTripRecord,
 } from "@/lib/offline/db";
@@ -15,11 +16,16 @@ export type OutboxSummary = {
   failed: number;
 };
 
-export async function enqueueTrip(trip: Trip, lastError: string | null = null) {
+export async function enqueueTrip(
+  trip: Trip,
+  lastError: string | null = null,
+  operation: OutboxOperation = "create",
+) {
   const db = getOfflineDb();
   const existing = await db.pendingTrips.get(trip.clientId);
   await db.pendingTrips.put({
     ...trip,
+    operation: normalizeOperation(existing?.operation, operation),
     syncStatus: "pending",
     retryCount: existing?.retryCount ?? 0,
     lastError,
@@ -31,11 +37,18 @@ export async function enqueueTrip(trip: Trip, lastError: string | null = null) {
 export async function enqueueExpense(
   expense: Expense,
   lastError: string | null = null,
+  operation: OutboxOperation = "create",
 ) {
   const db = getOfflineDb();
   const existing = await db.pendingExpenses.get(expense.clientId);
+  if (existing?.operation === "create" && operation === "delete") {
+    await db.pendingExpenses.delete(expense.clientId);
+    return;
+  }
+
   await db.pendingExpenses.put({
     ...expense,
+    operation: normalizeOperation(existing?.operation, operation),
     syncStatus: "pending",
     lastError,
     retryCount: existing?.retryCount ?? 0,
@@ -186,6 +199,17 @@ function resetFailedRecordForRetry<
     lastError: null,
     nextRetryAt: null,
   };
+}
+
+function normalizeOperation(
+  current: OutboxOperation | undefined,
+  next: OutboxOperation,
+): OutboxOperation {
+  if (current === "create" && next === "update") {
+    return "create";
+  }
+
+  return next;
 }
 
 export function createDexiePersister(): Persister {

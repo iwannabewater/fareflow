@@ -2,7 +2,10 @@ import Dexie, { type Table } from "dexie";
 import type { PersistedClient } from "@tanstack/react-query-persist-client";
 import type { Expense, Trip } from "@/lib/domain/schema";
 
+export type OutboxOperation = "create" | "update" | "delete";
+
 export type PendingTripRecord = Trip & {
+  operation: OutboxOperation;
   retryCount: number;
   lastError: string | null;
   nextRetryAt: string | null;
@@ -10,6 +13,7 @@ export type PendingTripRecord = Trip & {
 };
 
 export type PendingExpenseRecord = Expense & {
+  operation: OutboxOperation;
   retryCount: number;
   nextRetryAt: string | null;
   queuedAt: string;
@@ -36,6 +40,12 @@ class FareFlowOfflineDb extends Dexie {
     this.version(2).stores({
       pendingTrips: "clientId, id, syncStatus, queuedAt, nextRetryAt",
       pendingExpenses: "clientId, tripId, syncStatus, queuedAt, nextRetryAt",
+      queryCache: "key",
+    });
+    this.version(3).stores({
+      pendingTrips: "clientId, id, syncStatus, queuedAt, nextRetryAt, operation",
+      pendingExpenses:
+        "clientId, tripId, syncStatus, queuedAt, nextRetryAt, operation",
       queryCache: "key",
     });
   }

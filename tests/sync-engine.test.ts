@@ -45,6 +45,8 @@ const remote = vi.hoisted(() => {
     hasRemoteSession: vi.fn(),
     upsertRemoteTrip: vi.fn(),
     upsertRemoteExpense: vi.fn(),
+    updateRemoteExpense: vi.fn(),
+    deleteRemoteExpense: vi.fn(),
   };
 });
 
@@ -93,6 +95,8 @@ describe("syncPendingRecords", () => {
     remote.hasRemoteSession.mockReset();
     remote.upsertRemoteTrip.mockReset();
     remote.upsertRemoteExpense.mockReset();
+    remote.updateRemoteExpense.mockReset();
+    remote.deleteRemoteExpense.mockReset();
     await resetDb();
   });
 
@@ -144,7 +148,7 @@ describe("syncPendingRecords", () => {
       failed: 1,
     });
 
-    let [failedExpense] = await listPendingExpenses();
+    const [failedExpense] = await listPendingExpenses();
     expect(failedExpense.retryCount).toBe(1);
     expect(failedExpense.nextRetryAt).toBe("2026-05-14T00:00:05.000Z");
 
@@ -197,6 +201,35 @@ describe("syncPendingRecords", () => {
       synced: 1,
       failed: 0,
     });
+  });
+
+  it("syncs pending expense updates and deletes with their operation semantics", async () => {
+    const { syncPendingRecords } = await import("@/lib/sync/sync-engine");
+    await enqueueExpense({ ...baseExpense, note: "Updated" }, null, "update");
+    await enqueueExpense(
+      {
+        ...baseExpense,
+        id: "00000000-0000-4000-8000-000000000202",
+        clientId: "00000000-0000-4000-8000-000000000302",
+      },
+      null,
+      "delete",
+    );
+    remote.updateRemoteExpense.mockResolvedValue({
+      ...baseExpense,
+      note: "Updated",
+      syncStatus: "synced",
+    });
+    remote.deleteRemoteExpense.mockResolvedValue(undefined);
+
+    await expect(syncPendingRecords()).resolves.toEqual({
+      attempted: 2,
+      synced: 2,
+      failed: 0,
+    });
+    expect(remote.updateRemoteExpense).toHaveBeenCalledTimes(1);
+    expect(remote.deleteRemoteExpense).toHaveBeenCalledTimes(1);
+    expect(remote.upsertRemoteExpense).not.toHaveBeenCalled();
   });
 });
 

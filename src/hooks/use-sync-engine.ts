@@ -64,10 +64,14 @@ export function useSyncEngine({ enabled = true }: { enabled?: boolean } = {}) {
     };
 
     window.addEventListener("online", handleOnline);
-    void refreshOutboxSummary();
-    if (enabled) {
-      void runSync();
-    }
+    const initialTimer = window.setTimeout(() => {
+      if (!cancelled) {
+        void refreshOutboxSummary();
+        if (enabled) {
+          void runSync();
+        }
+      }
+    }, 0);
 
     const interval = window.setInterval(() => {
       if (!cancelled) {
@@ -81,6 +85,7 @@ export function useSyncEngine({ enabled = true }: { enabled?: boolean } = {}) {
     return () => {
       cancelled = true;
       window.removeEventListener("online", handleOnline);
+      window.clearTimeout(initialTimer);
       window.clearInterval(interval);
     };
   }, [enabled, refreshOutboxSummary, runSync]);

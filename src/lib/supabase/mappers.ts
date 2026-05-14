@@ -11,6 +11,7 @@ type TripRow = Database["public"]["Tables"]["trips"]["Row"];
 type TripInsert = Database["public"]["Tables"]["trips"]["Insert"];
 type ExpenseRow = Database["public"]["Tables"]["expenses"]["Row"];
 type ExpenseInsert = Database["public"]["Tables"]["expenses"]["Insert"];
+type ExpenseUpdate = Database["public"]["Tables"]["expenses"]["Update"];
 
 export function tripFromRow(row: TripRow): Trip {
   return {
@@ -86,6 +87,23 @@ export function expenseToInsert(expense: Expense): ExpenseInsert {
   };
 }
 
+export function expenseToUpdate(expense: Expense): ExpenseUpdate {
+  return {
+    trip_id: expense.tripId,
+    amount: expense.amount,
+    currency: expense.currency,
+    base_amount: expense.baseAmount,
+    base_currency: expense.baseCurrency,
+    exchange_rate: expense.exchangeRate,
+    exchange_rate_at: expense.exchangeRateAt,
+    exchange_rate_source: expense.exchangeRateSource,
+    category: expense.category,
+    note: expense.note,
+    receipt_url: expense.receiptUrl,
+    expense_date: expense.expenseDate,
+  };
+}
+
 function asCurrency(value: string): CurrencyCode {
   const currency = currencyCodes.find((candidate) => candidate === value);
   if (!currency) {
@@ -101,4 +119,3 @@ function asCategory(value: string): ExpenseCategory {
   }
   return category;
 }
-

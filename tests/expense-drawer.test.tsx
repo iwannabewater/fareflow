@@ -1,13 +1,21 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ExpenseDrawer } from "@/components/fareflow/expense-drawer";
-import type { Trip } from "@/lib/domain/schema";
+import type { Expense, Trip } from "@/lib/domain/schema";
 
 const mutateAsync = vi.fn();
+const updateMutateAsync = vi.fn();
 
 vi.mock("@/hooks/use-expenses", () => ({
   useCreateExpense: () => ({
     mutateAsync,
+    reset: vi.fn(),
+    isPending: false,
+    isError: false,
+    error: null,
+  }),
+  useUpdateExpense: () => ({
+    mutateAsync: updateMutateAsync,
     reset: vi.fn(),
     isPending: false,
     isError: false,
@@ -28,9 +36,31 @@ const baseTrip: Trip = {
   syncStatus: "pending",
 };
 
+const baseExpense: Expense = {
+  id: "00000000-0000-4000-8000-000000000201",
+  clientId: "00000000-0000-4000-8000-000000000301",
+  tripId: baseTrip.id,
+  userId: "local-demo-user",
+  amount: 1840,
+  currency: "JPY",
+  baseAmount: 8648,
+  baseCurrency: "CNY",
+  exchangeRate: "0.047",
+  exchangeRateAt: "2026-05-13T16:00:00.000Z",
+  exchangeRateSource: "manual",
+  category: "food",
+  note: "Tonkatsu",
+  receiptUrl: null,
+  expenseDate: "2026-05-14",
+  createdAt: "2026-05-13T16:00:00.000Z",
+  syncStatus: "synced",
+  lastError: null,
+};
+
 describe("ExpenseDrawer", () => {
   beforeEach(() => {
     mutateAsync.mockReset();
+    updateMutateAsync.mockReset();
   });
 
   it("uses currency-specific amount placeholder and helper text", () => {
@@ -70,5 +100,34 @@ describe("ExpenseDrawer", () => {
       "0.00 CNY",
     );
     expect(screen.getByText("CNY 最多支持 2 位小数。")).toBeInTheDocument();
+  });
+
+  it("opens in edit mode with the existing expense values", async () => {
+    updateMutateAsync.mockResolvedValue(baseExpense);
+
+    render(
+      <ExpenseDrawer
+        trip={baseTrip}
+        expense={baseExpense}
+        trigger={<button type="button">编辑支出</button>}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "编辑支出" }));
+
+    expect(screen.getByRole("heading", { name: "编辑支出" })).toBeInTheDocument();
+    expect(screen.getByLabelText("金额")).toHaveValue("1840");
+
+    fireEvent.change(screen.getByLabelText("金额"), {
+      target: { value: "1900" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "更新支出" }));
+
+    await waitFor(() => {
+      expect(updateMutateAsync).toHaveBeenCalledWith({
+        expense: baseExpense,
+        values: expect.objectContaining({ amountMajor: "1900" }),
+      });
+    });
   });
 });

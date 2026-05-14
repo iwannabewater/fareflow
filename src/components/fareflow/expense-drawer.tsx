@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, ReceiptText } from "lucide-react";
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -28,24 +29,46 @@ import {
   currencyCodes,
   expenseCategories,
   type CreateExpenseInput,
+  type Expense,
   type Trip,
 } from "@/lib/domain/schema";
 import {
   DEFAULT_BASE_CURRENCY,
   getAppDateInputValue,
 } from "@/lib/domain/defaults";
-import { currencyMeta } from "@/lib/domain/money";
-import { useCreateExpense } from "@/hooks/use-expenses";
+import { currencyMeta, minorToMajorText } from "@/lib/domain/money";
+import { useCreateExpense, useUpdateExpense } from "@/hooks/use-expenses";
 import { translateValidationError, useCopy } from "@/lib/i18n";
 
-export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
+type EditableExpense = Pick<
+  Expense,
+  | "amount"
+  | "currency"
+  | "exchangeRate"
+  | "category"
+  | "note"
+  | "expenseDate"
+>;
+
+export function ExpenseDrawer({
+  trip,
+  expense,
+  trigger,
+}: {
+  trip: Trip | null;
+  expense?: Expense;
+  trigger?: ReactNode;
+}) {
   const { t } = useCopy();
   const [open, setOpen] = useState(false);
-  const mutation = useCreateExpense(trip);
+  const createMutation = useCreateExpense(trip);
+  const updateMutation = useUpdateExpense(trip);
+  const mutation = expense ? updateMutation : createMutation;
   const form = useForm<CreateExpenseInput>({
     resolver: zodResolver(createExpenseInputSchema),
-    defaultValues: getExpenseDefaults(trip),
+    defaultValues: getExpenseDefaults(trip, expense),
   });
+  const isEditing = Boolean(expense);
 
   const selectedCurrency = useWatch({
     control: form.control,
@@ -66,17 +89,20 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
 
   useEffect(() => {
     if (!open) {
-      form.reset(getExpenseDefaults(trip));
+      form.reset(getExpenseDefaults(trip, expense));
     }
-  }, [form, open, trip]);
+  }, [expense, form, open, trip]);
 
   async function onSubmit(input: CreateExpenseInput) {
-    const expense = await mutation.mutateAsync(input).catch(() => null);
-    if (!expense) {
+    const savedExpense = await (isEditing && expense
+      ? updateMutation.mutateAsync({ expense, values: input })
+      : createMutation.mutateAsync(input)
+    ).catch(() => null);
+    if (!savedExpense) {
       return;
     }
 
-    form.reset(getExpenseDefaults(trip));
+    form.reset(getExpenseDefaults(trip, expense));
     setOpen(false);
   }
 
@@ -87,19 +113,21 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
         setOpen(nextOpen);
         if (nextOpen) {
           mutation.reset();
-          form.reset(getExpenseDefaults(trip));
+          form.reset(getExpenseDefaults(trip, expense));
         }
       }}
     >
       <SheetTrigger asChild>
-        <Button
-          type="button"
-          className="h-12 rounded-full bg-ink px-5 text-canvas shadow-[0_10px_28px_rgba(35,42,40,0.22)] active:scale-95"
-          disabled={!trip}
-        >
-          <Plus className="size-5" aria-hidden="true" />
-          {t.expense.trigger}
-        </Button>
+        {trigger ?? (
+          <Button
+            type="button"
+            className="h-12 rounded-full bg-ink px-5 text-canvas shadow-[0_10px_28px_rgba(35,42,40,0.22)] active:scale-95"
+            disabled={!trip}
+          >
+            <Plus className="size-5" aria-hidden="true" />
+            {t.expense.trigger}
+          </Button>
+        )}
       </SheetTrigger>
       <SheetContent
         side="bottom"
@@ -111,10 +139,10 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
               <ReceiptText className="size-5" aria-hidden="true" />
             </div>
             <SheetTitle className="text-2xl font-semibold">
-              {t.expense.newTitle}
+              {isEditing ? t.expense.editTitle : t.expense.newTitle}
             </SheetTitle>
             <SheetDescription className="text-ink-muted">
-              {t.expense.description}
+              {isEditing ? t.expense.editDescription : t.expense.description}
             </SheetDescription>
           </SheetHeader>
 
@@ -245,13 +273,19 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
               className="mt-2 h-12 rounded-full bg-ink text-canvas active:scale-95"
               disabled={mutation.isPending}
             >
-              {mutation.isPending ? t.common.saving : t.expense.save}
+              {mutation.isPending
+                ? t.common.saving
+                : isEditing
+                  ? t.expense.update
+                  : t.expense.save}
             </Button>
             {mutation.isError ? (
               <p className="text-sm text-destructive" role="alert">
                 {mutation.error instanceof Error
                   ? mutation.error.message
-                  : t.expense.saveFailed}
+                  : isEditing
+                    ? t.expense.updateFailed
+                    : t.expense.saveFailed}
               </p>
             ) : null}
           </form>
@@ -261,7 +295,21 @@ export function ExpenseDrawer({ trip }: { trip: Trip | null }) {
   );
 }
 
-function getExpenseDefaults(trip: Trip | null): CreateExpenseInput {
+function getExpenseDefaults(
+  trip: Trip | null,
+  expense?: EditableExpense,
+): CreateExpenseInput {
+  if (expense) {
+    return {
+      amountMajor: minorToMajorText(expense.amount, expense.currency),
+      currency: expense.currency,
+      exchangeRate: expense.exchangeRate,
+      category: expense.category,
+      note: expense.note ?? "",
+      expenseDate: expense.expenseDate,
+    };
+  }
+
   return {
     amountMajor: "",
     currency: trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY,

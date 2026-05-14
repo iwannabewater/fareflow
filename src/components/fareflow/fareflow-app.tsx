@@ -8,11 +8,13 @@ import {
   CircleDollarSign,
   Clock3,
   Download,
+  Pencil,
   Languages,
   MapPinned,
   Route,
   PlaneTakeoff,
   ReceiptText,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { AuthPanel } from "@/components/fareflow/auth-panel";
@@ -43,7 +45,7 @@ import {
   selectCurrentTrip,
   useTripSelectionStore,
 } from "@/lib/trips/selection";
-import { useExpenses } from "@/hooks/use-expenses";
+import { useDeleteExpense, useExpenses } from "@/hooks/use-expenses";
 import { useTrips } from "@/hooks/use-trips";
 
 export function FareFlowApp() {
@@ -188,6 +190,7 @@ export function FareFlowApp() {
                 />
               ) : (
                 <ExpenseTimeline
+                  trip={selectedTrip}
                   expenses={expenses.data ?? []}
                   isLoading={expenses.isLoading}
                   baseCurrency={baseCurrency}
@@ -695,12 +698,14 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 function ExpenseTimeline({
+  trip,
   expenses,
   isLoading,
   baseCurrency,
   copy,
   locale,
 }: {
+  trip: Trip | null;
   expenses: Expense[];
   isLoading: boolean;
   baseCurrency: Trip["baseCurrency"];
@@ -746,6 +751,7 @@ function ExpenseTimeline({
           <ExpenseRow
             key={expense.clientId}
             expense={expense}
+            trip={trip}
             baseCurrency={baseCurrency}
             copy={copy}
             locale={locale}
@@ -758,17 +764,21 @@ function ExpenseTimeline({
 
 function ExpenseRow({
   expense,
+  trip,
   baseCurrency,
   copy,
   locale,
 }: {
   expense: Expense;
+  trip: Trip | null;
   baseCurrency: Trip["baseCurrency"];
   copy: FareFlowCopy;
   locale: Locale;
 }) {
   const meta = categoryMeta[expense.category];
   const Icon = meta.icon;
+  const deleteMutation = useDeleteExpense(expense.tripId);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   return (
     <motion.article
@@ -777,7 +787,7 @@ function ExpenseRow({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-      className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3 rounded-2xl bg-canvas-strong p-3 shadow-[0_1px_3px_rgba(35,42,40,0.10)] sm:grid-cols-[2.75rem_minmax(0,1fr)_minmax(7rem,auto)] sm:items-center"
+      className="grid grid-cols-[2.75rem_minmax(0,1fr)_auto] gap-3 rounded-2xl bg-canvas-strong p-3 shadow-[0_1px_3px_rgba(35,42,40,0.10)] sm:grid-cols-[2.75rem_minmax(0,1fr)_minmax(7rem,auto)_auto] sm:items-center"
     >
       <div className={`flex size-11 items-center justify-center rounded-xl ${meta.tone}`}>
         <Icon className="size-5" aria-hidden="true" />
@@ -810,6 +820,71 @@ function ExpenseRow({
           </p>
         ) : null}
       </div>
+      <div className="col-start-3 row-span-2 flex items-center gap-1 self-start sm:row-span-1 sm:self-center">
+        {trip ? (
+          <ExpenseDrawer
+            trip={trip}
+            expense={expense}
+            trigger={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-9 rounded-full text-ink-muted hover:text-ink"
+                aria-label={copy.expense.editTrigger}
+              >
+                <Pencil className="size-4" aria-hidden="true" />
+              </Button>
+            }
+          />
+        ) : null}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-9 rounded-full text-ink-muted hover:text-destructive"
+          aria-label={copy.expense.deleteAria}
+          onClick={() => setIsConfirmingDelete(true)}
+        >
+          <Trash2 className="size-4" aria-hidden="true" />
+        </Button>
+      </div>
+      {isConfirmingDelete ? (
+        <div className="col-span-full rounded-xl bg-stamp-50 p-3 text-sm text-stamp-900">
+          <p className="font-medium">{copy.expense.deleteConfirmTitle}</p>
+          <p className="mt-1 leading-5 text-stamp-800">
+            {copy.expense.deleteConfirmDescription}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="destructive"
+              className="h-9 rounded-full px-4"
+              disabled={deleteMutation.isPending}
+              onClick={() =>
+                void deleteMutation.mutateAsync(expense).then(() => {
+                  setIsConfirmingDelete(false);
+                })
+              }
+            >
+              {copy.expense.confirmDelete}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-9 rounded-full bg-canvas px-4 text-stamp-900"
+              onClick={() => setIsConfirmingDelete(false)}
+            >
+              {copy.expense.cancelDelete}
+            </Button>
+          </div>
+          {deleteMutation.isError ? (
+            <p className="mt-2 text-xs text-destructive" role="alert">
+              {copy.expense.deleteFailed}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </motion.article>
   );
 }

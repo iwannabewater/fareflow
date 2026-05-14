@@ -155,6 +155,10 @@ export const dictionaries = {
       trigger: "Add expense",
       newTitle: "New expense",
       description: "Saved locally first; synced to Supabase when available.",
+      editTrigger: "Edit expense",
+      editTitle: "Edit expense",
+      editDescription:
+        "Updates are saved locally first and synced when cloud is available.",
       amount: "Amount",
       amountPlaceholder: (currency: CurrencyCode, example: string) =>
         `${example} ${currency}`,
@@ -169,8 +173,18 @@ export const dictionaries = {
       note: "Note",
       notePlaceholder: "Airport taxi…",
       save: "Save expense",
+      update: "Update expense",
       saveFailed: "Expense could not be saved.",
+      updateFailed: "Expense could not be updated.",
       selectTripFirst: "Select a trip before adding an expense.",
+      delete: "Delete expense",
+      deleteAria: "Delete expense",
+      deleteConfirmTitle: "Delete this expense?",
+      deleteConfirmDescription:
+        "This removes the expense from the trip and syncs the deletion when cloud is available.",
+      confirmDelete: "Delete",
+      cancelDelete: "Cancel",
+      deleteFailed: "Expense could not be deleted.",
     },
     categories: {
       food: "Food",
@@ -328,6 +342,9 @@ export const dictionaries = {
       trigger: "添加支出",
       newTitle: "新增支出",
       description: "先保存到本机；网络可用时自动同步到 Supabase。",
+      editTrigger: "编辑支出",
+      editTitle: "编辑支出",
+      editDescription: "修改会先保存到本机，云端可用时继续同步。",
       amount: "金额",
       amountPlaceholder: (currency: CurrencyCode, example: string) =>
         `${example} ${currency}`,
@@ -342,8 +359,18 @@ export const dictionaries = {
       note: "备注",
       notePlaceholder: "机场出租车…",
       save: "保存支出",
+      update: "更新支出",
       saveFailed: "支出保存失败。",
+      updateFailed: "支出更新失败。",
       selectTripFirst: "请先选择一个旅程。",
+      delete: "删除支出",
+      deleteAria: "删除支出",
+      deleteConfirmTitle: "删除这笔支出？",
+      deleteConfirmDescription:
+        "这会从当前旅程移除该支出；云端可用时会同步删除。",
+      confirmDelete: "删除",
+      cancelDelete: "取消",
+      deleteFailed: "支出删除失败。",
     },
     categories: {
       food: "餐饮",

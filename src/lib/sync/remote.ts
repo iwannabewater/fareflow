@@ -8,6 +8,7 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   expenseFromRow,
   expenseToInsert,
+  expenseToUpdate,
   tripFromRow,
   tripToInsert,
 } from "@/lib/supabase/mappers";
@@ -152,6 +153,41 @@ export async function upsertRemoteExpense(expense: Expense): Promise<Expense> {
   }
 
   return expenseFromRow(data);
+}
+
+export async function updateRemoteExpense(expense: Expense): Promise<Expense> {
+  const user = await requireRemoteUser();
+  const supabase = getSupabaseBrowserClient();
+  const payload = expenseToUpdate({ ...expense, userId: user.id });
+
+  const { data, error } = await supabase
+    .from("expenses")
+    .update(payload)
+    .eq("client_id", expense.clientId)
+    .eq("user_id", user.id)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw classifySupabaseError(error);
+  }
+
+  return expenseFromRow(data);
+}
+
+export async function deleteRemoteExpense(expense: Expense): Promise<void> {
+  const user = await requireRemoteUser();
+  const supabase = getSupabaseBrowserClient();
+
+  const { error } = await supabase
+    .from("expenses")
+    .delete()
+    .eq("client_id", expense.clientId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    throw classifySupabaseError(error);
+  }
 }
 
 async function requireRemoteUser(): Promise<User> {

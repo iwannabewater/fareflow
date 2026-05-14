@@ -54,6 +54,19 @@ vi.mock("@/hooks/use-expenses", () => ({
     isError: false,
     error: null,
   }),
+  useUpdateExpense: () => ({
+    mutateAsync: vi.fn(),
+    reset: vi.fn(),
+    isPending: false,
+    isError: false,
+    error: null,
+  }),
+  useDeleteExpense: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+    isError: false,
+    error: null,
+  }),
 }));
 
 vi.mock("@/hooks/use-auth-session", () => ({
@@ -66,7 +79,12 @@ vi.mock("@/hooks/use-auth-session", () => ({
 }));
 
 vi.mock("@/hooks/use-sync-engine", () => ({
-  useSyncEngine: () => ({ isSyncing: false, lastSummary: null }),
+  useSyncEngine: () => ({
+    isSyncing: false,
+    lastSummary: null,
+    outboxSummary: { pending: 0, failed: 0 },
+    retryNow: vi.fn(),
+  }),
 }));
 
 vi.mock("@/hooks/use-network-status", () => ({

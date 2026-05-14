@@ -18,6 +18,8 @@ import {
   RemoteNetworkUnavailableError,
   RemoteUnavailableError,
   RemoteValidationError,
+  deleteRemoteExpense,
+  updateRemoteExpense,
   upsertRemoteExpense,
   upsertRemoteTrip,
 } from "@/lib/sync/remote";
@@ -80,6 +82,62 @@ export async function saveExpense(expense: Expense): Promise<Expense> {
   }
 }
 
+export async function updateExpense(expense: Expense): Promise<Expense> {
+  if (!navigator.onLine) {
+    const error = new RemoteNetworkUnavailableError();
+    await enqueueExpense(expense, error.message, "update");
+    return { ...expense, syncStatus: "pending", lastError: error.message };
+  }
+
+  try {
+    if (!(await hasRemoteSession())) {
+      const error = new RemoteAuthRequiredError();
+      await enqueueExpense(expense, error.message, "update");
+      return {
+        ...expense,
+        syncStatus: "pending",
+        lastError: error.message,
+      };
+    }
+
+    return await updateRemoteExpense(expense);
+  } catch (error) {
+    if (shouldQueue(error)) {
+      await enqueueExpense(expense, getErrorMessage(error), "update");
+      return {
+        ...expense,
+        syncStatus: "pending",
+        lastError: getErrorMessage(error),
+      };
+    }
+    throw error;
+  }
+}
+
+export async function deleteExpense(expense: Expense): Promise<void> {
+  if (!navigator.onLine) {
+    const error = new RemoteNetworkUnavailableError();
+    await enqueueExpense(expense, error.message, "delete");
+    return;
+  }
+
+  try {
+    if (!(await hasRemoteSession())) {
+      const error = new RemoteAuthRequiredError();
+      await enqueueExpense(expense, error.message, "delete");
+      return;
+    }
+
+    await deleteRemoteExpense(expense);
+  } catch (error) {
+    if (shouldQueue(error)) {
+      await enqueueExpense(expense, getErrorMessage(error), "delete");
+      return;
+    }
+    throw error;
+  }
+}
+
 export async function syncPendingRecords(
   options: { force?: boolean; now?: Date } = {},
 ): Promise<SyncSummary> {
@@ -135,7 +193,13 @@ async function runSyncPendingRecords({
 
     attempted += 1;
     try {
-      await upsertRemoteExpense({ ...expense, syncStatus: "syncing" });
+      if (expense.operation === "delete") {
+        await deleteRemoteExpense(expense);
+      } else if (expense.operation === "update") {
+        await updateRemoteExpense({ ...expense, syncStatus: "syncing" });
+      } else {
+        await upsertRemoteExpense({ ...expense, syncStatus: "syncing" });
+      }
       await markExpenseSynced(expense.clientId);
       synced += 1;
     } catch (error) {
