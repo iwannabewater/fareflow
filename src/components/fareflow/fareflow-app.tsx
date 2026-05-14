@@ -16,7 +16,14 @@ import {
   ReceiptText,
   Trash2,
 } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { AuthPanel } from "@/components/fareflow/auth-panel";
 import { ExpenseDrawer } from "@/components/fareflow/expense-drawer";
 import {
@@ -50,6 +57,84 @@ import { useDeleteExpense, useExpenses } from "@/hooks/use-expenses";
 import { useDeleteTrip, useTrips } from "@/hooks/use-trips";
 
 export function FareFlowApp() {
+  const isClient = useSyncExternalStore(
+    subscribeToHydration,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
+
+  if (!isClient) {
+    return <FareFlowHydrationShell />;
+  }
+
+  return <FareFlowDashboard />;
+}
+
+function subscribeToHydration() {
+  return () => {};
+}
+
+function getClientSnapshot() {
+  return true;
+}
+
+function getServerSnapshot() {
+  return false;
+}
+
+function FareFlowHydrationShell() {
+  return (
+    <main
+      id="main-content"
+      aria-busy="true"
+      className="min-h-svh overflow-x-hidden bg-canvas text-ink selection:bg-passport-100 selection:text-passport-900"
+    >
+      <div className="mx-auto flex min-h-svh w-full max-w-6xl flex-col lg:grid lg:grid-cols-[22rem_1fr]">
+        <aside className="hidden border-r border-ink/8 bg-canvas-strong px-5 py-6 lg:block">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 items-center justify-center rounded-2xl bg-ink text-canvas">
+              <PlaneTakeoff className="size-5" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="font-casual text-xl font-bold">FareFlow</p>
+              <Skeleton className="mt-2 h-4 w-36" />
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4">
+            <Skeleton className="h-28 w-full rounded-lg" />
+            <Skeleton className="h-12 w-full rounded-lg" />
+          </div>
+        </aside>
+
+        <section className="flex min-h-svh flex-col">
+          <header className="sticky top-0 z-30 border-b border-ink/8 bg-canvas px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))] lg:px-8 lg:pt-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-2xl bg-ink text-canvas lg:hidden">
+                  <PlaneTakeoff className="size-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="font-casual text-xl font-bold lg:hidden">
+                    FareFlow
+                  </p>
+                  <Skeleton className="hidden h-9 w-44 lg:block" />
+                </div>
+              </div>
+              <Skeleton className="h-10 w-24 rounded-full" />
+            </div>
+          </header>
+          <div className="grid flex-1 gap-5 px-4 py-5 lg:px-8">
+            <Skeleton className="h-28 w-full rounded-lg" />
+            <Skeleton className="h-48 w-full rounded-lg" />
+            <Skeleton className="h-64 w-full rounded-lg" />
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function FareFlowDashboard() {
   const { locale, t, toggleLocale } = useCopy();
   const trips = useTrips();
   const selectedTripId = useTripSelectionStore((state) => state.selectedTripId);
@@ -64,7 +149,7 @@ export function FareFlowApp() {
   }, []);
 
   useEffect(() => {
-    if (!trips.data) {
+    if (!trips.data || !trips.isFetched) {
       return;
     }
 
@@ -72,7 +157,13 @@ export function FareFlowApp() {
     if (selectedTripId !== normalizedTripId) {
       setSelectedTripId(normalizedTripId);
     }
-  }, [selectedTrip?.id, selectedTripId, setSelectedTripId, trips.data]);
+  }, [
+    selectedTrip?.id,
+    selectedTripId,
+    setSelectedTripId,
+    trips.data,
+    trips.isFetched,
+  ]);
 
   const analytics = useMemo(
     () => buildTripAnalytics(expenses.data ?? []),

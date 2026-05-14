@@ -34,8 +34,10 @@ const trips: Trip[] = [
   },
 ];
 
+let tripsResult: { data: Trip[]; isLoading: boolean; isFetched: boolean };
+
 vi.mock("@/hooks/use-trips", () => ({
-  useTrips: () => ({ data: trips, isLoading: false }),
+  useTrips: () => tripsResult,
   useCreateTrip: () => ({
     mutateAsync: vi.fn(),
     reset: vi.fn(),
@@ -107,6 +109,7 @@ vi.mock("@/hooks/use-network-status", () => ({
 describe("trip selection persistence", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    tripsResult = { data: trips, isLoading: false, isFetched: true };
     useTripSelectionStore.setState({ selectedTripId: null });
   });
 
@@ -117,7 +120,9 @@ describe("trip selection persistence", () => {
   it("keeps the selected trip across remounts", async () => {
     const firstRender = render(<FareFlowApp />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Bangkok weekend/ }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Bangkok weekend/ }),
+    );
 
     await waitFor(() => {
       expect(useTripSelectionStore.getState().selectedTripId).toBe(trips[1].id);
@@ -144,5 +149,27 @@ describe("trip selection persistence", () => {
     expect(
       screen.getByRole("button", { name: /Tokyo spring loop/ }),
     ).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("does not overwrite a persisted trip before trips finish fetching", async () => {
+    useTripSelectionStore.setState({ selectedTripId: trips[1].id });
+    tripsResult = {
+      data: [trips[0]],
+      isLoading: false,
+      isFetched: false,
+    };
+
+    const view = render(<FareFlowApp />);
+
+    await waitFor(() => {
+      expect(useTripSelectionStore.getState().selectedTripId).toBe(trips[1].id);
+    });
+
+    tripsResult = { data: trips, isLoading: false, isFetched: true };
+    view.rerender(<FareFlowApp />);
+
+    await waitFor(() => {
+      expect(useTripSelectionStore.getState().selectedTripId).toBe(trips[1].id);
+    });
   });
 });

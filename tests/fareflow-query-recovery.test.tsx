@@ -92,10 +92,10 @@ describe("FareFlowApp query recovery", () => {
     refetchTrips.mockReset();
   });
 
-  it("shows a recoverable query error with retry", () => {
+  it("shows a recoverable query error with retry", async () => {
     render(<FareFlowApp />);
 
-    expect(screen.getByText("无法载入最新记录")).toBeInTheDocument();
+    expect(await screen.findByText("无法载入最新记录")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "重试" }));
 
     expect(refetchTrips).toHaveBeenCalledTimes(1);
