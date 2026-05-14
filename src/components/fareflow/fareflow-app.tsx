@@ -60,6 +60,10 @@ export function FareFlowApp() {
   const expenses = useExpenses(selectedTrip?.id ?? null);
 
   useEffect(() => {
+    void useTripSelectionStore.persist.rehydrate();
+  }, []);
+
+  useEffect(() => {
     if (!trips.data) {
       return;
     }

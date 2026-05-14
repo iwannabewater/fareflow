@@ -1,7 +1,7 @@
 "use client";
 
 import { CloudOff, RotateCcw, TriangleAlert } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { FareFlowCopy } from "@/lib/i18n";
 
@@ -43,7 +43,15 @@ export function InlineRecoveryPanel({
 }
 
 export function StorageHealthBanner({ copy }: { copy: FareFlowCopy }) {
-  const [isUnavailable] = useState(() => typeof indexedDB === "undefined");
+  const [isUnavailable, setIsUnavailable] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setIsUnavailable(typeof indexedDB === "undefined");
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   if (!isUnavailable) {
     return null;

@@ -18,6 +18,7 @@ export const useTripSelectionStore = create<TripSelectionState>()(
     {
       name: "fareflow-current-trip",
       storage: createJSONStorage(() => localStorage),
+      skipHydration: true,
     },
   ),
 );
