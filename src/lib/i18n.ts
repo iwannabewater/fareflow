@@ -73,6 +73,10 @@ export const dictionaries = {
       online: "Online",
       syncing: "Syncing",
       synced: (count: number) => `${count} synced`,
+      pendingCount: (count: number) => `${count} pending`,
+      failedCount: (count: number) => `${count} failed`,
+      retryFailed: "Retry failed sync",
+      retryFailedAria: "Retry failed sync records",
       status: {
         pending: "pending",
         syncing: "syncing",
@@ -224,6 +228,10 @@ export const dictionaries = {
       online: "在线",
       syncing: "同步中",
       synced: (count: number) => `已同步 ${count} 项`,
+      pendingCount: (count: number) => `${count} 项待同步`,
+      failedCount: (count: number) => `${count} 项失败`,
+      retryFailed: "重试失败同步",
+      retryFailedAria: "重试同步失败记录",
       status: {
         pending: "待同步",
         syncing: "同步中",

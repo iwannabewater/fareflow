@@ -5,11 +5,13 @@ import type { Expense, Trip } from "@/lib/domain/schema";
 export type PendingTripRecord = Trip & {
   retryCount: number;
   lastError: string | null;
+  nextRetryAt: string | null;
   queuedAt: string;
 };
 
 export type PendingExpenseRecord = Expense & {
   retryCount: number;
+  nextRetryAt: string | null;
   queuedAt: string;
 };
 
@@ -31,6 +33,11 @@ class FareFlowOfflineDb extends Dexie {
       pendingExpenses: "clientId, tripId, syncStatus, queuedAt",
       queryCache: "key",
     });
+    this.version(2).stores({
+      pendingTrips: "clientId, id, syncStatus, queuedAt, nextRetryAt",
+      pendingExpenses: "clientId, tripId, syncStatus, queuedAt, nextRetryAt",
+      queryCache: "key",
+    });
   }
 }
 
@@ -48,4 +55,3 @@ export function getOfflineDb(): FareFlowOfflineDb {
 export function resetOfflineDbForTests() {
   db = null;
 }
-

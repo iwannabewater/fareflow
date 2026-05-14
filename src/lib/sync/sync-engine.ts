@@ -4,6 +4,7 @@ import type { Expense, SyncSummary, Trip } from "@/lib/domain/schema";
 import {
   enqueueExpense,
   enqueueTrip,
+  isRecordReadyForRetry,
   listPendingExpenses,
   listPendingTrips,
   markExpenseFailed,
@@ -14,24 +15,29 @@ import {
 import {
   hasRemoteSession,
   RemoteAuthRequiredError,
+  RemoteNetworkUnavailableError,
   RemoteUnavailableError,
+  RemoteValidationError,
   upsertRemoteExpense,
   upsertRemoteTrip,
 } from "@/lib/sync/remote";
 
+let activeSync: Promise<SyncSummary> | null = null;
+
 export async function saveTrip(trip: Trip): Promise<Trip> {
   if (!navigator.onLine) {
-    await enqueueTrip(trip, "Waiting for network");
-    return { ...trip, syncStatus: "pending" };
-  }
-
-  if (!(await hasRemoteSession())) {
-    const error = new RemoteAuthRequiredError();
+    const error = new RemoteNetworkUnavailableError();
     await enqueueTrip(trip, error.message);
     return { ...trip, syncStatus: "pending" };
   }
 
   try {
+    if (!(await hasRemoteSession())) {
+      const error = new RemoteAuthRequiredError();
+      await enqueueTrip(trip, error.message);
+      return { ...trip, syncStatus: "pending" };
+    }
+
     return await upsertRemoteTrip(trip);
   } catch (error) {
     if (shouldQueue(error)) {
@@ -44,21 +50,22 @@ export async function saveTrip(trip: Trip): Promise<Trip> {
 
 export async function saveExpense(expense: Expense): Promise<Expense> {
   if (!navigator.onLine) {
-    await enqueueExpense(expense, "Waiting for network");
+    const error = new RemoteNetworkUnavailableError();
+    await enqueueExpense(expense, error.message);
     return { ...expense, syncStatus: "pending", lastError: null };
   }
 
-  if (!(await hasRemoteSession())) {
-    const error = new RemoteAuthRequiredError();
-    await enqueueExpense(expense, error.message);
-    return {
-      ...expense,
-      syncStatus: "pending",
-      lastError: error.message,
-    };
-  }
-
   try {
+    if (!(await hasRemoteSession())) {
+      const error = new RemoteAuthRequiredError();
+      await enqueueExpense(expense, error.message);
+      return {
+        ...expense,
+        syncStatus: "pending",
+        lastError: error.message,
+      };
+    }
+
     return await upsertRemoteExpense(expense);
   } catch (error) {
     if (shouldQueue(error)) {
@@ -73,7 +80,24 @@ export async function saveExpense(expense: Expense): Promise<Expense> {
   }
 }
 
-export async function syncPendingRecords(): Promise<SyncSummary> {
+export async function syncPendingRecords(
+  options: { force?: boolean; now?: Date } = {},
+): Promise<SyncSummary> {
+  if (activeSync) {
+    return activeSync;
+  }
+
+  activeSync = runSyncPendingRecords(options).finally(() => {
+    activeSync = null;
+  });
+
+  return activeSync;
+}
+
+async function runSyncPendingRecords({
+  force = false,
+  now = new Date(),
+}: { force?: boolean; now?: Date }): Promise<SyncSummary> {
   if (!navigator.onLine) {
     return { attempted: 0, synced: 0, failed: 0 };
   }
@@ -83,13 +107,20 @@ export async function syncPendingRecords(): Promise<SyncSummary> {
   let failed = 0;
 
   for (const trip of await listPendingTrips()) {
+    if (!isRecordReadyForRetry(trip, now, force)) {
+      continue;
+    }
+
     attempted += 1;
     try {
       await upsertRemoteTrip({ ...trip, syncStatus: "syncing" });
       await markTripSynced(trip.clientId);
       synced += 1;
     } catch (error) {
-      await markTripFailed(trip.clientId, getErrorMessage(error));
+      await markTripFailed(trip.clientId, getErrorMessage(error), {
+        now,
+        retryable: isRetryableSyncError(error),
+      });
       failed += 1;
       if (error instanceof RemoteAuthRequiredError) {
         return { attempted, synced, failed };
@@ -98,13 +129,20 @@ export async function syncPendingRecords(): Promise<SyncSummary> {
   }
 
   for (const expense of await listPendingExpenses()) {
+    if (!isRecordReadyForRetry(expense, now, force)) {
+      continue;
+    }
+
     attempted += 1;
     try {
       await upsertRemoteExpense({ ...expense, syncStatus: "syncing" });
       await markExpenseSynced(expense.clientId);
       synced += 1;
     } catch (error) {
-      await markExpenseFailed(expense.clientId, getErrorMessage(error));
+      await markExpenseFailed(expense.clientId, getErrorMessage(error), {
+        now,
+        retryable: isRetryableSyncError(error),
+      });
       failed += 1;
       if (error instanceof RemoteAuthRequiredError) {
         return { attempted, synced, failed };
@@ -118,8 +156,13 @@ export async function syncPendingRecords(): Promise<SyncSummary> {
 function shouldQueue(error: unknown): boolean {
   return (
     error instanceof RemoteUnavailableError ||
-    error instanceof RemoteAuthRequiredError
+    error instanceof RemoteAuthRequiredError ||
+    error instanceof RemoteNetworkUnavailableError
   );
+}
+
+function isRetryableSyncError(error: unknown): boolean {
+  return !(error instanceof RemoteValidationError);
 }
 
 function getErrorMessage(error: unknown): string {

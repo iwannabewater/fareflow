@@ -26,6 +26,20 @@ export class RemoteUnavailableError extends Error {
   }
 }
 
+export class RemoteNetworkUnavailableError extends Error {
+  constructor(message = "Network is unavailable.") {
+    super(message);
+    this.name = "RemoteNetworkUnavailableError";
+  }
+}
+
+export class RemoteValidationError extends Error {
+  constructor(message = "Remote rejected the record.") {
+    super(message);
+    this.name = "RemoteValidationError";
+  }
+}
+
 export async function getRemoteUser(): Promise<User | null> {
   if (!isSupabaseConfigured()) {
     return null;
@@ -50,7 +64,7 @@ export async function hasRemoteSession(): Promise<boolean> {
   const { data, error } = await supabase.auth.getSession();
 
   if (error) {
-    return false;
+    throw new RemoteUnavailableError(error.message);
   }
 
   return Boolean(data.session);
@@ -73,7 +87,7 @@ export async function fetchTrips(): Promise<Trip[]> {
     .order("start_date", { ascending: false });
 
   if (error) {
-    throw new RemoteUnavailableError(error.message);
+    throw classifySupabaseError(error);
   }
 
   return data.map(tripFromRow);
@@ -98,7 +112,7 @@ export async function fetchExpenses(tripId: string): Promise<Expense[]> {
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new RemoteUnavailableError(error.message);
+    throw classifySupabaseError(error);
   }
 
   return data.map(expenseFromRow);
@@ -116,7 +130,7 @@ export async function upsertRemoteTrip(trip: Trip): Promise<Trip> {
     .single();
 
   if (error) {
-    throw new RemoteUnavailableError(error.message);
+    throw classifySupabaseError(error);
   }
 
   return tripFromRow(data);
@@ -134,7 +148,7 @@ export async function upsertRemoteExpense(expense: Expense): Promise<Expense> {
     .single();
 
   if (error) {
-    throw new RemoteUnavailableError(error.message);
+    throw classifySupabaseError(error);
   }
 
   return expenseFromRow(data);
@@ -153,4 +167,18 @@ async function requireRemoteUser(): Promise<User> {
   }
 
   return user;
+}
+
+function classifySupabaseError(error: { code?: string; message: string }) {
+  const code = error.code ?? "";
+  if (
+    code === "42501" ||
+    code === "PGRST116" ||
+    code.startsWith("22") ||
+    code.startsWith("23")
+  ) {
+    return new RemoteValidationError(error.message);
+  }
+
+  return new RemoteUnavailableError(error.message);
 }
