@@ -35,18 +35,33 @@ import { categoryMeta } from "@/lib/domain/categories";
 import { formatMoney } from "@/lib/domain/money";
 import type { Expense, Trip } from "@/lib/domain/schema";
 import { type FareFlowCopy, type Locale, useCopy } from "@/lib/i18n";
+import {
+  selectCurrentTrip,
+  useTripSelectionStore,
+} from "@/lib/trips/selection";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useTrips } from "@/hooks/use-trips";
 
 export function FareFlowApp() {
   const { locale, t, toggleLocale } = useCopy();
   const trips = useTrips();
-  const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
-  const selectedTrip =
-    trips.data?.find((trip) => trip.id === (selectedTripId ?? trips.data?.[0]?.id)) ??
-    trips.data?.[0] ??
-    null;
+  const selectedTripId = useTripSelectionStore((state) => state.selectedTripId);
+  const setSelectedTripId = useTripSelectionStore(
+    (state) => state.setSelectedTripId,
+  );
+  const selectedTrip = selectCurrentTrip(trips.data ?? [], selectedTripId);
   const expenses = useExpenses(selectedTrip?.id ?? null);
+
+  useEffect(() => {
+    if (!trips.data) {
+      return;
+    }
+
+    const normalizedTripId = selectedTrip?.id ?? null;
+    if (selectedTripId !== normalizedTripId) {
+      setSelectedTripId(normalizedTripId);
+    }
+  }, [selectedTrip?.id, selectedTripId, setSelectedTripId, trips.data]);
 
   const analytics = useMemo(
     () => buildTripAnalytics(expenses.data ?? []),
