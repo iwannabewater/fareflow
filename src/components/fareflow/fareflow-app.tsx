@@ -51,6 +51,7 @@ import type { Expense, Trip } from "@/lib/domain/schema";
 import { type FareFlowCopy, type Locale, useCopy } from "@/lib/i18n";
 import {
   selectCurrentTrip,
+  useTripSelectionHydrated,
   useTripSelectionStore,
 } from "@/lib/trips/selection";
 import { useDeleteExpense, useExpenses } from "@/hooks/use-expenses";
@@ -138,6 +139,7 @@ function FareFlowDashboard() {
   const { locale, t, toggleLocale } = useCopy();
   const trips = useTrips();
   const selectedTripId = useTripSelectionStore((state) => state.selectedTripId);
+  const isTripSelectionHydrated = useTripSelectionHydrated();
   const setSelectedTripId = useTripSelectionStore(
     (state) => state.setSelectedTripId,
   );
@@ -149,7 +151,7 @@ function FareFlowDashboard() {
   }, []);
 
   useEffect(() => {
-    if (!trips.data || !trips.isFetched) {
+    if (!trips.data || !trips.isFetched || !isTripSelectionHydrated) {
       return;
     }
 
@@ -163,6 +165,7 @@ function FareFlowDashboard() {
     setSelectedTripId,
     trips.data,
     trips.isFetched,
+    isTripSelectionHydrated,
   ]);
 
   const analytics = useMemo(

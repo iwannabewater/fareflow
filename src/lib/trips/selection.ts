@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { Trip } from "@/lib/domain/schema";
@@ -22,6 +23,14 @@ export const useTripSelectionStore = create<TripSelectionState>()(
     },
   ),
 );
+
+export function useTripSelectionHydrated() {
+  return useSyncExternalStore(
+    (callback) => useTripSelectionStore.persist.onFinishHydration(callback),
+    () => useTripSelectionStore.persist.hasHydrated(),
+    () => false,
+  );
+}
 
 export function selectCurrentTrip(
   trips: Trip[],
