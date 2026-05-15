@@ -12,6 +12,7 @@ FareFlow uses a warm atlas ledger direction: paper canvas, dark ink totals, pass
 - Passport blue `oklch(0.34 0.105 224)`: navigation and travel cues.
 - Mint `oklch(0.31 0.075 158)`: healthy sync/ready states.
 - Tomato `oklch(0.36 0.09 38)`: food and warm category accents.
+- Lodging green `oklch(0.31 0.07 145)`: lodging category icons and chart marks.
 - Berry `oklch(0.38 0.1 344)`: health category accent.
 - Stamp `oklch(0.31 0.064 82)`: offline and pending states.
 

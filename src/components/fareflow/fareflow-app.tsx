@@ -942,9 +942,14 @@ function CategoryDonutChart({
   reduceMotion: boolean | null;
 }) {
   const titleId = useId();
+  const [activeCategory, setActiveCategory] = useState<
+    CategoryInsightSlice["category"] | null
+  >(slices[0]?.category ?? null);
+  const activeSlice =
+    slices.find((slice) => slice.category === activeCategory) ?? slices[0];
   const donutSegments = slices.map((slice, index) => ({
     slice,
-    dash: Math.max(0.8, slice.ratio * 100 - 1.2),
+    dash: Math.max(0.7, slice.ratio * 100 - 1.1),
     segmentOffset:
       25 -
       slices
@@ -954,7 +959,7 @@ function CategoryDonutChart({
 
   return (
     <div className="mt-3 grid max-w-full gap-4 overflow-hidden rounded-[1.15rem] bg-canvas/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]">
-      <div className="relative mx-auto size-40">
+      <div className="relative mx-auto size-44">
         <svg
           role="img"
           aria-labelledby={titleId}
@@ -970,32 +975,55 @@ function CategoryDonutChart({
             className="stroke-ink/8"
             strokeWidth="5.8"
           />
-          {donutSegments.map(({ slice, dash, segmentOffset }) => (
-            <motion.circle
-              key={slice.category}
-              cx="22"
-              cy="22"
-              r="15.9154943092"
-              fill="none"
-              stroke={slice.chartColor}
-              strokeWidth="5.8"
-              strokeLinecap="round"
-              strokeDasharray={`${dash} ${100 - dash}`}
-              strokeDashoffset={segmentOffset}
-              initial={reduceMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{
-                duration: reduceMotion ? 0 : 0.24,
-                ease: [0.16, 1, 0.3, 1],
-              }}
-            />
-          ))}
+          {donutSegments.map(({ slice, dash, segmentOffset }) => {
+            const isActive = activeSlice?.category === slice.category;
+
+            return (
+              <g
+                key={slice.category}
+                aria-hidden="true"
+                className="cursor-pointer"
+                onMouseEnter={() => setActiveCategory(slice.category)}
+                onPointerDown={() => setActiveCategory(slice.category)}
+              >
+                <motion.circle
+                  cx="22"
+                  cy="22"
+                  r="15.9154943092"
+                  fill="none"
+                  stroke={slice.chartColor}
+                  strokeWidth={isActive ? 6.7 : 5.8}
+                  strokeLinecap="round"
+                  strokeDasharray={`${dash} ${100 - dash}`}
+                  strokeDashoffset={segmentOffset}
+                  className="transition-[opacity,stroke-width] duration-200"
+                  initial={reduceMotion ? false : { opacity: 0 }}
+                  animate={{
+                    opacity: isActive ? 1 : 0.78,
+                  }}
+                  transition={{
+                    duration: reduceMotion ? 0 : 0.24,
+                    ease: [0.16, 1, 0.3, 1],
+                  }}
+                />
+              </g>
+            );
+          })}
         </svg>
         <div className="absolute inset-0 grid place-items-center text-center">
-          <div>
-            <p className="text-2xl font-semibold tabular-nums text-ink">100%</p>
-            <p className="mt-0.5 text-xs text-ink-muted">
-              {copy.home.categoryBreakdown}
+          <div
+            role="status"
+            aria-live="polite"
+            className="grid max-w-24 justify-items-center"
+          >
+            <p className="text-2xl font-semibold tabular-nums text-ink">
+              {activeSlice?.percent ?? "0%"}
+            </p>
+            <p className="mt-0.5 max-w-full truncate text-xs font-medium text-ink">
+              {activeSlice?.label ?? copy.home.categoryBreakdown}
+            </p>
+            <p className="mt-0.5 max-w-full truncate text-[0.68rem] text-ink-muted tabular-nums">
+              {activeSlice?.value ?? ""}
             </p>
           </div>
         </div>
@@ -1003,11 +1031,21 @@ function CategoryDonutChart({
       <div className="grid min-w-0 gap-1.5">
         {slices.map((slice) => {
           const Icon = slice.icon;
+          const isActive = activeSlice?.category === slice.category;
 
           return (
-            <div
+            <button
+              type="button"
               key={slice.category}
-              className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2 rounded-xl px-2 py-2 text-sm transition-colors [@media(hover:hover)]:hover:bg-canvas"
+              className={`grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-xl px-2 py-2 text-left text-sm transition-[background-color,box-shadow,transform] duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 [@media(hover:hover)]:hover:-translate-y-0.5 ${
+                isActive
+                  ? "bg-canvas shadow-[0_1px_3px_rgba(35,42,40,0.10)]"
+                  : "hover:bg-canvas"
+              }`}
+              aria-pressed={isActive}
+              onClick={() => setActiveCategory(slice.category)}
+              onFocus={() => setActiveCategory(slice.category)}
+              onMouseEnter={() => setActiveCategory(slice.category)}
             >
               <span
                 className={`flex size-8 items-center justify-center rounded-lg ${slice.tone}`}
@@ -1020,7 +1058,14 @@ function CategoryDonutChart({
                   {slice.percent} · {slice.value}
                 </span>
               </span>
-            </div>
+              <span
+                className="h-8 w-1 rounded-full"
+                style={{
+                  backgroundColor: isActive ? slice.chartColor : "transparent",
+                }}
+                aria-hidden="true"
+              />
+            </button>
           );
         })}
       </div>
@@ -1042,6 +1087,7 @@ function DailyTrendChart({
   reduceMotion: boolean | null;
 }) {
   const titleId = useId();
+  const [activeDate, setActiveDate] = useState<string | null>(null);
 
   if (items.length === 0) {
     return (
@@ -1067,7 +1113,12 @@ function DailyTrendChart({
     const y = getY(item.total);
     return { ...item, x, y };
   });
-  const linePoints = points.map((point) => `${point.x},${point.y}`).join(" ");
+  const linePath =
+    points.length > 0
+      ? `M ${points
+          .map((point) => `${point.x} ${point.y}`)
+          .join(" L ")}`
+      : "";
   const areaPath =
     points.length > 0
       ? `M ${points[0].x} ${baseline} L ${points
@@ -1077,6 +1128,7 @@ function DailyTrendChart({
   const peak = points.reduce((currentPeak, point) =>
     point.total > currentPeak.total ? point : currentPeak,
   );
+  const activePoint = points.find((point) => point.date === activeDate) ?? peak;
 
   return (
     <div className="mt-3 rounded-[1.15rem] bg-canvas/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]">
@@ -1123,34 +1175,58 @@ function DailyTrendChart({
                 );
               })}
               <path d={areaPath} className="fill-passport-900/8" />
-              <motion.polyline
-                points={linePoints}
+              <motion.path
+                d={linePath}
                 className="fill-none stroke-passport-900"
                 strokeWidth="3.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 vectorEffect="non-scaling-stroke"
-                initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 1 }}
+                initial={reduceMotion ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
                 transition={{
-                  duration: reduceMotion ? 0 : 0.55,
+                  duration: reduceMotion ? 0 : 0.18,
                   ease: [0.16, 1, 0.3, 1],
                 }}
               />
             </svg>
-            {points.map((point) => (
-              <span
-                key={point.date}
-                className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-passport-900 bg-canvas shadow-[0_0_0_2px_var(--canvas)]"
+            {activePoint ? (
+              <div
+                className="pointer-events-none absolute z-10 -translate-x-1/2 rounded-full bg-ink px-2.5 py-1 text-[0.65rem] text-canvas shadow-[0_8px_20px_rgba(35,42,40,0.18)] tabular-nums"
                 style={{
-                  left: `${point.x}%`,
+                  left: `${(activePoint.x / width) * 100}%`,
+                  top: `max(0.25rem, calc(${(activePoint.y / height) * 100}% - 2rem))`,
+                }}
+              >
+                {formatMoney(activePoint.total, baseCurrency, copy.localeCode)}
+              </div>
+            ) : null}
+            {points.map((point) => (
+              <button
+                type="button"
+                key={point.date}
+                className={`absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-passport-900 bg-canvas shadow-[0_0_0_2px_var(--canvas)] transition-[box-shadow,transform] duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 [@media(hover:hover)]:hover:scale-125 ${
+                  activePoint?.date === point.date
+                    ? "scale-125 shadow-[0_0_0_3px_var(--canvas),0_8px_18px_rgba(12,79,112,0.20)]"
+                    : ""
+                }`}
+                style={{
+                  left: `${(point.x / width) * 100}%`,
                   top: `${(point.y / height) * 100}%`,
                 }}
+                aria-label={`${formatDateLabel(point.date, locale)} · ${formatMoney(
+                  point.total,
+                  baseCurrency,
+                  copy.localeCode,
+                )}`}
                 title={`${formatDateLabel(point.date, locale)} · ${formatMoney(
                   point.total,
                   baseCurrency,
                   copy.localeCode,
                 )}`}
+                onFocus={() => setActiveDate(point.date)}
+                onMouseEnter={() => setActiveDate(point.date)}
+                onClick={() => setActiveDate(point.date)}
               />
             ))}
           </div>

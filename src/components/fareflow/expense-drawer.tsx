@@ -190,8 +190,8 @@ export function ExpenseDrawer({
         side="bottom"
         className="max-h-[94svh] w-full overflow-x-hidden overflow-y-auto overscroll-contain rounded-t-3xl border-0 bg-canvas p-0 text-ink shadow-[0_-12px_36px_rgba(35,42,40,0.18)] touch-pan-y"
       >
-        <div className="mx-auto flex w-full max-w-[min(40rem,100vw)] min-w-0 flex-col overflow-x-hidden px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 min-[390px]:px-5">
-          <SheetHeader className="px-0 py-0 text-left">
+        <div className="mx-auto flex w-full max-w-[min(36rem,100vw)] min-w-0 flex-col overflow-x-hidden px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 min-[390px]:px-5">
+          <SheetHeader className="px-0 py-0 pr-12 text-left">
             <div className="flex size-11 items-center justify-center rounded-2xl bg-passport-100 text-passport-900">
               <ReceiptText className="size-5" aria-hidden="true" />
             </div>
@@ -215,27 +215,17 @@ export function ExpenseDrawer({
                 t,
               )}
             >
-              <div className="grid min-w-0 grid-cols-1 gap-2 min-[380px]:grid-cols-[minmax(0,1fr)_8.75rem]">
-                <Input
-                  inputMode={amountExponent === 0 ? "numeric" : "decimal"}
-                  aria-label={t.expense.amount}
-                  autoComplete="off"
-                  placeholder={t.expense.amountPlaceholder(
-                    selectedCurrency,
-                    amountExample,
-                  )}
-                  className="h-12 w-full min-w-0 rounded-xl bg-white text-[1.2rem] font-semibold tabular-nums min-[430px]:text-[1.35rem]"
-                  {...form.register("amountMajor")}
-                />
-                <CurrencySelect
-                  value={selectedCurrency}
-                  onValueChange={(value) =>
-                    form.setValue("currency", value, { shouldValidate: true })
-                  }
-                  label={t.expense.currency}
-                  currencyNames={t.currencies}
-                />
-              </div>
+              <Input
+                inputMode={amountExponent === 0 ? "numeric" : "decimal"}
+                aria-label={t.expense.amount}
+                autoComplete="off"
+                placeholder={t.expense.amountPlaceholder(
+                  selectedCurrency,
+                  amountExample,
+                )}
+                className="h-14 w-full min-w-0 rounded-2xl bg-white px-4 text-[1.55rem] font-semibold tabular-nums shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
+                {...form.register("amountMajor")}
+              />
             </Field>
             {amountPreview ? (
               <div className="rounded-xl bg-passport-50 px-3 py-2 text-sm text-passport-900">
@@ -244,7 +234,23 @@ export function ExpenseDrawer({
               </div>
             ) : null}
 
-            <div className="grid min-w-0 grid-cols-1 gap-3 min-[460px]:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-3 min-[390px]:grid-cols-2">
+              <Field
+                label={t.expense.currency}
+                error={translateValidationError(
+                  form.formState.errors.currency?.message,
+                  t,
+                )}
+              >
+                <CurrencySelect
+                  value={selectedCurrency}
+                  onValueChange={(value) =>
+                    form.setValue("currency", value, { shouldValidate: true })
+                  }
+                  label={t.expense.currency}
+                  currencyNames={t.currencies}
+                />
+              </Field>
               <Field
                 label={t.expense.date}
                 error={translateValidationError(
@@ -256,27 +262,28 @@ export function ExpenseDrawer({
                   type="date"
                   aria-label={t.expense.date}
                   autoComplete="off"
-                  className="h-12 w-full min-w-0 rounded-xl bg-white"
+                  className="h-12 w-full min-w-0 rounded-2xl bg-white"
                   {...form.register("expenseDate")}
                 />
               </Field>
-              <Field
-                label={t.expense.rate}
-                error={translateValidationError(
-                  form.formState.errors.exchangeRate?.message,
-                  t,
-                )}
-              >
-                <Input
-                  inputMode="decimal"
-                  aria-label={t.expense.rate}
-                  autoComplete="off"
-                  className="h-12 w-full min-w-0 rounded-xl bg-white tabular-nums"
-                  disabled={selectedCurrency === trip?.baseCurrency}
-                  {...form.register("exchangeRate")}
-                />
-              </Field>
             </div>
+
+            <Field
+              label={t.expense.rate}
+              error={translateValidationError(
+                form.formState.errors.exchangeRate?.message,
+                t,
+              )}
+            >
+              <Input
+                inputMode="decimal"
+                aria-label={t.expense.rate}
+                autoComplete="off"
+                className="h-12 w-full min-w-0 rounded-2xl bg-white tabular-nums disabled:bg-canvas-strong/80"
+                disabled={selectedCurrency === trip?.baseCurrency}
+                {...form.register("exchangeRate")}
+              />
+            </Field>
 
             <Field
               label={t.expense.category}
@@ -285,7 +292,7 @@ export function ExpenseDrawer({
                 t,
               )}
             >
-              <div className="mb-2 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {expenseCategories.map((category) => {
                   const Icon = categoryMeta[category].icon;
                   const isSelected = selectedCategory === category;
@@ -293,9 +300,9 @@ export function ExpenseDrawer({
                     <button
                       key={category}
                       type="button"
-                      className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 ${
+                      className={`flex h-11 shrink-0 items-center gap-2 rounded-full px-3.5 text-sm transition-[background-color,box-shadow,transform] duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.97] ${
                         isSelected
-                          ? "bg-ink text-canvas"
+                          ? "bg-ink text-canvas shadow-[0_8px_18px_rgba(35,42,40,0.16)]"
                           : "bg-canvas-strong text-ink hover:bg-passport-50"
                       }`}
                       onClick={() =>
@@ -311,34 +318,6 @@ export function ExpenseDrawer({
                   );
                 })}
               </div>
-              <Select
-                value={selectedCategory}
-                onValueChange={(value) =>
-                  form.setValue("category", value as CreateExpenseInput["category"], {
-                    shouldValidate: true,
-                  })
-                }
-              >
-                <SelectTrigger
-                  aria-label={t.expense.category}
-                  className="h-12 w-full min-w-0 rounded-xl bg-white"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {expenseCategories.map((category) => {
-                    const Icon = categoryMeta[category].icon;
-                    return (
-                      <SelectItem key={category} value={category}>
-                        <span className="flex items-center gap-2">
-                          <Icon className="size-4" aria-hidden="true" />
-                          {t.categories[category]}
-                        </span>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
             </Field>
 
             <Field
@@ -349,7 +328,7 @@ export function ExpenseDrawer({
               )}
             >
               <Textarea
-                className="min-h-24 w-full min-w-0 resize-none rounded-xl bg-white"
+                className="min-h-24 w-full min-w-0 resize-none rounded-2xl bg-white"
                 aria-label={t.expense.note}
                 autoComplete="off"
                 placeholder={t.expense.notePlaceholder}
@@ -464,7 +443,7 @@ function CurrencySelect({
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger
         aria-label={label}
-        className="h-12 w-full min-w-0 rounded-xl bg-white"
+        className="h-12 w-full min-w-0 rounded-2xl bg-white"
       >
         <SelectValue />
       </SelectTrigger>
@@ -491,7 +470,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="grid min-w-0 gap-1.5 text-sm font-medium text-ink">
+    <div className="grid min-w-0 gap-1.5 text-sm font-medium text-ink">
       <span className="flex min-w-0 items-center justify-between gap-2">
         {label}
         {error ? (
@@ -506,6 +485,6 @@ function Field({
           {helper}
         </span>
       ) : null}
-    </label>
+    </div>
   );
 }

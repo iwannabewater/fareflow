@@ -23,6 +23,8 @@
   --color-mint-900: var(--mint-900);
   --color-tomato-100: var(--tomato-100);
   --color-tomato-900: var(--tomato-900);
+  --color-lodging-100: var(--lodging-100);
+  --color-lodging-900: var(--lodging-900);
   --color-rail-100: var(--rail-100);
   --color-rail-900: var(--rail-900);
   --color-berry-100: var(--berry-100);
@@ -86,6 +88,8 @@
   --mint-900: oklch(0.31 0.075 158);
   --tomato-100: oklch(0.91 0.07 38);
   --tomato-900: oklch(0.36 0.09 38);
+  --lodging-100: oklch(0.9 0.04 134);
+  --lodging-900: oklch(0.31 0.07 145);
   --rail-100: oklch(0.91 0.04 252);
   --rail-900: oklch(0.35 0.08 252);
   --berry-100: oklch(0.91 0.06 344);

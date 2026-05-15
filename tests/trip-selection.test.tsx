@@ -198,10 +198,18 @@ describe("trip selection persistence", () => {
     expect(
       screen.getByRole("img", { name: "分类占比圆环图" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("住宿");
+    expect(screen.getByRole("status")).toHaveTextContent("59%");
+    fireEvent.mouseEnter(screen.getByRole("button", { name: /餐饮.*38%/ }));
+    expect(screen.getByRole("status")).toHaveTextContent("餐饮");
+    expect(screen.getByRole("status")).toHaveTextContent("38%");
     expect(screen.queryByRole("meter", { name: "住宿" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "条形" }));
     expect(screen.getByRole("meter", { name: "住宿" })).toBeInTheDocument();
     expect(screen.getByText("每日走势")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /5月15日.*¥840\.00/ }),
+    ).toBeInTheDocument();
     expect(screen.getByText("已用分类")).toBeInTheDocument();
   });
 });

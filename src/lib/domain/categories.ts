@@ -28,9 +28,9 @@ export const categoryMeta = {
   lodging: {
     label: "Lodging",
     icon: BedDouble,
-    tone: "bg-canvas-strong text-ink",
-    chartTone: "bg-ink",
-    chartColor: "var(--ink)",
+    tone: "bg-lodging-100 text-lodging-900",
+    chartTone: "bg-lodging-900",
+    chartColor: "var(--lodging-900)",
   },
   sights: {
     label: "Sights",
