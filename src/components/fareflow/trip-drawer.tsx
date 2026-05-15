@@ -105,9 +105,9 @@ export function TripDrawer({
       </SheetTrigger>
       <SheetContent
         side="bottom"
-        className="max-h-[94svh] overflow-y-auto overscroll-contain rounded-t-3xl border-0 bg-canvas p-0 text-ink shadow-[0_-12px_36px_rgba(35,42,40,0.18)]"
+        className="max-h-[94svh] w-full overflow-x-hidden overflow-y-auto overscroll-contain rounded-t-3xl border-0 bg-canvas p-0 text-ink shadow-[0_-12px_36px_rgba(35,42,40,0.18)] touch-pan-y"
       >
-        <div className="mx-auto flex w-full max-w-xl flex-col px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 min-[390px]:px-5">
+        <div className="mx-auto flex w-full max-w-[min(40rem,100vw)] min-w-0 flex-col overflow-x-hidden px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 min-[390px]:px-5">
           <SheetHeader className="px-0 py-0 text-left">
             <div className="flex size-11 items-center justify-center rounded-2xl bg-mint-100 text-mint-900">
               <MapPinned className="size-5" aria-hidden="true" />
@@ -122,7 +122,7 @@ export function TripDrawer({
 
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="mt-5 grid gap-4"
+            className="mt-5 grid min-w-0 gap-4"
           >
             <FormRow
               label={t.trip.name}
@@ -132,7 +132,7 @@ export function TripDrawer({
               )}
             >
               <Input
-                className="h-12 rounded-xl bg-white"
+                className="h-12 w-full min-w-0 rounded-xl bg-white"
                 aria-label={t.trip.name}
                 autoComplete="off"
                 placeholder={t.trip.namePlaceholder}
@@ -147,7 +147,7 @@ export function TripDrawer({
               )}
             >
               <Input
-                className="h-12 rounded-xl bg-white"
+                className="h-12 w-full min-w-0 rounded-xl bg-white"
                 aria-label={t.trip.destination}
                 autoComplete="off"
                 placeholder={t.trip.destinationPlaceholder}
@@ -155,7 +155,7 @@ export function TripDrawer({
               />
             </FormRow>
 
-            <div className="grid grid-cols-1 gap-3 min-[460px]:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-3 min-[460px]:grid-cols-2">
               <FormRow
                 label={t.trip.start}
                 error={translateValidationError(
@@ -167,7 +167,7 @@ export function TripDrawer({
                   type="date"
                   aria-label={t.trip.start}
                   autoComplete="off"
-                  className="h-12 rounded-xl bg-white"
+                  className="h-12 w-full min-w-0 rounded-xl bg-white"
                   {...form.register("startDate")}
                 />
               </FormRow>
@@ -182,7 +182,7 @@ export function TripDrawer({
                   type="date"
                   aria-label={t.trip.end}
                   autoComplete="off"
-                  className="h-12 rounded-xl bg-white"
+                  className="h-12 w-full min-w-0 rounded-xl bg-white"
                   {...form.register("endDate")}
                 />
               </FormRow>
@@ -205,7 +205,7 @@ export function TripDrawer({
               >
                 <SelectTrigger
                   aria-label={t.trip.baseCurrency}
-                  className="h-12 w-full rounded-xl bg-white"
+                  className="h-12 w-full min-w-0 rounded-xl bg-white"
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -222,7 +222,7 @@ export function TripDrawer({
 
             <Button
               type="submit"
-              className="mt-2 h-12 rounded-full bg-ink text-canvas active:scale-95"
+              className="mt-2 h-12 w-full rounded-full bg-ink text-canvas active:scale-95"
               disabled={mutation.isPending}
             >
               {mutation.isPending
@@ -277,11 +277,13 @@ function FormRow({
   children: React.ReactNode;
 }) {
   return (
-    <label className="grid gap-1.5 text-sm font-medium text-ink">
-      <span className="flex items-center justify-between">
+    <label className="grid min-w-0 gap-1.5 text-sm font-medium text-ink">
+      <span className="flex min-w-0 items-center justify-between gap-2">
         {label}
         {error ? (
-          <span className="text-xs font-normal text-destructive">{error}</span>
+          <span className="min-w-0 text-right text-xs font-normal text-destructive">
+            {error}
+          </span>
         ) : null}
       </span>
       {children}

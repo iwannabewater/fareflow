@@ -188,9 +188,9 @@ export function ExpenseDrawer({
       </SheetTrigger>
       <SheetContent
         side="bottom"
-        className="max-h-[94svh] overflow-y-auto overscroll-contain rounded-t-3xl border-0 bg-canvas p-0 text-ink shadow-[0_-12px_36px_rgba(35,42,40,0.18)]"
+        className="max-h-[94svh] w-full overflow-x-hidden overflow-y-auto overscroll-contain rounded-t-3xl border-0 bg-canvas p-0 text-ink shadow-[0_-12px_36px_rgba(35,42,40,0.18)] touch-pan-y"
       >
-        <div className="mx-auto flex w-full max-w-xl flex-col px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 min-[390px]:px-5">
+        <div className="mx-auto flex w-full max-w-[min(40rem,100vw)] min-w-0 flex-col overflow-x-hidden px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 min-[390px]:px-5">
           <SheetHeader className="px-0 py-0 text-left">
             <div className="flex size-11 items-center justify-center rounded-2xl bg-passport-100 text-passport-900">
               <ReceiptText className="size-5" aria-hidden="true" />
@@ -205,7 +205,7 @@ export function ExpenseDrawer({
 
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="mt-5 grid gap-4"
+            className="mt-5 grid min-w-0 gap-4"
           >
             <Field
               label={t.expense.amount}
@@ -215,7 +215,7 @@ export function ExpenseDrawer({
                 t,
               )}
             >
-              <div className="grid grid-cols-[1fr_7rem] gap-2">
+              <div className="grid min-w-0 grid-cols-1 gap-2 min-[380px]:grid-cols-[minmax(0,1fr)_8.75rem]">
                 <Input
                   inputMode={amountExponent === 0 ? "numeric" : "decimal"}
                   aria-label={t.expense.amount}
@@ -224,7 +224,7 @@ export function ExpenseDrawer({
                     selectedCurrency,
                     amountExample,
                   )}
-                  className="h-12 rounded-xl bg-white text-[1.35rem] font-semibold tabular-nums"
+                  className="h-12 w-full min-w-0 rounded-xl bg-white text-[1.2rem] font-semibold tabular-nums min-[430px]:text-[1.35rem]"
                   {...form.register("amountMajor")}
                 />
                 <CurrencySelect
@@ -244,7 +244,7 @@ export function ExpenseDrawer({
               </div>
             ) : null}
 
-            <div className="grid grid-cols-1 gap-3 min-[460px]:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-3 min-[460px]:grid-cols-2">
               <Field
                 label={t.expense.date}
                 error={translateValidationError(
@@ -256,7 +256,7 @@ export function ExpenseDrawer({
                   type="date"
                   aria-label={t.expense.date}
                   autoComplete="off"
-                  className="h-12 rounded-xl bg-white"
+                  className="h-12 w-full min-w-0 rounded-xl bg-white"
                   {...form.register("expenseDate")}
                 />
               </Field>
@@ -271,7 +271,7 @@ export function ExpenseDrawer({
                   inputMode="decimal"
                   aria-label={t.expense.rate}
                   autoComplete="off"
-                  className="h-12 rounded-xl bg-white tabular-nums"
+                  className="h-12 w-full min-w-0 rounded-xl bg-white tabular-nums"
                   disabled={selectedCurrency === trip?.baseCurrency}
                   {...form.register("exchangeRate")}
                 />
@@ -285,7 +285,7 @@ export function ExpenseDrawer({
                 t,
               )}
             >
-              <div className="mb-2 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="mb-2 flex max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {expenseCategories.map((category) => {
                   const Icon = categoryMeta[category].icon;
                   const isSelected = selectedCategory === category;
@@ -321,7 +321,7 @@ export function ExpenseDrawer({
               >
                 <SelectTrigger
                   aria-label={t.expense.category}
-                  className="h-12 w-full rounded-xl bg-white"
+                  className="h-12 w-full min-w-0 rounded-xl bg-white"
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -349,7 +349,7 @@ export function ExpenseDrawer({
               )}
             >
               <Textarea
-                className="min-h-24 rounded-xl bg-white"
+                className="min-h-24 w-full min-w-0 resize-none rounded-xl bg-white"
                 aria-label={t.expense.note}
                 autoComplete="off"
                 placeholder={t.expense.notePlaceholder}
@@ -359,7 +359,7 @@ export function ExpenseDrawer({
 
             <Button
               type="submit"
-              className="mt-2 h-12 rounded-full bg-ink text-canvas active:scale-95"
+              className="mt-2 h-12 w-full rounded-full bg-ink text-canvas active:scale-95"
               disabled={mutation.isPending}
             >
               {mutation.isPending
@@ -462,7 +462,10 @@ function CurrencySelect({
 }) {
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger aria-label={label} className="h-12 rounded-xl bg-white">
+      <SelectTrigger
+        aria-label={label}
+        className="h-12 w-full min-w-0 rounded-xl bg-white"
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -488,11 +491,13 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="grid gap-1.5 text-sm font-medium text-ink">
-      <span className="flex items-center justify-between">
+    <label className="grid min-w-0 gap-1.5 text-sm font-medium text-ink">
+      <span className="flex min-w-0 items-center justify-between gap-2">
         {label}
         {error ? (
-          <span className="text-xs font-normal text-destructive">{error}</span>
+          <span className="min-w-0 text-right text-xs font-normal text-destructive">
+            {error}
+          </span>
         ) : null}
       </span>
       {children}

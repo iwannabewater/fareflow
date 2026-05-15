@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   BarChart3,
   CalendarDays,
+  ChartPie,
   ChevronDown,
   CircleDollarSign,
   Clock3,
@@ -13,6 +14,7 @@ import {
   Languages,
   MapPinned,
   Route,
+  Rows3,
   PlaneTakeoff,
   ReceiptText,
   TrendingUp,
@@ -708,12 +710,29 @@ function TripInsightsPanel({
   expenseDayCount: number;
 }) {
   const reduceMotion = useReducedMotion();
+  const [categoryView, setCategoryView] = useState<"bars" | "donut">("bars");
   const baseCurrency = trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY;
   const topCategory = analytics.categoryTotals[0] ?? null;
   const visibleDailyTotals = buildDailySeries(analytics.dailyTotals);
   const trackedCategories = analytics.categoryTotals.length;
   const topCategoryRatio =
     topCategory && analytics.total > 0 ? topCategory.total / analytics.total : 0;
+  const categorySlices = analytics.categoryTotals.map((item) => {
+    const meta = categoryMeta[item.category];
+    const ratio = analytics.total > 0 ? item.total / analytics.total : 0;
+
+    return {
+      category: item.category,
+      icon: meta.icon,
+      label: copy.categories[item.category],
+      value: formatMoney(item.total, baseCurrency, copy.localeCode),
+      percent: formatPercent(ratio, copy.localeCode),
+      ratio,
+      tone: meta.tone,
+      chartTone: meta.chartTone,
+      chartColor: meta.chartColor,
+    };
+  });
 
   return (
     <motion.section
@@ -779,28 +798,61 @@ function TripInsightsPanel({
       ) : (
         <div className="mt-5 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.85fr)]">
           <div className="min-w-0">
-            <h3 className="flex items-center gap-2 text-sm font-semibold">
-              <Flag className="size-4 text-passport-900" aria-hidden="true" />
-              {copy.home.categoryBreakdown}
-            </h3>
-            <div className="mt-3 grid gap-2">
-              {analytics.categoryTotals.map((item) => {
-                const meta = categoryMeta[item.category];
-                const ratio = analytics.total > 0 ? item.total / analytics.total : 0;
-                return (
-                  <CategoryBreakdownRow
-                    key={item.category}
-                    icon={meta.icon}
-                    label={copy.categories[item.category]}
-                    value={formatMoney(item.total, baseCurrency, copy.localeCode)}
-                    percent={formatPercent(ratio, copy.localeCode)}
-                    ratio={ratio}
-                    tone={meta.tone}
-                    chartTone={meta.chartTone}
-                  />
-                );
-              })}
+            <div className="flex min-w-0 items-center justify-between gap-3">
+              <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
+                <Flag className="size-4 shrink-0 text-passport-900" aria-hidden="true" />
+                <span className="truncate">{copy.home.categoryBreakdown}</span>
+              </h3>
+              <div
+                className="flex shrink-0 items-center rounded-full bg-canvas p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.42),0_1px_2px_rgba(35,42,40,0.08)]"
+                role="group"
+                aria-label={copy.home.categoryViewAria}
+              >
+                <button
+                  type="button"
+                  className={`flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 ${
+                    categoryView === "bars"
+                      ? "bg-ink text-canvas"
+                      : "text-ink-muted hover:bg-canvas-strong hover:text-ink"
+                  }`}
+                  aria-label={copy.home.categoryBars}
+                  aria-pressed={categoryView === "bars"}
+                  title={copy.home.categoryBars}
+                  onClick={() => setCategoryView("bars")}
+                >
+                  <Rows3 className="size-3.5" aria-hidden="true" />
+                  <span className="sr-only">{copy.home.categoryBars}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 ${
+                    categoryView === "donut"
+                      ? "bg-ink text-canvas"
+                      : "text-ink-muted hover:bg-canvas-strong hover:text-ink"
+                  }`}
+                  aria-label={copy.home.categoryDonut}
+                  aria-pressed={categoryView === "donut"}
+                  title={copy.home.categoryDonut}
+                  onClick={() => setCategoryView("donut")}
+                >
+                  <ChartPie className="size-3.5" aria-hidden="true" />
+                  <span className="sr-only">{copy.home.categoryDonut}</span>
+                </button>
+              </div>
             </div>
+            {categoryView === "bars" ? (
+              <div className="mt-3 grid gap-2">
+                {categorySlices.map((slice) => (
+                  <CategoryBreakdownRow key={slice.category} slice={slice} />
+                ))}
+              </div>
+            ) : (
+              <CategoryDonutChart
+                slices={categorySlices}
+                copy={copy}
+                reduceMotion={reduceMotion}
+              />
+            )}
           </div>
 
           <div className="min-w-0">
@@ -831,15 +883,8 @@ function InsightMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function CategoryBreakdownRow({
-  icon: Icon,
-  label,
-  value,
-  percent,
-  ratio,
-  tone,
-  chartTone,
-}: {
+type CategoryInsightSlice = {
+  category: Expense["category"];
   icon: LucideIcon;
   label: string;
   value: string;
@@ -847,37 +892,137 @@ function CategoryBreakdownRow({
   ratio: number;
   tone: string;
   chartTone: string;
-}) {
-  const percentValue = Math.round(ratio * 100);
+  chartColor: string;
+};
+
+function CategoryBreakdownRow({ slice }: { slice: CategoryInsightSlice }) {
+  const Icon = slice.icon;
+  const percentValue = Math.round(slice.ratio * 100);
 
   return (
     <div className="group grid gap-2 rounded-[1rem] px-2 py-2 transition-[background-color,transform] duration-200 [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:bg-canvas/70">
       <div className="flex min-w-0 items-center gap-3 text-sm">
-        <span className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${tone}`}>
+        <span className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${slice.tone}`}>
           <Icon className="size-4" aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-ink">{label}</span>
+          <span className="block truncate font-medium text-ink">{slice.label}</span>
           <span className="mt-0.5 block truncate text-xs text-ink-muted">
-            {percent}
+            {slice.percent}
           </span>
         </span>
         <span className="shrink-0 text-right font-medium tabular-nums">
-          {value}
+          {slice.value}
         </span>
       </div>
       <div
         className="h-2.5 overflow-hidden rounded-full bg-ink/8"
         role="meter"
-        aria-label={label}
+        aria-label={slice.label}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={percentValue}
       >
         <div
-          className={`h-full rounded-full ${chartTone}`}
-          style={{ width: `${Math.max(4, ratio * 100)}%` }}
+          className={`h-full rounded-full ${slice.chartTone}`}
+          style={{ width: `${Math.max(4, slice.ratio * 100)}%` }}
         />
+      </div>
+    </div>
+  );
+}
+
+function CategoryDonutChart({
+  slices,
+  copy,
+  reduceMotion,
+}: {
+  slices: CategoryInsightSlice[];
+  copy: FareFlowCopy;
+  reduceMotion: boolean | null;
+}) {
+  const titleId = useId();
+  const donutSegments = slices.map((slice, index) => ({
+    slice,
+    dash: Math.max(0.8, slice.ratio * 100 - 1.2),
+    segmentOffset:
+      25 -
+      slices
+        .slice(0, index)
+        .reduce((total, previousSlice) => total + previousSlice.ratio * 100, 0),
+  }));
+
+  return (
+    <div className="mt-3 grid max-w-full gap-4 overflow-hidden rounded-[1.15rem] bg-canvas/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]">
+      <div className="relative mx-auto size-40">
+        <svg
+          role="img"
+          aria-labelledby={titleId}
+          viewBox="0 0 44 44"
+          className="size-full -rotate-90 overflow-visible"
+        >
+          <title id={titleId}>{copy.home.categoryDonutAria}</title>
+          <circle
+            cx="22"
+            cy="22"
+            r="15.9154943092"
+            fill="none"
+            className="stroke-ink/8"
+            strokeWidth="5.8"
+          />
+          {donutSegments.map(({ slice, dash, segmentOffset }) => (
+            <motion.circle
+              key={slice.category}
+              cx="22"
+              cy="22"
+              r="15.9154943092"
+              fill="none"
+              stroke={slice.chartColor}
+              strokeWidth="5.8"
+              strokeLinecap="round"
+              strokeDasharray={`${dash} ${100 - dash}`}
+              strokeDashoffset={segmentOffset}
+              initial={reduceMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{
+                duration: reduceMotion ? 0 : 0.24,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+            />
+          ))}
+        </svg>
+        <div className="absolute inset-0 grid place-items-center text-center">
+          <div>
+            <p className="text-2xl font-semibold tabular-nums text-ink">100%</p>
+            <p className="mt-0.5 text-xs text-ink-muted">
+              {copy.home.categoryBreakdown}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="grid min-w-0 gap-1.5">
+        {slices.map((slice) => {
+          const Icon = slice.icon;
+
+          return (
+            <div
+              key={slice.category}
+              className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-2 rounded-xl px-2 py-2 text-sm transition-colors [@media(hover:hover)]:hover:bg-canvas"
+            >
+              <span
+                className={`flex size-8 items-center justify-center rounded-lg ${slice.tone}`}
+              >
+                <Icon className="size-3.5" aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <span className="block font-medium">{slice.label}</span>
+                <span className="mt-0.5 block text-xs text-ink-muted tabular-nums">
+                  {slice.percent} · {slice.value}
+                </span>
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -906,86 +1051,125 @@ function DailyTrendChart({
     );
   }
 
-  const width = 240;
-  const height = 96;
-  const padX = 10;
-  const padY = 12;
+  const width = 100;
+  const height = 118;
+  const padTop = 12;
+  const padBottom = 18;
+  const baseline = height - padBottom;
   const maxTotal = Math.max(...items.map((item) => item.total), 1);
+  const axisValues = Array.from(
+    new Set([maxTotal, Math.round(maxTotal / 2), 0]),
+  ).sort((a, b) => b - a);
+  const getY = (value: number) =>
+    padTop + (1 - value / maxTotal) * (height - padTop - padBottom);
   const points = items.map((item, index) => {
-    const x =
-      items.length === 1
-        ? width / 2
-        : padX + (index / (items.length - 1)) * (width - padX * 2);
-    const y =
-      height - padY - (item.total / maxTotal) * (height - padY * 2);
+    const x = ((index + 0.5) / items.length) * width;
+    const y = getY(item.total);
     return { ...item, x, y };
   });
-  const linePoints =
-    points.length === 1
-      ? `${padX},${points[0].y} ${width - padX},${points[0].y}`
-      : points.map((point) => `${point.x},${point.y}`).join(" ");
-  const areaPath = `M ${padX} ${height - padY} L ${linePoints.replaceAll(",", " ")} L ${width - padX} ${height - padY} Z`;
+  const linePoints = points.map((point) => `${point.x},${point.y}`).join(" ");
+  const areaPath =
+    points.length > 0
+      ? `M ${points[0].x} ${baseline} L ${points
+          .map((point) => `${point.x} ${point.y}`)
+          .join(" L ")} L ${points[points.length - 1].x} ${baseline} Z`
+      : "";
   const peak = points.reduce((currentPeak, point) =>
     point.total > currentPeak.total ? point : currentPeak,
   );
 
   return (
-    <div className="mt-3 grid gap-3">
-      <div className="rounded-[1.15rem] bg-canvas/70 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]">
-        <svg
-          role="img"
-          aria-labelledby={titleId}
-          viewBox={`0 0 ${width} ${height}`}
-          className="h-28 w-full overflow-visible"
-        >
-          <title id={titleId}>
-            {copy.home.dailyTrend}:{" "}
-            {formatMoney(peak.total, baseCurrency, copy.localeCode)}
-          </title>
-          <path d={areaPath} className="fill-passport-900/8" />
-          <motion.polyline
-            points={linePoints}
-            className="fill-none stroke-passport-900"
-            strokeWidth="4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: reduceMotion ? 0 : 0.55, ease: [0.16, 1, 0.3, 1] }}
-          />
-          {points.map((point) => (
-            <circle
-              key={point.date}
-              cx={point.x}
-              cy={point.y}
-              r={point.total === peak.total ? 4.5 : 3.5}
-              className="fill-canvas stroke-passport-900"
-              strokeWidth="3"
+    <div className="mt-3 rounded-[1.15rem] bg-canvas/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]">
+      <div className="grid grid-cols-[3rem_minmax(0,1fr)] gap-x-3">
+        <div className="relative h-32" aria-hidden="true">
+          <div className="absolute right-[-0.4rem] top-0 h-full w-px bg-ink/10" />
+          {axisValues.map((value) => (
+            <span
+              key={value}
+              className="absolute right-0 -translate-y-1/2 text-right text-[0.64rem] leading-none text-ink-muted tabular-nums"
+              style={{ top: `${(getY(value) / height) * 100}%` }}
             >
-              <title>
-                {formatDateLabel(point.date, locale)} ·{" "}
-                {formatMoney(point.total, baseCurrency, copy.localeCode)}
-              </title>
-            </circle>
+              {formatTinyMoney(value, baseCurrency, copy.localeCode)}
+            </span>
           ))}
-        </svg>
-      </div>
-      <div
-        className="grid gap-2"
-        style={{
-          gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
-        }}
-      >
-        {points.map((point) => (
-          <div key={point.date} className="min-w-0 text-center">
-            <p className="truncate text-[0.68rem] text-ink-muted">
-              {formatShortDateLabel(point.date, locale)}
-            </p>
-            <p className="mt-1 truncate text-xs font-medium tabular-nums text-ink">
-              {formatTinyMoney(point.total, baseCurrency, copy.localeCode)}
-            </p>
+        </div>
+        <div className="min-w-0">
+          <div className="relative h-32">
+            <svg
+              role="img"
+              aria-labelledby={titleId}
+              viewBox={`0 0 ${width} ${height}`}
+              preserveAspectRatio="none"
+              className="absolute inset-0 h-full w-full overflow-visible"
+            >
+              <title id={titleId}>
+                {copy.home.dailyTrend}:{" "}
+                {formatMoney(peak.total, baseCurrency, copy.localeCode)}
+              </title>
+              {axisValues.map((value) => {
+                const y = getY(value);
+
+                return (
+                  <line
+                    key={value}
+                    x1="0"
+                    x2={width}
+                    y1={y}
+                    y2={y}
+                    className="stroke-ink/8"
+                    strokeWidth="1"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                );
+              })}
+              <path d={areaPath} className="fill-passport-900/8" />
+              <motion.polyline
+                points={linePoints}
+                className="fill-none stroke-passport-900"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+                initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{
+                  duration: reduceMotion ? 0 : 0.55,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+              />
+            </svg>
+            {points.map((point) => (
+              <span
+                key={point.date}
+                className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-passport-900 bg-canvas shadow-[0_0_0_2px_var(--canvas)]"
+                style={{
+                  left: `${point.x}%`,
+                  top: `${(point.y / height) * 100}%`,
+                }}
+                title={`${formatDateLabel(point.date, locale)} · ${formatMoney(
+                  point.total,
+                  baseCurrency,
+                  copy.localeCode,
+                )}`}
+              />
+            ))}
           </div>
-        ))}
+        </div>
+        <div />
+        <div
+          className="mt-2 grid gap-1"
+          style={{
+            gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
+          }}
+        >
+          {points.map((point) => (
+            <div key={point.date} className="min-w-0 text-center">
+              <p className="truncate text-[0.62rem] text-ink-muted tabular-nums">
+                {formatShortDateLabel(point.date, locale)}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

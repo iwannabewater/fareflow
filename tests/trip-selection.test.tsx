@@ -194,6 +194,13 @@ describe("trip selection persistence", () => {
       "59",
     );
     expect(screen.getByText("59%")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "圆环" }));
+    expect(
+      screen.getByRole("img", { name: "分类占比圆环图" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("meter", { name: "住宿" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "条形" }));
+    expect(screen.getByRole("meter", { name: "住宿" })).toBeInTheDocument();
     expect(screen.getByText("每日走势")).toBeInTheDocument();
     expect(screen.getByText("已用分类")).toBeInTheDocument();
   });
