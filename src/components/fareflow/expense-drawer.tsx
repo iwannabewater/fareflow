@@ -293,7 +293,7 @@ export function ExpenseDrawer({
                     <button
                       key={category}
                       type="button"
-                      className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm transition-colors ${
+                      className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 ${
                         isSelected
                           ? "bg-ink text-canvas"
                           : "bg-canvas-strong text-ink hover:bg-passport-50"

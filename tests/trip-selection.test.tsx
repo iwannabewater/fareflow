@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FareFlowApp } from "@/components/fareflow/fareflow-app";
-import type { Trip } from "@/lib/domain/schema";
+import type { Expense, Trip } from "@/lib/domain/schema";
 import {
   selectCurrentTrip,
   useTripSelectionStore,
@@ -35,6 +35,7 @@ const trips: Trip[] = [
 ];
 
 let tripsResult: { data: Trip[]; isLoading: boolean; isFetched: boolean };
+let expensesResult: { data: Expense[]; isLoading: boolean; isError: boolean };
 
 vi.mock("@/hooks/use-trips", () => ({
   useTrips: () => tripsResult,
@@ -61,7 +62,7 @@ vi.mock("@/hooks/use-trips", () => ({
 }));
 
 vi.mock("@/hooks/use-expenses", () => ({
-  useExpenses: () => ({ data: [], isLoading: false }),
+  useExpenses: () => expensesResult,
   useCreateExpense: () => ({
     mutateAsync: vi.fn(),
     reset: vi.fn(),
@@ -110,6 +111,7 @@ describe("trip selection persistence", () => {
   beforeEach(() => {
     window.localStorage.clear();
     tripsResult = { data: trips, isLoading: false, isFetched: true };
+    expensesResult = { data: [], isLoading: false, isError: false };
     useTripSelectionStore.setState({ selectedTripId: null });
   });
 
@@ -172,4 +174,54 @@ describe("trip selection persistence", () => {
       expect(useTripSelectionStore.getState().selectedTripId).toBe(trips[1].id);
     });
   });
+
+  it("renders category share meters and daily trend from current trip expenses", async () => {
+    expensesResult = {
+      data: [
+        buildExpense("lodging", 120000, "2026-05-14"),
+        buildExpense("food", 78000, "2026-05-15"),
+        buildExpense("transport", 6000, "2026-05-15"),
+      ],
+      isLoading: false,
+      isError: false,
+    };
+
+    render(<FareFlowApp />);
+
+    expect(await screen.findByText("分类占比")).toBeInTheDocument();
+    expect(screen.getByRole("meter", { name: "住宿" })).toHaveAttribute(
+      "aria-valuenow",
+      "59",
+    );
+    expect(screen.getByText("59%")).toBeInTheDocument();
+    expect(screen.getByText("每日走势")).toBeInTheDocument();
+    expect(screen.getByText("已用分类")).toBeInTheDocument();
+  });
 });
+
+function buildExpense(
+  category: Expense["category"],
+  baseAmount: number,
+  expenseDate: string,
+): Expense {
+  return {
+    id: crypto.randomUUID(),
+    clientId: crypto.randomUUID(),
+    tripId: trips[0].id,
+    userId: "local-demo-user",
+    amount: baseAmount,
+    currency: "CNY",
+    baseAmount,
+    baseCurrency: "CNY",
+    exchangeRate: "1",
+    exchangeRateAt: "2026-05-13T16:00:00.000Z",
+    exchangeRateSource: "identity",
+    category,
+    note: null,
+    receiptUrl: null,
+    expenseDate,
+    createdAt: "2026-05-13T16:00:00.000Z",
+    syncStatus: "synced",
+    lastError: null,
+  };
+}

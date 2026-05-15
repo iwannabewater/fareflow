@@ -87,7 +87,7 @@ export function AuthPanel() {
 
   if (!auth.isConfigured) {
     return (
-      <div className="rounded-xl bg-stamp-50 px-4 py-3 text-sm text-stamp-900 shadow-[0_1px_3px_rgba(70,56,28,0.12)]">
+      <div className="rounded-[1.15rem] bg-stamp-50 px-4 py-3 text-sm text-stamp-900 shadow-[0_1px_3px_rgba(70,56,28,0.12)]">
         <div className="flex items-center gap-2 font-medium">
           <ShieldCheck className="size-4" aria-hidden="true" />
           {t.auth.localDemo}
@@ -101,7 +101,7 @@ export function AuthPanel() {
 
   if (auth.user) {
     return (
-      <div className="flex items-center justify-between gap-3 rounded-xl bg-mint-50 px-4 py-3 text-sm text-mint-900 shadow-[0_1px_3px_rgba(30,88,64,0.12)]">
+      <div className="flex items-center justify-between gap-3 rounded-[1.15rem] bg-mint-50 px-4 py-3 text-sm text-mint-900 shadow-[0_1px_3px_rgba(30,88,64,0.12)]">
         <div>
           <div className="font-medium">{t.auth.cloudReady}</div>
           <div className="max-w-[14rem] truncate text-mint-800">
@@ -125,7 +125,7 @@ export function AuthPanel() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-xl bg-canvas-strong p-3 shadow-[0_1px_3px_rgba(35,42,40,0.12)]"
+      className="rounded-[1.15rem] bg-canvas-strong p-3 shadow-[0_1px_3px_rgba(35,42,40,0.12)]"
     >
       <label
         htmlFor={emailInputId}
@@ -156,8 +156,16 @@ export function AuthPanel() {
           <span className="sr-only">{t.auth.send}</span>
         </Button>
       </div>
-      {message ? <p className="mt-2 text-xs text-mint-900">{message}</p> : null}
-      {error ? <p className="mt-2 text-xs text-destructive">{error}</p> : null}
+      {message ? (
+        <p className="mt-2 text-xs text-mint-900" aria-live="polite">
+          {message}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="mt-2 text-xs text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
       {isCoolingDown ? (
         <p className="mt-2 text-xs text-ink-muted">
           {t.auth.retryAfter(retrySeconds)}

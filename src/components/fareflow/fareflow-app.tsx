@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   BarChart3,
   CalendarDays,
@@ -8,13 +8,16 @@ import {
   CircleDollarSign,
   Clock3,
   Download,
+  Flag,
   Pencil,
   Languages,
   MapPinned,
   Route,
   PlaneTakeoff,
   ReceiptText,
+  TrendingUp,
   Trash2,
+  type LucideIcon,
 } from "lucide-react";
 import {
   useEffect,
@@ -43,10 +46,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   buildTripAnalytics,
   expensesToCsv,
+  type DailyTotal,
   type TripAnalytics,
 } from "@/lib/domain/analytics";
 import { categoryMeta } from "@/lib/domain/categories";
-import { formatMoney } from "@/lib/domain/money";
+import { currencyMeta, formatMoney } from "@/lib/domain/money";
 import type { Expense, Trip } from "@/lib/domain/schema";
 import { type FareFlowCopy, type Locale, useCopy } from "@/lib/i18n";
 import {
@@ -90,8 +94,8 @@ function FareFlowHydrationShell() {
       aria-busy="true"
       className="min-h-svh overflow-x-hidden bg-canvas text-ink selection:bg-passport-100 selection:text-passport-900"
     >
-      <div className="mx-auto flex min-h-svh w-full max-w-6xl flex-col lg:grid lg:grid-cols-[22rem_1fr]">
-        <aside className="hidden border-r border-ink/8 bg-canvas-strong px-5 py-6 lg:block">
+      <div className="mx-auto grid min-h-svh w-full max-w-[112rem] lg:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[20rem_minmax(0,1fr)]">
+        <aside className="hidden border-r border-ink/8 bg-canvas-strong px-4 py-6 xl:px-6 lg:block">
           <div className="flex items-center gap-3">
             <div className="flex size-11 items-center justify-center rounded-2xl bg-ink text-canvas">
               <PlaneTakeoff className="size-5" aria-hidden="true" />
@@ -107,8 +111,8 @@ function FareFlowHydrationShell() {
           </div>
         </aside>
 
-        <section className="flex min-h-svh flex-col">
-          <header className="sticky top-0 z-30 border-b border-ink/8 bg-canvas px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))] lg:px-8 lg:pt-6">
+        <section className="flex min-h-svh min-w-0 flex-col">
+          <header className="sticky top-0 z-30 border-b border-ink/8 bg-canvas px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))] lg:px-6 lg:pt-6 xl:px-8">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 items-center justify-center rounded-2xl bg-ink text-canvas lg:hidden">
@@ -124,7 +128,7 @@ function FareFlowHydrationShell() {
               <Skeleton className="h-10 w-24 rounded-full" />
             </div>
           </header>
-          <div className="grid flex-1 gap-5 px-4 py-5 lg:px-8">
+          <div className="grid flex-1 gap-5 px-4 py-5 lg:px-6 xl:px-8">
             <Skeleton className="h-28 w-full rounded-lg" />
             <Skeleton className="h-48 w-full rounded-lg" />
             <Skeleton className="h-64 w-full rounded-lg" />
@@ -183,14 +187,16 @@ function FareFlowDashboard() {
     [expenses.data, todayDate],
   );
   const todaySpend = formatMoney(todayTotal, baseCurrency, t.localeCode);
+  const tripDayCount = selectedTrip ? countTripDays(selectedTrip) : 0;
+  const expenseDayCount = analytics.dailyTotals.length;
 
   return (
     <main
       id="main-content"
       className="min-h-svh overflow-x-hidden bg-canvas text-ink selection:bg-passport-100 selection:text-passport-900"
     >
-      <div className="mx-auto flex min-h-svh w-full max-w-6xl flex-col lg:grid lg:grid-cols-[22rem_1fr]">
-        <aside className="hidden border-r border-ink/8 bg-canvas-strong px-5 py-6 lg:block">
+      <div className="mx-auto grid min-h-svh w-full max-w-[112rem] lg:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[20rem_minmax(0,1fr)]">
+        <aside className="hidden border-r border-ink/8 bg-canvas-strong px-4 py-6 xl:px-6 lg:sticky lg:top-0 lg:block lg:max-h-svh lg:overflow-y-auto">
           <div className="flex items-center gap-3">
             <div className="flex size-11 items-center justify-center rounded-2xl bg-ink text-canvas">
               <PlaneTakeoff className="size-5" aria-hidden="true" />
@@ -208,8 +214,8 @@ function FareFlowDashboard() {
           </div>
         </aside>
 
-        <section className="flex min-h-svh flex-col">
-          <header className="sticky top-0 z-30 border-b border-ink/8 bg-canvas px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))] lg:px-8 lg:pt-6">
+        <section className="flex min-h-svh min-w-0 flex-col">
+          <header className="sticky top-0 z-30 border-b border-ink/8 bg-canvas px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(35,42,40,0.04)] lg:px-6 lg:pt-6 xl:px-8">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3 lg:hidden">
                 <div className="flex size-10 items-center justify-center rounded-2xl bg-ink text-canvas">
@@ -260,7 +266,7 @@ function FareFlowDashboard() {
             <TripManageActions trip={selectedTrip} copy={t} />
           </header>
 
-          <div className="grid flex-1 gap-5 px-4 py-5 pb-28 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-8 lg:pb-8">
+          <div className="grid flex-1 gap-5 px-4 py-5 pb-28 lg:grid-cols-[minmax(0,1fr)_18rem] lg:px-6 lg:pb-8 xl:grid-cols-[minmax(0,1fr)_21rem] xl:px-8">
             <div className="lg:hidden">
               <AuthPanel />
             </div>
@@ -281,6 +287,7 @@ function FareFlowDashboard() {
                 todaySpend={todaySpend}
                 count={analytics.count}
                 pending={analytics.pending}
+                dayCount={tripDayCount}
                 copy={t}
                 locale={locale}
               />
@@ -290,6 +297,8 @@ function FareFlowDashboard() {
                 analytics={analytics}
                 copy={t}
                 locale={locale}
+                tripDayCount={tripDayCount}
+                expenseDayCount={expenseDayCount}
               />
               {expenses.isError ? (
                 <InlineRecoveryPanel
@@ -315,6 +324,8 @@ function FareFlowDashboard() {
                 trip={selectedTrip}
                 total={total}
                 pending={analytics.pending}
+                dayCount={tripDayCount}
+                expenseDayCount={expenseDayCount}
                 copy={t}
               />
             </aside>
@@ -427,7 +438,7 @@ function TripQuickList({
 
   return (
     <div
-      className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:-mx-8 lg:px-8 [&::-webkit-scrollbar]:hidden"
+      className="mt-3 flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       aria-label={copy.home.tripList}
     >
       {trips.map((trip) => {
@@ -436,7 +447,7 @@ function TripQuickList({
           <button
             key={trip.clientId}
             type="button"
-            className={`flex min-w-[11.75rem] max-w-[14rem] items-center gap-2 rounded-2xl px-3 py-2 text-left shadow-[0_1px_3px_rgba(35,42,40,0.10)] transition-[background-color,box-shadow,transform] duration-200 active:scale-[0.98] ${
+            className={`flex min-w-[11.75rem] max-w-[14rem] items-center gap-2 rounded-2xl px-3 py-2 text-left shadow-[0_1px_3px_rgba(35,42,40,0.10)] transition-[background-color,box-shadow,transform] duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] ${
               isSelected
                 ? "bg-ink text-canvas shadow-[0_10px_26px_rgba(35,42,40,0.18)]"
                 : "bg-canvas-strong text-ink hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(35,42,40,0.10)]"
@@ -577,7 +588,7 @@ function TripPicker({
                   type="button"
                   role="option"
                   aria-selected={isSelected}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors ${
+                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 ${
                     isSelected
                       ? "bg-ink text-canvas"
                       : "text-ink hover:bg-canvas-strong"
@@ -624,6 +635,7 @@ function SummaryPanel({
   todaySpend,
   count,
   pending,
+  dayCount,
   copy,
   locale,
 }: {
@@ -632,18 +644,20 @@ function SummaryPanel({
   todaySpend: string;
   count: number;
   pending: number;
+  dayCount: number;
   copy: FareFlowCopy;
   locale: Locale;
 }) {
+  const reduceMotion = useReducedMotion();
   const totalSizeClass =
     total.length > 12 ? "text-4xl" : "text-5xl lg:text-[3rem]";
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 12 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-      className="overflow-hidden rounded-[1.45rem] bg-ink text-canvas shadow-[0_18px_44px_rgba(35,42,40,0.22)]"
+      transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] }}
+      className="overflow-hidden rounded-[1.65rem] bg-ink text-canvas shadow-[0_18px_44px_rgba(35,42,40,0.22)]"
     >
       <div className="grid min-w-0 gap-5 p-5 lg:p-7">
         <div className="min-w-0">
@@ -662,14 +676,13 @@ function SummaryPanel({
               : copy.home.noTripSelected}
           </p>
         </div>
-        <div className="grid max-w-xl grid-cols-2 gap-2 min-[520px]:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 min-[620px]:grid-cols-4">
           <Metric label={copy.home.tripTotal} value={total} compact />
           <Metric label={copy.home.todaySpend} value={todaySpend} compact />
           <Metric label={copy.home.items} value={String(count)} />
-          <Metric label={copy.home.pending} value={String(pending)} />
           <Metric
-            label={copy.home.budgetRemaining}
-            value={copy.home.budgetPlaceholder}
+            label={pending > 0 ? copy.home.pending : copy.home.tripDays}
+            value={String(pending > 0 ? pending : dayCount)}
           />
         </div>
       </div>
@@ -683,45 +696,52 @@ function TripInsightsPanel({
   analytics,
   copy,
   locale,
+  tripDayCount,
+  expenseDayCount,
 }: {
   trip: Trip | null;
   expenses: Expense[];
   analytics: TripAnalytics;
   copy: FareFlowCopy;
   locale: Locale;
+  tripDayCount: number;
+  expenseDayCount: number;
 }) {
+  const reduceMotion = useReducedMotion();
   const baseCurrency = trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY;
   const topCategory = analytics.categoryTotals[0] ?? null;
-  const maxCategoryTotal = topCategory?.total ?? 0;
-  const maxDailyTotal = Math.max(
-    ...analytics.dailyTotals.map((item) => item.total),
-    0,
-  );
-  const visibleDailyTotals = analytics.dailyTotals.slice(-7);
+  const visibleDailyTotals = buildDailySeries(analytics.dailyTotals);
+  const trackedCategories = analytics.categoryTotals.length;
+  const topCategoryRatio =
+    topCategory && analytics.total > 0 ? topCategory.total / analytics.total : 0;
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 12 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1], delay: 0.04 }}
-      className="rounded-[1.45rem] bg-canvas-strong p-4 shadow-[0_1px_3px_rgba(35,42,40,0.10)] lg:p-5"
+      transition={{
+        duration: reduceMotion ? 0 : 0.28,
+        ease: [0.16, 1, 0.3, 1],
+        delay: reduceMotion ? 0 : 0.04,
+      }}
+      className="overflow-hidden rounded-[1.65rem] bg-canvas-strong p-4 shadow-[0_1px_3px_rgba(35,42,40,0.10)] lg:p-5"
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2 text-sm font-medium text-ink">
             <BarChart3 className="size-4 text-passport-900" aria-hidden="true" />
             {copy.home.dashboard}
           </div>
-          <p className="mt-1 text-xs leading-5 text-ink-muted">
+          <p className="mt-1 max-w-xl text-xs leading-5 text-ink-muted">
             {topCategory
-              ? `${copy.home.topCategory}: ${copy.categories[topCategory.category]}`
+              ? `${copy.home.topCategory}: ${copy.categories[topCategory.category]} · ${formatPercent(topCategoryRatio, copy.localeCode)}`
               : copy.home.noAnalytics}
           </p>
         </div>
         <ExportCsvButton trip={trip} expenses={expenses} copy={copy} />
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-y border-ink/8 py-3 min-[520px]:grid-cols-3">
+      <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3 border-y border-ink/8 py-3 min-[620px]:grid-cols-4">
         <InsightMetric
           label={copy.home.averageDaily}
           value={formatMoney(analytics.averagePerDay, baseCurrency, copy.localeCode)}
@@ -739,60 +759,62 @@ function TripInsightsPanel({
           }
         />
         <InsightMetric
-          label={copy.home.pendingSync}
-          value={String(analytics.pending)}
+          label={copy.home.expenseDays}
+          value={
+            tripDayCount > 0
+              ? `${expenseDayCount}/${tripDayCount}`
+              : copy.common.notSet
+          }
+        />
+        <InsightMetric
+          label={copy.home.categoriesTracked}
+          value={String(trackedCategories)}
         />
       </div>
 
-      {analytics.count === 0 ? null : (
-        <div className="mt-4 grid gap-5 xl:grid-cols-2">
-          <div>
-            <h3 className="text-sm font-semibold">
+      {analytics.count === 0 ? (
+        <div className="mt-5 rounded-[1.15rem] bg-canvas/70 px-4 py-5 text-sm leading-6 text-ink-muted">
+          {copy.home.noAnalytics}
+        </div>
+      ) : (
+        <div className="mt-5 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.85fr)]">
+          <div className="min-w-0">
+            <h3 className="flex items-center gap-2 text-sm font-semibold">
+              <Flag className="size-4 text-passport-900" aria-hidden="true" />
               {copy.home.categoryBreakdown}
             </h3>
-            <div className="mt-3 grid gap-2.5">
-              {analytics.categoryTotals.map((item) => (
-                <BreakdownRow
-                  key={item.category}
-                  label={copy.categories[item.category]}
-                  value={formatMoney(item.total, baseCurrency, copy.localeCode)}
-                  ratio={maxCategoryTotal > 0 ? item.total / maxCategoryTotal : 0}
-                  tone={categoryMeta[item.category].tone}
-                />
-              ))}
+            <div className="mt-3 grid gap-2">
+              {analytics.categoryTotals.map((item) => {
+                const meta = categoryMeta[item.category];
+                const ratio = analytics.total > 0 ? item.total / analytics.total : 0;
+                return (
+                  <CategoryBreakdownRow
+                    key={item.category}
+                    icon={meta.icon}
+                    label={copy.categories[item.category]}
+                    value={formatMoney(item.total, baseCurrency, copy.localeCode)}
+                    percent={formatPercent(ratio, copy.localeCode)}
+                    ratio={ratio}
+                    tone={meta.tone}
+                    chartTone={meta.chartTone}
+                  />
+                );
+              })}
             </div>
           </div>
 
-          <div>
-            <h3 className="text-sm font-semibold">{copy.home.dailyTrend}</h3>
-            <div className="mt-3 flex h-28 items-end gap-2">
-              {visibleDailyTotals.map((item) => (
-                <div
-                  key={item.date}
-                  className="flex min-w-0 flex-1 flex-col items-center gap-2"
-                >
-                  <div className="flex h-20 w-full items-end rounded-full bg-canvas/70 p-1">
-                    <div
-                      className="w-full rounded-full bg-passport-900"
-                      style={{
-                        height: `${Math.max(
-                          10,
-                          maxDailyTotal > 0 ? (item.total / maxDailyTotal) * 100 : 0,
-                        )}%`,
-                      }}
-                      aria-label={`${formatDateLabel(item.date, locale)} ${formatMoney(
-                        item.total,
-                        baseCurrency,
-                        copy.localeCode,
-                      )}`}
-                    />
-                  </div>
-                  <span className="max-w-full truncate text-[0.68rem] text-ink-muted">
-                    {formatShortDateLabel(item.date, locale)}
-                  </span>
-                </div>
-              ))}
-            </div>
+          <div className="min-w-0">
+            <h3 className="flex items-center gap-2 text-sm font-semibold">
+              <TrendingUp className="size-4 text-passport-900" aria-hidden="true" />
+              {copy.home.dailyTrend}
+            </h3>
+            <DailyTrendChart
+              items={visibleDailyTotals}
+              baseCurrency={baseCurrency}
+              copy={copy}
+              locale={locale}
+              reduceMotion={reduceMotion}
+            />
           </div>
         </div>
       )}
@@ -809,28 +831,161 @@ function InsightMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function BreakdownRow({
+function CategoryBreakdownRow({
+  icon: Icon,
   label,
   value,
+  percent,
   ratio,
   tone,
+  chartTone,
 }: {
+  icon: LucideIcon;
   label: string;
   value: string;
+  percent: string;
   ratio: number;
   tone: string;
+  chartTone: string;
 }) {
+  const percentValue = Math.round(ratio * 100);
+
   return (
-    <div className="grid gap-1.5">
-      <div className="flex items-center justify-between gap-3 text-sm">
-        <span className="truncate text-ink">{label}</span>
-        <span className="shrink-0 font-medium tabular-nums">{value}</span>
+    <div className="group grid gap-2 rounded-[1rem] px-2 py-2 transition-[background-color,transform] duration-200 [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:bg-canvas/70">
+      <div className="flex min-w-0 items-center gap-3 text-sm">
+        <span className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${tone}`}>
+          <Icon className="size-4" aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-medium text-ink">{label}</span>
+          <span className="mt-0.5 block truncate text-xs text-ink-muted">
+            {percent}
+          </span>
+        </span>
+        <span className="shrink-0 text-right font-medium tabular-nums">
+          {value}
+        </span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-canvas">
+      <div
+        className="h-2.5 overflow-hidden rounded-full bg-ink/8"
+        role="meter"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percentValue}
+      >
         <div
-          className={`h-full rounded-full ${tone}`}
-          style={{ width: `${Math.max(6, ratio * 100)}%` }}
+          className={`h-full rounded-full ${chartTone}`}
+          style={{ width: `${Math.max(4, ratio * 100)}%` }}
         />
+      </div>
+    </div>
+  );
+}
+
+function DailyTrendChart({
+  items,
+  baseCurrency,
+  copy,
+  locale,
+  reduceMotion,
+}: {
+  items: DailyTotal[];
+  baseCurrency: Trip["baseCurrency"];
+  copy: FareFlowCopy;
+  locale: Locale;
+  reduceMotion: boolean | null;
+}) {
+  const titleId = useId();
+
+  if (items.length === 0) {
+    return (
+      <div className="mt-3 rounded-[1.15rem] bg-canvas/70 px-4 py-5 text-sm leading-6 text-ink-muted">
+        {copy.home.noAnalytics}
+      </div>
+    );
+  }
+
+  const width = 240;
+  const height = 96;
+  const padX = 10;
+  const padY = 12;
+  const maxTotal = Math.max(...items.map((item) => item.total), 1);
+  const points = items.map((item, index) => {
+    const x =
+      items.length === 1
+        ? width / 2
+        : padX + (index / (items.length - 1)) * (width - padX * 2);
+    const y =
+      height - padY - (item.total / maxTotal) * (height - padY * 2);
+    return { ...item, x, y };
+  });
+  const linePoints =
+    points.length === 1
+      ? `${padX},${points[0].y} ${width - padX},${points[0].y}`
+      : points.map((point) => `${point.x},${point.y}`).join(" ");
+  const areaPath = `M ${padX} ${height - padY} L ${linePoints.replaceAll(",", " ")} L ${width - padX} ${height - padY} Z`;
+  const peak = points.reduce((currentPeak, point) =>
+    point.total > currentPeak.total ? point : currentPeak,
+  );
+
+  return (
+    <div className="mt-3 grid gap-3">
+      <div className="rounded-[1.15rem] bg-canvas/70 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]">
+        <svg
+          role="img"
+          aria-labelledby={titleId}
+          viewBox={`0 0 ${width} ${height}`}
+          className="h-28 w-full overflow-visible"
+        >
+          <title id={titleId}>
+            {copy.home.dailyTrend}:{" "}
+            {formatMoney(peak.total, baseCurrency, copy.localeCode)}
+          </title>
+          <path d={areaPath} className="fill-passport-900/8" />
+          <motion.polyline
+            points={linePoints}
+            className="fill-none stroke-passport-900"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            initial={reduceMotion ? false : { pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 1 }}
+            transition={{ duration: reduceMotion ? 0 : 0.55, ease: [0.16, 1, 0.3, 1] }}
+          />
+          {points.map((point) => (
+            <circle
+              key={point.date}
+              cx={point.x}
+              cy={point.y}
+              r={point.total === peak.total ? 4.5 : 3.5}
+              className="fill-canvas stroke-passport-900"
+              strokeWidth="3"
+            >
+              <title>
+                {formatDateLabel(point.date, locale)} ·{" "}
+                {formatMoney(point.total, baseCurrency, copy.localeCode)}
+              </title>
+            </circle>
+          ))}
+        </svg>
+      </div>
+      <div
+        className="grid gap-2"
+        style={{
+          gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
+        }}
+      >
+        {points.map((point) => (
+          <div key={point.date} className="min-w-0 text-center">
+            <p className="truncate text-[0.68rem] text-ink-muted">
+              {formatShortDateLabel(point.date, locale)}
+            </p>
+            <p className="mt-1 truncate text-xs font-medium tabular-nums text-ink">
+              {formatTinyMoney(point.total, baseCurrency, copy.localeCode)}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -897,7 +1052,7 @@ function Metric({
   compact?: boolean;
 }) {
   return (
-    <div className="rounded-xl bg-white/[0.08] px-3 py-3">
+    <div className="grid min-h-20 content-between rounded-[1rem] bg-white/[0.08] px-3 py-3">
       <p className="font-casual text-xs text-canvas/60">{label}</p>
       <p
         className={`mt-1 font-semibold tabular-nums [overflow-wrap:anywhere] ${
@@ -992,14 +1147,15 @@ function ExpenseRow({
   const Icon = meta.icon;
   const deleteMutation = useDeleteExpense(expense.tripId);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   return (
     <motion.article
       layout
-      initial={{ opacity: 0, y: 10 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.16, 1, 0.3, 1] }}
       className="grid grid-cols-[2.75rem_minmax(0,1fr)_auto] gap-3 rounded-2xl bg-canvas-strong p-3 shadow-[0_1px_3px_rgba(35,42,40,0.10)] sm:grid-cols-[2.75rem_minmax(0,1fr)_minmax(7rem,auto)_auto] sm:items-center"
     >
       <div className={`flex size-11 items-center justify-center rounded-xl ${meta.tone}`}>
@@ -1106,15 +1262,19 @@ function TripHealthPanel({
   trip,
   total,
   pending,
+  dayCount,
+  expenseDayCount,
   copy,
 }: {
   trip: Trip | null;
   total: string;
   pending: number;
+  dayCount: number;
+  expenseDayCount: number;
   copy: FareFlowCopy;
 }) {
   return (
-    <div className="rounded-[1.35rem] bg-canvas-strong p-4 shadow-[0_1px_3px_rgba(35,42,40,0.10)]">
+    <div className="rounded-[1.45rem] bg-canvas-strong p-4 shadow-[0_1px_3px_rgba(35,42,40,0.10)]">
       <div className="flex items-center gap-2 text-sm font-medium">
         <Clock3 className="size-4 text-passport-900" aria-hidden="true" />
         {copy.home.tripState}
@@ -1130,6 +1290,8 @@ function TripHealthPanel({
             value={trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY}
           />
           <Info label={copy.home.currentTotal} value={total} />
+          <Info label={copy.home.tripDays} value={String(dayCount)} />
+          <Info label={copy.home.expenseDays} value={String(expenseDayCount)} />
           <Info label={copy.home.pendingSync} value={String(pending)} />
         </dl>
       </div>
@@ -1156,6 +1318,89 @@ function formatShortDateLabel(value: string, locale: Locale) {
     day: "numeric",
     timeZone: "Asia/Shanghai",
   }).format(new Date(`${value}T00:00:00+08:00`));
+}
+
+function formatPercent(value: number, localeCode: string) {
+  return new Intl.NumberFormat(localeCode, {
+    style: "percent",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatTinyMoney(
+  value: number,
+  currency: Trip["baseCurrency"],
+  localeCode: string,
+) {
+  if (value === 0) {
+    return "0";
+  }
+
+  const exponent = currencyMeta[currency].exponent;
+  const majorValue = value / 10 ** exponent;
+  return new Intl.NumberFormat(localeCode, {
+    style: "currency",
+    currency,
+    notation: Math.abs(majorValue) >= 10_000 ? "compact" : "standard",
+    maximumFractionDigits: Number.isInteger(majorValue) ? 0 : 2,
+  }).format(majorValue);
+}
+
+function countTripDays(trip: Trip) {
+  const start = dateFromInput(trip.startDate);
+  const end = dateFromInput(trip.endDate ?? trip.startDate);
+  const days = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
+  return Math.max(1, days);
+}
+
+function buildDailySeries(dailyTotals: DailyTotal[]): DailyTotal[] {
+  if (dailyTotals.length === 0) {
+    return [];
+  }
+
+  const byDate = new Map(dailyTotals.map((item) => [item.date, item]));
+  const sorted = [...dailyTotals].sort((a, b) => a.date.localeCompare(b.date));
+  const firstDate = dateFromInput(sorted[0].date);
+  const lastDate = dateFromInput(sorted[sorted.length - 1].date);
+  const sevenDayStart = addDays(lastDate, -6);
+  const startDate = firstDate > sevenDayStart ? firstDate : sevenDayStart;
+  const series: DailyTotal[] = [];
+
+  for (
+    let current = startDate;
+    current.getTime() <= lastDate.getTime();
+    current = addDays(current, 1)
+  ) {
+    const date = toDateInput(current);
+    const item = byDate.get(date);
+    series.push({
+      date,
+      total: item?.total ?? 0,
+      count: item?.count ?? 0,
+    });
+  }
+
+  return series;
+}
+
+function dateFromInput(value: string) {
+  return new Date(`${value}T00:00:00+08:00`);
+}
+
+function addDays(date: Date, days: number) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+  return nextDate;
+}
+
+function toDateInput(date: Date) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "Asia/Shanghai",
+  });
+  return formatter.format(date);
 }
 
 function LanguageToggle({
