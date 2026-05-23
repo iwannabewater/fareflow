@@ -13,6 +13,7 @@ import {
   Pencil,
   Languages,
   MapPinned,
+  PlaneTakeoff,
   Route,
   Rows3,
   ReceiptText,
@@ -102,7 +103,7 @@ function BrandMark({
     <div
       className={`flex shrink-0 items-center justify-center bg-ink text-canvas ${frameClass} ${className}`}
     >
-      <ReceiptText className="size-5" aria-hidden="true" />
+      <PlaneTakeoff className="size-5" aria-hidden="true" />
     </div>
   );
 }

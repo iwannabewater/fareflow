@@ -77,7 +77,7 @@ test("adds an expense offline and keeps it queued after network recovery", async
   await expect(page.getByText("待同步").first()).toBeVisible();
 
   await context.setOffline(false);
-  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await gotoWithNetworkRetry(page, "/");
   await expect(page.getByText("离线章鱼烧")).toBeVisible();
 });
 
@@ -100,6 +100,24 @@ async function openExpenseDrawer(page: import("@playwright/test").Page) {
   await expect(trigger).toBeEnabled();
   await trigger.click();
   await expect(page.getByRole("heading", { name: "新增支出" })).toBeVisible();
+}
+
+async function gotoWithNetworkRetry(
+  page: import("@playwright/test").Page,
+  url: string,
+) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      await page.goto(url, { waitUntil: "domcontentloaded" });
+      return;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes("ERR_ABORTED") || attempt === 1) {
+        throw error;
+      }
+      await page.waitForTimeout(250);
+    }
+  }
 }
 
 async function expectNoHorizontalOverflow(page: import("@playwright/test").Page) {
