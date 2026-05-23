@@ -9,14 +9,16 @@
 
   <g transform="translate(215 126)">
     <rect width="110" height="110" rx="30" fill="#293432"/>
-    <path d="M27 19h56c6 0 10 4 10 10v59l-8-5-8 5-8-5-8 5-8-5-8 5-8-5-8 5V29c0-6 4-10 10-10z" fill="#f5f0df"/>
-    <path d="M42 40h29M42 53h20M42 66h23" fill="none" stroke="#293432" stroke-width="4" stroke-linecap="round" opacity=".52"/>
-    <circle cx="75" cy="75" r="20" fill="#2d6487"/>
-    <path d="M62 73l27-8c3-1 6 2 5 5l-9 27c-1 3-4 3-6 1l-6-10-11-5c-3-2-3-9 0-10z" fill="#f5f0df"/>
-    <path d="M72 86l7 11" fill="none" stroke="#293432" stroke-width="4" stroke-linecap="round" opacity=".35"/>
-    <circle cx="35" cy="33" r="6" fill="#c85f3b"/>
-    <circle cx="82" cy="33" r="6" fill="#4f8a68"/>
-    <circle cx="36" cy="78" r="4" fill="#e7d18a" opacity=".9"/>
+    <path d="M25 18h47c6 0 11 5 11 11v57l-7-5-8 5-7-5-8 5-7-5-8 5-7-5-7 5V29c0-6 5-11 11-11z" fill="#f5f0df"/>
+    <path d="M39 38h28M39 51h21M39 64h24" fill="none" stroke="#293432" stroke-width="4" stroke-linecap="round" opacity=".52"/>
+    <circle cx="76" cy="76" r="22" fill="#293432" stroke="#f5f0df" stroke-width="3"/>
+    <g transform="translate(64 65) scale(1)" fill="none" stroke="#f5f0df" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 22h20"/>
+      <path d="M6.36 17.4 4 17l-2-4 1.1-.55a2 2 0 0 1 1.8 0l.17.1a2 2 0 0 0 1.8 0L8 12 5 6l.9-.45a2 2 0 0 1 2.09.2l4.02 3a2 2 0 0 0 2.1.2l4.19-2.06a2.41 2.41 0 0 1 1.73-.17L21 7a1.4 1.4 0 0 1 .87 1.99l-.38.76c-.23.46-.6.84-1.07 1.08L7.58 17.2a2 2 0 0 1-1.22.18Z"/>
+    </g>
+    <circle cx="33" cy="32" r="6" fill="#c85f3b"/>
+    <circle cx="79" cy="32" r="6" fill="#4f8a68"/>
+    <circle cx="33" cy="77" r="4" fill="#e7d18a" opacity=".9"/>
   </g>
   <text x="270" y="278" text-anchor="middle" fill="#293432" font-family="Georgia, serif" font-size="38" font-weight="700">FareFlow</text>
   <text x="270" y="306" text-anchor="middle" fill="#66706d" font-family="Arial, sans-serif" font-size="15">Offline-first</text>
