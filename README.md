@@ -89,7 +89,3 @@ Supabase magic links are confirmed at `/auth/confirm`. FareFlow supports hash-se
 The repository is connected to Vercel Git Integration. Pushes to `main` are verified by GitHub Actions and deployed by Vercel.
 
 Use [docs/devops.md](docs/devops.md) for the Supabase setup, Vercel environment configuration, Cloudflare cache guidance, and release smoke checklist.
-
-## Repository Guidance
-
-Contributor and agent expectations live in [AGENTS.md](AGENTS.md). Product, domain, and design constraints live in [CONTEXT.md](CONTEXT.md) and [DESIGN.md](DESIGN.md).
