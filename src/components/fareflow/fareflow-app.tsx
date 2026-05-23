@@ -796,7 +796,7 @@ function TripInsightsPanel({
           {copy.home.noAnalytics}
         </div>
       ) : (
-        <div className="mt-5 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.85fr)]">
+        <div className="mt-5 grid gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(18rem,0.85fr)]">
           <div className="min-w-0">
             <div className="flex min-w-0 items-center justify-between gap-3">
               <h3 className="flex min-w-0 items-center gap-2 text-sm font-semibold">
@@ -945,90 +945,106 @@ function CategoryDonutChart({
   const [activeCategory, setActiveCategory] = useState<
     CategoryInsightSlice["category"] | null
   >(slices[0]?.category ?? null);
+  const resolvedActiveCategory = slices.some(
+    (slice) => slice.category === activeCategory,
+  )
+    ? activeCategory
+    : slices[0]?.category;
   const activeSlice =
-    slices.find((slice) => slice.category === activeCategory) ?? slices[0];
-  const donutSegments = slices.map((slice, index) => ({
-    slice,
-    dash: Math.max(0.7, slice.ratio * 100 - 1.1),
-    segmentOffset:
-      25 -
-      slices
-        .slice(0, index)
-        .reduce((total, previousSlice) => total + previousSlice.ratio * 100, 0),
-  }));
+    slices.find((slice) => slice.category === resolvedActiveCategory) ??
+    slices[0];
+  const donutSegments = buildDonutSegments(slices);
 
   return (
-    <div className="mt-3 grid max-w-full gap-4 overflow-hidden rounded-[1.15rem] bg-canvas/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]">
-      <div className="relative mx-auto size-44">
-        <svg
-          role="img"
-          aria-labelledby={titleId}
-          viewBox="0 0 44 44"
-          className="size-full -rotate-90 overflow-visible"
-        >
-          <title id={titleId}>{copy.home.categoryDonutAria}</title>
-          <circle
-            cx="22"
-            cy="22"
-            r="15.9154943092"
-            fill="none"
-            className="stroke-ink/8"
-            strokeWidth="5.8"
-          />
-          {donutSegments.map(({ slice, dash, segmentOffset }) => {
-            const isActive = activeSlice?.category === slice.category;
+    <div className="mt-3 grid max-w-full gap-3 overflow-hidden rounded-[1.15rem] bg-canvas/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]">
+      <div className="relative grid min-h-56 overflow-hidden place-items-center rounded-[1rem] bg-canvas px-3 py-4 shadow-[0_1px_3px_rgba(35,42,40,0.08)]">
+        <div className="relative size-52 max-w-full">
+          <svg
+            role="img"
+            aria-labelledby={titleId}
+            viewBox="0 0 120 120"
+            className="size-full"
+          >
+            <title id={titleId}>{copy.home.categoryDonutAria}</title>
+            <circle
+              cx="60"
+              cy="60"
+              r="42"
+              fill="none"
+              className="stroke-ink/8"
+              strokeWidth="16"
+            />
+            {donutSegments.map((segment, index) => {
+              const isActive = activeSlice?.category === segment.slice.category;
 
-            return (
-              <g
-                key={slice.category}
-                aria-hidden="true"
-                className="cursor-pointer"
-                onMouseEnter={() => setActiveCategory(slice.category)}
-                onPointerDown={() => setActiveCategory(slice.category)}
-              >
-                <motion.circle
-                  cx="22"
-                  cy="22"
-                  r="15.9154943092"
+              if (segment.fullCircle) {
+                return (
+                  <motion.circle
+                    key={segment.slice.category}
+                    cx="60"
+                    cy="60"
+                    r="42"
+                    fill="none"
+                    stroke={segment.slice.chartColor}
+                    strokeWidth={isActive ? 18 : 16}
+                    aria-hidden="true"
+                    className="cursor-pointer transition-[opacity,stroke-width] duration-200"
+                    initial={reduceMotion ? false : { opacity: 0 }}
+                    animate={{ opacity: isActive ? 1 : 0.82 }}
+                    transition={{
+                      duration: reduceMotion ? 0 : 0.24,
+                      delay: reduceMotion ? 0 : index * 0.025,
+                      ease: [0.16, 1, 0.3, 1],
+                    }}
+                    onMouseEnter={() => setActiveCategory(segment.slice.category)}
+                    onPointerDown={() => setActiveCategory(segment.slice.category)}
+                  />
+                );
+              }
+
+              return (
+                <motion.path
+                  key={segment.slice.category}
+                  d={segment.path}
                   fill="none"
-                  stroke={slice.chartColor}
-                  strokeWidth={isActive ? 6.7 : 5.8}
-                  strokeLinecap="round"
-                  strokeDasharray={`${dash} ${100 - dash}`}
-                  strokeDashoffset={segmentOffset}
-                  className="transition-[opacity,stroke-width] duration-200"
+                  stroke={segment.slice.chartColor}
+                  strokeWidth={isActive ? 18 : 16}
+                  strokeLinecap="butt"
+                  aria-hidden="true"
+                  className="cursor-pointer transition-[opacity,stroke-width] duration-200"
                   initial={reduceMotion ? false : { opacity: 0 }}
-                  animate={{
-                    opacity: isActive ? 1 : 0.78,
-                  }}
+                  animate={{ opacity: isActive ? 1 : 0.82 }}
                   transition={{
                     duration: reduceMotion ? 0 : 0.24,
+                    delay: reduceMotion ? 0 : index * 0.025,
                     ease: [0.16, 1, 0.3, 1],
                   }}
+                  onMouseEnter={() => setActiveCategory(segment.slice.category)}
+                  onPointerDown={() => setActiveCategory(segment.slice.category)}
                 />
-              </g>
-            );
-          })}
-        </svg>
-        <div className="absolute inset-0 grid place-items-center text-center">
-          <div
-            role="status"
-            aria-live="polite"
-            className="grid max-w-24 justify-items-center"
-          >
-            <p className="text-2xl font-semibold tabular-nums text-ink">
-              {activeSlice?.percent ?? "0%"}
-            </p>
-            <p className="mt-0.5 max-w-full truncate text-xs font-medium text-ink">
-              {activeSlice?.label ?? copy.home.categoryBreakdown}
-            </p>
-            <p className="mt-0.5 max-w-full truncate text-[0.68rem] text-ink-muted tabular-nums">
-              {activeSlice?.value ?? ""}
-            </p>
+              );
+            })}
+          </svg>
+          <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+            <div
+              role="status"
+              aria-live="polite"
+              className="grid max-w-28 justify-items-center rounded-full bg-canvas/92 px-3 py-2 shadow-[0_1px_3px_rgba(35,42,40,0.08)]"
+            >
+              <p className="text-3xl font-semibold leading-none tabular-nums text-ink">
+                {activeSlice?.percent ?? "0%"}
+              </p>
+              <p className="mt-1 max-w-full truncate text-xs font-medium text-ink">
+                {activeSlice?.label ?? copy.home.categoryBreakdown}
+              </p>
+              <p className="mt-0.5 max-w-full truncate text-[0.68rem] text-ink-muted tabular-nums">
+                {activeSlice?.value ?? ""}
+              </p>
+            </div>
           </div>
         </div>
       </div>
-      <div className="grid min-w-0 gap-1.5">
+      <div className="grid min-w-0 content-center gap-1.5">
         {slices.map((slice) => {
           const Icon = slice.icon;
           const isActive = activeSlice?.category === slice.category;
@@ -1037,7 +1053,7 @@ function CategoryDonutChart({
             <button
               type="button"
               key={slice.category}
-              className={`grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-xl px-2 py-2 text-left text-sm transition-[background-color,box-shadow,transform] duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 [@media(hover:hover)]:hover:-translate-y-0.5 ${
+              className={`grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm transition-[background-color,box-shadow,transform] duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 [@media(hover:hover)]:hover:-translate-y-0.5 ${
                 isActive
                   ? "bg-canvas shadow-[0_1px_3px_rgba(35,42,40,0.10)]"
                   : "hover:bg-canvas"
@@ -1054,12 +1070,21 @@ function CategoryDonutChart({
               </span>
               <span className="min-w-0">
                 <span className="block font-medium">{slice.label}</span>
-                <span className="mt-0.5 block text-xs text-ink-muted tabular-nums">
+                <span className="mt-0.5 block truncate text-xs text-ink-muted tabular-nums">
                   {slice.percent} · {slice.value}
+                </span>
+                <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-ink/8">
+                  <span
+                    className="block h-full rounded-full"
+                    style={{
+                      width: `${Math.max(4, slice.ratio * 100)}%`,
+                      backgroundColor: slice.chartColor,
+                    }}
+                  />
                 </span>
               </span>
               <span
-                className="h-8 w-1 rounded-full"
+                className="h-9 w-1 rounded-full transition-colors"
                 style={{
                   backgroundColor: isActive ? slice.chartColor : "transparent",
                 }}
@@ -1071,6 +1096,70 @@ function CategoryDonutChart({
       </div>
     </div>
   );
+}
+
+type DonutSegment = {
+  slice: CategoryInsightSlice;
+  path: string;
+  fullCircle: boolean;
+};
+
+function buildDonutSegments(slices: CategoryInsightSlice[]): DonutSegment[] {
+  let cursor = -90;
+
+  return slices.map((slice) => {
+    const sweep = slice.ratio * 360;
+    const gap = slices.length > 1 ? Math.min(2.4, sweep * 0.28) : 0;
+    const startAngle = cursor + gap / 2;
+    const endAngle = cursor + sweep - gap / 2;
+    cursor += sweep;
+
+    return {
+      slice,
+      path: describeArc(60, 60, 42, startAngle, endAngle),
+      fullCircle: sweep >= 359.6,
+    };
+  });
+}
+
+function describeArc(
+  centerX: number,
+  centerY: number,
+  radius: number,
+  startAngle: number,
+  endAngle: number,
+) {
+  const start = polarToCartesian(centerX, centerY, radius, startAngle);
+  const end = polarToCartesian(centerX, centerY, radius, endAngle);
+  const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+
+  return [
+    "M",
+    start.x,
+    start.y,
+    "A",
+    radius,
+    radius,
+    0,
+    largeArcFlag,
+    1,
+    end.x,
+    end.y,
+  ].join(" ");
+}
+
+function polarToCartesian(
+  centerX: number,
+  centerY: number,
+  radius: number,
+  angleInDegrees: number,
+) {
+  const angleInRadians = (angleInDegrees * Math.PI) / 180;
+
+  return {
+    x: centerX + radius * Math.cos(angleInRadians),
+    y: centerY + radius * Math.sin(angleInRadians),
+  };
 }
 
 function DailyTrendChart({

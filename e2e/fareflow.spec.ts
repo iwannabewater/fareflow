@@ -17,7 +17,7 @@ test("creates a trip, adds, edits, exports, and deletes an expense", async ({
 
   await expectCurrentTrip(page, "首尔周末");
 
-  await page.getByRole("button", { name: "添加支出" }).first().click();
+  await openExpenseDrawer(page);
   await expectNoHorizontalOverflow(page);
   await page.getByLabel("金额").fill("42.80");
   await page.getByRole("button", { name: "交通", exact: true }).click();
@@ -25,6 +25,7 @@ test("creates a trip, adds, edits, exports, and deletes an expense", async ({
   await expectNoHorizontalOverflow(page);
   await expect(page.getByText("预览")).toBeVisible();
   await page.getByRole("button", { name: "保存支出" }).click();
+  await expect(page.getByRole("heading", { name: "新增支出" })).toBeHidden();
 
   await expect(page.getByText("机场巴士")).toBeVisible();
   await page.getByRole("button", { name: "圆环" }).click();
@@ -65,17 +66,18 @@ test("adds an expense offline and keeps it queued after network recovery", async
   await expectCurrentTrip(page, "离线测试");
 
   await context.setOffline(true);
-  await page.getByRole("button", { name: "添加支出" }).first().click();
+  await openExpenseDrawer(page);
   await expectNoHorizontalOverflow(page);
   await page.getByLabel("金额").fill("18");
   await page.getByLabel("备注").fill("离线章鱼烧");
   await page.getByRole("button", { name: "保存支出" }).click();
+  await expect(page.getByRole("heading", { name: "新增支出" })).toBeHidden();
 
   await expect(page.getByText("离线章鱼烧")).toBeVisible();
   await expect(page.getByText("待同步").first()).toBeVisible();
 
   await context.setOffline(false);
-  await page.reload();
+  await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(page.getByText("离线章鱼烧")).toBeVisible();
 });
 
@@ -91,6 +93,13 @@ async function expectCurrentTrip(
 async function openTripDrawer(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "旅程" }).first().click();
   await expect(page.getByRole("heading", { name: "新建旅程" })).toBeVisible();
+}
+
+async function openExpenseDrawer(page: import("@playwright/test").Page) {
+  const trigger = page.getByRole("button", { name: "添加支出" }).last();
+  await expect(trigger).toBeEnabled();
+  await trigger.click();
+  await expect(page.getByRole("heading", { name: "新增支出" })).toBeVisible();
 }
 
 async function expectNoHorizontalOverflow(page: import("@playwright/test").Page) {

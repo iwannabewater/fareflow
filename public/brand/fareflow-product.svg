@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">FareFlow product preview</title>
+  <desc id="desc">A warm travel ledger interface with the FareFlow logo, trip summary, category analytics, and expense rows.</desc>
+  <rect width="1200" height="630" rx="44" fill="#f5f0df"/>
+  <path d="M82 502c246 70 554 18 815-155" fill="none" stroke="#d9ceb4" stroke-width="2"/>
+  <path d="M128 123c0-35 28-63 63-63h818c35 0 63 28 63 63v384c0 35-28 63-63 63H191c-35 0-63-28-63-63z" fill="#eee6d2" stroke="#ddd1b8" stroke-width="2"/>
+  <rect x="168" y="100" width="204" height="430" rx="32" fill="#fbf8ef" stroke="#ddd1b8" stroke-width="2"/>
+  <rect x="410" y="100" width="622" height="430" rx="32" fill="#fbf8ef" stroke="#ddd1b8" stroke-width="2"/>
+
+  <g transform="translate(198 132)">
+    <rect width="72" height="72" rx="18" fill="#293432"/>
+    <path d="M17 46c21 7 43 2 61-14" fill="none" stroke="#f5f0df" stroke-width="5" stroke-linecap="round"/>
+    <path d="M26 28l34-9c4-1 7 2 6 6L56 57c-1 4-6 5-8 1l-8-13-14-7c-4-2-3-8 0-10z" fill="#2d6487"/>
+    <path d="M39 43l11 14" fill="none" stroke="#f5f0df" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="25" cy="50" r="5" fill="#c85f3b"/>
+    <circle cx="61" cy="19" r="4" fill="#4f8a68"/>
+  </g>
+  <text x="198" y="236" fill="#293432" font-family="Georgia, serif" font-size="40" font-weight="700">FareFlow</text>
+  <text x="198" y="267" fill="#66706d" font-family="Georgia, serif" font-size="18">Offline-first travel ledger</text>
+  <rect x="198" y="306" width="122" height="34" rx="17" fill="#293432"/>
+  <text x="221" y="329" fill="#f5f0df" font-family="Arial, sans-serif" font-size="14" font-weight="700">Add expense</text>
+  <rect x="198" y="368" width="132" height="18" rx="9" fill="#dbe7df"/>
+  <rect x="198" y="400" width="102" height="18" rx="9" fill="#d8e6ee"/>
+  <rect x="198" y="432" width="142" height="18" rx="9" fill="#ecd3c5"/>
+
+  <g transform="translate(450 132)">
+    <text x="0" y="32" fill="#66706d" font-family="Arial, sans-serif" font-size="18">Current journey</text>
+    <text x="0" y="74" fill="#293432" font-family="Georgia, serif" font-size="42" font-weight="700">Kyoto Spring Route</text>
+    <rect y="112" width="256" height="126" rx="24" fill="#293432"/>
+    <text x="26" y="152" fill="#c9d6d1" font-family="Arial, sans-serif" font-size="16">Trip total</text>
+    <text x="26" y="204" fill="#fbf8ef" font-family="Georgia, serif" font-size="44" font-weight="700">¥8,371.64</text>
+    <rect x="286" y="112" width="256" height="126" rx="24" fill="#eee6d2" stroke="#ddd1b8" stroke-width="2"/>
+    <text x="312" y="152" fill="#66706d" font-family="Arial, sans-serif" font-size="16">Top category</text>
+    <text x="312" y="204" fill="#293432" font-family="Georgia, serif" font-size="36" font-weight="700">Lodging</text>
+
+    <rect y="280" width="542" height="178" rx="28" fill="#f5f0df" stroke="#ddd1b8" stroke-width="2"/>
+    <text x="28" y="326" fill="#293432" font-family="Georgia, serif" font-size="24" font-weight="700">Category breakdown</text>
+    <g transform="translate(346 308)">
+      <circle cx="72" cy="72" r="54" fill="none" stroke="#e3dac3" stroke-width="17"/>
+      <path d="M72 18a54 54 0 0 1 41 89" fill="none" stroke="#4f8a68" stroke-width="17"/>
+      <path d="M113 107a54 54 0 0 1-76 4" fill="none" stroke="#c85f3b" stroke-width="17"/>
+      <path d="M37 111a54 54 0 0 1 35-93" fill="none" stroke="#2d6487" stroke-width="17"/>
+      <circle cx="72" cy="72" r="32" fill="#fbf8ef"/>
+      <text x="72" y="70" text-anchor="middle" fill="#293432" font-family="Georgia, serif" font-size="24" font-weight="700">59%</text>
+      <text x="72" y="91" text-anchor="middle" fill="#66706d" font-family="Arial, sans-serif" font-size="12">Lodging</text>
+    </g>
+    <g transform="translate(28 352)">
+      <rect width="250" height="12" rx="6" fill="#e3dac3"/>
+      <rect width="148" height="12" rx="6" fill="#4f8a68"/>
+      <text y="38" fill="#293432" font-family="Arial, sans-serif" font-size="16">Lodging</text>
+      <text x="206" y="38" fill="#293432" font-family="Arial, sans-serif" font-size="16" font-weight="700">59%</text>
+      <rect y="62" width="250" height="12" rx="6" fill="#e3dac3"/>
+      <rect y="62" width="96" height="12" rx="6" fill="#c85f3b"/>
+      <text y="100" fill="#293432" font-family="Arial, sans-serif" font-size="16">Food</text>
+      <text x="206" y="100" fill="#293432" font-family="Arial, sans-serif" font-size="16" font-weight="700">38%</text>
+    </g>
+  </g>
+</svg>

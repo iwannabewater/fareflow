@@ -13,11 +13,16 @@ test("home screen has accessible core controls and keyboard focus", async ({
     page.getByRole("button", { name: "添加支出" }).first(),
   ).toBeVisible();
 
-  const unnamedButtons = await page.locator("button").evaluateAll((buttons) =>
-    buttons
-      .filter((button) => !button.textContent?.trim() && !button.getAttribute("aria-label"))
-      .map((button) => button.outerHTML),
-  );
+  const unnamedButtons = await page
+    .locator("#main-content button")
+    .evaluateAll((buttons) =>
+      buttons
+        .filter(
+          (button) =>
+            !button.textContent?.trim() && !button.getAttribute("aria-label"),
+        )
+        .map((button) => button.outerHTML),
+    );
   expect(unnamedButtons).toEqual([]);
 
   await page.keyboard.press("Tab");

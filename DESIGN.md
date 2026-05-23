@@ -53,7 +53,7 @@ When multiple Trips exist, the current Trip must not be the only visible journey
 
 ## Data Visualization
 
-Category breakdown is a ranked list with meters. The meter color must come from a dedicated chart token, not from the row surface token, so every category remains visible on the paper track. Daily trend uses a compact sparkline with full values in tooltips and short values in mobile labels.
+Category breakdown is a ranked list with meters plus an optional share donut. Donut segments must be drawn as non-overlapping geometric arcs, not rounded stroke dashes, so small categories remain legible without colored caps stacking on top of each other. The meter and donut colors must come from dedicated chart tokens, not from row surface tokens. Daily trend uses a compact sparkline with full values in tooltips and short values in mobile labels.
 
 ## Localization
 
