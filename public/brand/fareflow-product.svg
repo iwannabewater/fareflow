@@ -7,21 +7,25 @@
   <rect x="168" y="100" width="204" height="430" rx="32" fill="#fbf8ef" stroke="#ddd1b8" stroke-width="2"/>
   <rect x="410" y="100" width="622" height="430" rx="32" fill="#fbf8ef" stroke="#ddd1b8" stroke-width="2"/>
 
-  <g transform="translate(198 132)">
-    <rect width="72" height="72" rx="18" fill="#293432"/>
-    <path d="M17 46c21 7 43 2 61-14" fill="none" stroke="#f5f0df" stroke-width="5" stroke-linecap="round"/>
-    <path d="M26 28l34-9c4-1 7 2 6 6L56 57c-1 4-6 5-8 1l-8-13-14-7c-4-2-3-8 0-10z" fill="#2d6487"/>
-    <path d="M39 43l11 14" fill="none" stroke="#f5f0df" stroke-width="4" stroke-linecap="round"/>
-    <circle cx="25" cy="50" r="5" fill="#c85f3b"/>
-    <circle cx="61" cy="19" r="4" fill="#4f8a68"/>
+  <g transform="translate(215 126)">
+    <rect width="110" height="110" rx="30" fill="#293432"/>
+    <path d="M33 22h44c5 0 9 4 9 9v55l-8-5-8 5-8-5-8 5-8-5-8 5V31c0-5 4-9 9-9z" fill="#f5f0df"/>
+    <path d="M46 42h27M46 55h18M46 68h22" fill="none" stroke="#293432" stroke-width="4" stroke-linecap="round" opacity=".52"/>
+    <circle cx="73" cy="72" r="18" fill="#2d6487"/>
+    <path d="M78 57l7 28-25-11z" fill="#f5f0df"/>
+    <path d="M76 62l-5 14" fill="none" stroke="#293432" stroke-width="3" stroke-linecap="round" opacity=".35"/>
+    <circle cx="35" cy="34" r="6" fill="#c85f3b"/>
+    <circle cx="82" cy="34" r="6" fill="#4f8a68"/>
+    <circle cx="37" cy="76" r="4" fill="#e7d18a" opacity=".9"/>
   </g>
-  <text x="198" y="236" fill="#293432" font-family="Georgia, serif" font-size="40" font-weight="700">FareFlow</text>
-  <text x="198" y="267" fill="#66706d" font-family="Georgia, serif" font-size="18">Offline-first travel ledger</text>
-  <rect x="198" y="306" width="122" height="34" rx="17" fill="#293432"/>
-  <text x="221" y="329" fill="#f5f0df" font-family="Arial, sans-serif" font-size="14" font-weight="700">Add expense</text>
-  <rect x="198" y="368" width="132" height="18" rx="9" fill="#dbe7df"/>
-  <rect x="198" y="400" width="102" height="18" rx="9" fill="#d8e6ee"/>
-  <rect x="198" y="432" width="142" height="18" rx="9" fill="#ecd3c5"/>
+  <text x="270" y="278" text-anchor="middle" fill="#293432" font-family="Georgia, serif" font-size="38" font-weight="700">FareFlow</text>
+  <text x="270" y="306" text-anchor="middle" fill="#66706d" font-family="Arial, sans-serif" font-size="15">Offline-first</text>
+  <text x="270" y="328" text-anchor="middle" fill="#66706d" font-family="Arial, sans-serif" font-size="15">travel ledger</text>
+  <rect x="208" y="362" width="124" height="36" rx="18" fill="#293432"/>
+  <text x="270" y="385" text-anchor="middle" fill="#f5f0df" font-family="Arial, sans-serif" font-size="14" font-weight="700">Add expense</text>
+  <rect x="208" y="430" width="132" height="18" rx="9" fill="#dbe7df"/>
+  <rect x="222" y="462" width="104" height="18" rx="9" fill="#d8e6ee"/>
+  <rect x="208" y="494" width="142" height="18" rx="9" fill="#ecd3c5"/>
 
   <g transform="translate(450 132)">
     <text x="0" y="32" fill="#66706d" font-family="Arial, sans-serif" font-size="18">Current journey</text>

@@ -45,6 +45,11 @@ yarn-error.log*
 # supabase local link metadata
 /supabase/.temp/
 
+# local agent context
+/AGENTS.md
+/CONTEXT.md
+/DESIGN.md
+
 # typescript
 *.tsbuildinfo
 .env*.local

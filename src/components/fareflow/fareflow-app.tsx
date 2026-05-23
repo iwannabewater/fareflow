@@ -15,7 +15,6 @@ import {
   MapPinned,
   Route,
   Rows3,
-  PlaneTakeoff,
   ReceiptText,
   TrendingUp,
   Trash2,
@@ -89,6 +88,25 @@ function getServerSnapshot() {
   return false;
 }
 
+function BrandMark({
+  size = "md",
+  className = "",
+}: {
+  size?: "md" | "sm";
+  className?: string;
+}) {
+  const frameClass =
+    size === "sm" ? "size-10 rounded-2xl" : "size-11 rounded-2xl";
+
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-center bg-ink text-canvas ${frameClass} ${className}`}
+    >
+      <ReceiptText className="size-5" aria-hidden="true" />
+    </div>
+  );
+}
+
 function FareFlowHydrationShell() {
   return (
     <main
@@ -99,9 +117,7 @@ function FareFlowHydrationShell() {
       <div className="mx-auto grid min-h-svh w-full max-w-[112rem] lg:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[20rem_minmax(0,1fr)]">
         <aside className="hidden border-r border-ink/8 bg-canvas-strong px-4 py-6 xl:px-6 lg:block">
           <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-ink text-canvas">
-              <PlaneTakeoff className="size-5" aria-hidden="true" />
-            </div>
+            <BrandMark />
             <div>
               <p className="font-casual text-xl font-bold">FareFlow</p>
               <Skeleton className="mt-2 h-4 w-36" />
@@ -117,9 +133,7 @@ function FareFlowHydrationShell() {
           <header className="sticky top-0 z-30 border-b border-ink/8 bg-canvas px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))] lg:px-6 lg:pt-6 xl:px-8">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-2xl bg-ink text-canvas lg:hidden">
-                  <PlaneTakeoff className="size-5" aria-hidden="true" />
-                </div>
+                <BrandMark size="sm" className="lg:hidden" />
                 <div>
                   <p className="font-casual text-xl font-bold lg:hidden">
                     FareFlow
@@ -200,9 +214,7 @@ function FareFlowDashboard() {
       <div className="mx-auto grid min-h-svh w-full max-w-[112rem] lg:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[20rem_minmax(0,1fr)]">
         <aside className="hidden border-r border-ink/8 bg-canvas-strong px-4 py-6 xl:px-6 lg:sticky lg:top-0 lg:block lg:max-h-svh lg:overflow-y-auto">
           <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-ink text-canvas">
-              <PlaneTakeoff className="size-5" aria-hidden="true" />
-            </div>
+            <BrandMark />
             <div>
               <p className="font-casual text-xl font-bold">
                 {t.appName}
@@ -220,9 +232,7 @@ function FareFlowDashboard() {
           <header className="sticky top-0 z-30 border-b border-ink/8 bg-canvas px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))] shadow-[0_1px_0_rgba(35,42,40,0.04)] lg:px-6 lg:pt-6 xl:px-8">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3 lg:hidden">
-                <div className="flex size-10 items-center justify-center rounded-2xl bg-ink text-canvas">
-                  <PlaneTakeoff className="size-5" aria-hidden="true" />
-                </div>
+                <BrandMark size="sm" />
                 <div className="min-w-0">
                   <p className="font-casual truncate text-base font-bold min-[430px]:text-lg">
                     {t.appName}
