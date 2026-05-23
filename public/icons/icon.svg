@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="FareFlow app icon">
   <rect width="512" height="512" rx="112" fill="#293432"/>
-  <path d="M154 90h204c25 0 45 20 45 45v257l-37-24-37 24-37-24-37 24-37-24-37 24-37-24-37 24V135c0-25 20-45 45-45z" fill="#f5f0df"/>
-  <path d="M216 184h124M216 248h86M216 312h100" fill="none" stroke="#293432" stroke-width="20" stroke-linecap="round" opacity=".52"/>
-  <circle cx="333" cy="333" r="82" fill="#2d6487"/>
-  <path d="M355 265l33 129-115-54z" fill="#f5f0df"/>
-  <path d="M345 291l-30 70" fill="none" stroke="#293432" stroke-width="14" stroke-linecap="round" opacity=".35"/>
-  <circle cx="160" cy="151" r="28" fill="#c85f3b"/>
-  <circle cx="372" cy="151" r="28" fill="#4f8a68"/>
-  <circle cx="164" cy="356" r="20" fill="#e7d18a" opacity=".9"/>
+  <path d="M135 86h242c27 0 49 22 49 49v258l-36-24-37 24-36-24-37 24-36-24-37 24-36-24-36 24V135c0-27 22-49 49-49z" fill="#f5f0df"/>
+  <path d="M202 180h118M202 244h82M202 308h94" fill="none" stroke="#293432" stroke-width="20" stroke-linecap="round" opacity=".52"/>
+  <circle cx="336" cy="336" r="74" fill="#2d6487"/>
+  <path d="M292 330l94-28c8-2 16 6 13 14l-31 93c-3 8-14 9-18 2l-20-34-37-18c-8-4-8-26-1-29z" fill="#f5f0df"/>
+  <path d="M328 375l22 35" fill="none" stroke="#293432" stroke-width="13" stroke-linecap="round" opacity=".35"/>
+  <circle cx="153" cy="151" r="28" fill="#c85f3b"/>
+  <circle cx="359" cy="151" r="28" fill="#4f8a68"/>
+  <circle cx="154" cy="356" r="20" fill="#e7d18a" opacity=".9"/>
 </svg>

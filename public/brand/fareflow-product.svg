@@ -9,14 +9,14 @@
 
   <g transform="translate(215 126)">
     <rect width="110" height="110" rx="30" fill="#293432"/>
-    <path d="M33 22h44c5 0 9 4 9 9v55l-8-5-8 5-8-5-8 5-8-5-8 5V31c0-5 4-9 9-9z" fill="#f5f0df"/>
-    <path d="M46 42h27M46 55h18M46 68h22" fill="none" stroke="#293432" stroke-width="4" stroke-linecap="round" opacity=".52"/>
-    <circle cx="73" cy="72" r="18" fill="#2d6487"/>
-    <path d="M78 57l7 28-25-11z" fill="#f5f0df"/>
-    <path d="M76 62l-5 14" fill="none" stroke="#293432" stroke-width="3" stroke-linecap="round" opacity=".35"/>
-    <circle cx="35" cy="34" r="6" fill="#c85f3b"/>
-    <circle cx="82" cy="34" r="6" fill="#4f8a68"/>
-    <circle cx="37" cy="76" r="4" fill="#e7d18a" opacity=".9"/>
+    <path d="M27 19h56c6 0 10 4 10 10v59l-8-5-8 5-8-5-8 5-8-5-8 5-8-5-8 5V29c0-6 4-10 10-10z" fill="#f5f0df"/>
+    <path d="M42 40h29M42 53h20M42 66h23" fill="none" stroke="#293432" stroke-width="4" stroke-linecap="round" opacity=".52"/>
+    <circle cx="75" cy="75" r="20" fill="#2d6487"/>
+    <path d="M62 73l27-8c3-1 6 2 5 5l-9 27c-1 3-4 3-6 1l-6-10-11-5c-3-2-3-9 0-10z" fill="#f5f0df"/>
+    <path d="M72 86l7 11" fill="none" stroke="#293432" stroke-width="4" stroke-linecap="round" opacity=".35"/>
+    <circle cx="35" cy="33" r="6" fill="#c85f3b"/>
+    <circle cx="82" cy="33" r="6" fill="#4f8a68"/>
+    <circle cx="36" cy="78" r="4" fill="#e7d18a" opacity=".9"/>
   </g>
   <text x="270" y="278" text-anchor="middle" fill="#293432" font-family="Georgia, serif" font-size="38" font-weight="700">FareFlow</text>
   <text x="270" y="306" text-anchor="middle" fill="#66706d" font-family="Arial, sans-serif" font-size="15">Offline-first</text>
