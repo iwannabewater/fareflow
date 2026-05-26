@@ -8,12 +8,14 @@ import {
   ChevronDown,
   CircleDollarSign,
   Clock3,
+  Compass,
   Download,
   Flag,
   Pencil,
   Languages,
   MapPinned,
   PlaneTakeoff,
+  Plus,
   Route,
   Rows3,
   ReceiptText,
@@ -63,6 +65,9 @@ import {
 import { useDeleteExpense, useExpenses } from "@/hooks/use-expenses";
 import { useDeleteTrip, useTrips } from "@/hooks/use-trips";
 
+let hasHydratedDashboard = false;
+const hydrationListeners = new Set<() => void>();
+
 export function FareFlowApp() {
   const isClient = useSyncExternalStore(
     subscribeToHydration,
@@ -77,12 +82,23 @@ export function FareFlowApp() {
   return <FareFlowDashboard />;
 }
 
-function subscribeToHydration() {
-  return () => {};
+function subscribeToHydration(onStoreChange: () => void) {
+  hydrationListeners.add(onStoreChange);
+
+  if (!hasHydratedDashboard) {
+    window.setTimeout(() => {
+      hasHydratedDashboard = true;
+      hydrationListeners.forEach((listener) => listener());
+    }, 0);
+  }
+
+  return () => {
+    hydrationListeners.delete(onStoreChange);
+  };
 }
 
 function getClientSnapshot() {
-  return true;
+  return hasHydratedDashboard;
 }
 
 function getServerSnapshot() {
@@ -101,7 +117,7 @@ function BrandMark({
 
   return (
     <div
-      className={`flex shrink-0 items-center justify-center bg-ink text-canvas ${frameClass} ${className}`}
+      className={`flex shrink-0 items-center justify-center bg-ink text-canvas shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_10px_24px_rgba(35,42,40,0.16)] ${frameClass} ${className}`}
     >
       <PlaneTakeoff className="size-5" aria-hidden="true" />
     </div>
@@ -304,6 +320,14 @@ function FareFlowDashboard() {
                 copy={t}
                 locale={locale}
               />
+              <div className="lg:hidden">
+                <JourneyRhythmPanel
+                  trip={selectedTrip}
+                  analytics={analytics}
+                  copy={t}
+                  locale={locale}
+                />
+              </div>
               <TripInsightsPanel
                 trip={selectedTrip}
                 expenses={expenses.data ?? []}
@@ -333,6 +357,12 @@ function FareFlowDashboard() {
             </section>
 
             <aside className="hidden content-start gap-4 lg:grid">
+              <JourneyRhythmPanel
+                trip={selectedTrip}
+                analytics={analytics}
+                copy={t}
+                locale={locale}
+              />
               <TripHealthPanel
                 trip={selectedTrip}
                 total={total}
@@ -345,7 +375,19 @@ function FareFlowDashboard() {
           </div>
 
           <div className="fixed inset-x-0 bottom-0 z-40 border-t border-ink/8 bg-canvas px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] lg:hidden">
-            <ExpenseDrawer trip={selectedTrip} />
+            <ExpenseDrawer
+              trip={selectedTrip}
+              trigger={
+                <Button
+                  type="button"
+                  className="h-12 w-full rounded-full bg-ink px-5 text-canvas shadow-[0_10px_28px_rgba(35,42,40,0.22)] active:scale-95"
+                  disabled={!selectedTrip}
+                >
+                  <Plus className="size-5" aria-hidden="true" />
+                  {t.expense.trigger}
+                </Button>
+              }
+            />
           </div>
         </section>
       </div>
@@ -368,7 +410,7 @@ function TripManageActions({
   }
 
   return (
-    <div className="mt-3 rounded-2xl bg-canvas-strong p-2 shadow-[0_1px_3px_rgba(35,42,40,0.10)]">
+    <div className="mt-3">
       <div className="flex flex-wrap items-center gap-2">
         <TripDrawer
           trip={trip}
@@ -376,7 +418,7 @@ function TripManageActions({
             <Button
               type="button"
               variant="secondary"
-              className="h-10 rounded-full bg-canvas px-3 text-ink"
+              className="h-10 rounded-full bg-canvas-strong px-3 text-ink shadow-[0_1px_3px_rgba(35,42,40,0.10)] active:scale-95"
             >
               <Pencil className="size-4" aria-hidden="true" />
               {copy.trip.editTrigger}
@@ -386,7 +428,7 @@ function TripManageActions({
         <Button
           type="button"
           variant="destructive"
-          className="h-10 rounded-full px-3"
+          className="h-10 rounded-full px-3 shadow-[0_1px_3px_rgba(120,48,34,0.10)] active:scale-95"
           onClick={() => setIsConfirmingDelete(true)}
           aria-label={copy.trip.deleteAria}
         >
@@ -670,9 +712,10 @@ function SummaryPanel({
       initial={reduceMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] }}
-      className="overflow-hidden rounded-[1.65rem] bg-ink text-canvas shadow-[0_18px_44px_rgba(35,42,40,0.22)]"
+      className="relative isolate overflow-hidden rounded-[1.65rem] bg-ink text-canvas shadow-[0_18px_44px_rgba(35,42,40,0.22)]"
     >
-      <div className="grid min-w-0 gap-5 p-5 lg:p-7">
+      <AtlasRouteMark />
+      <div className="relative z-10 grid min-w-0 gap-5 p-5 lg:p-7">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-canvas/70">
             <CircleDollarSign className="size-4" aria-hidden="true" />
@@ -700,6 +743,134 @@ function SummaryPanel({
         </div>
       </div>
     </motion.section>
+  );
+}
+
+function AtlasRouteMark() {
+  return (
+    <svg
+      className="pointer-events-none absolute right-[-5%] top-[-8%] h-[118%] w-[58%] text-canvas/12"
+      viewBox="0 0 320 280"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M18 226 C82 146 122 198 168 126 C204 70 245 86 304 34"
+        stroke="currentColor"
+        strokeWidth="18"
+        strokeLinecap="round"
+      />
+      <path
+        d="M18 226 C82 146 122 198 168 126 C204 70 245 86 304 34"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeDasharray="7 12"
+        strokeLinecap="round"
+        className="text-canvas/30"
+      />
+      {[18, 168, 304].map((cx, index) => (
+        <circle
+          key={cx}
+          cx={cx}
+          cy={index === 0 ? 226 : index === 1 ? 126 : 34}
+          r={index === 1 ? 8 : 6}
+          fill="currentColor"
+        />
+      ))}
+    </svg>
+  );
+}
+
+function JourneyRhythmPanel({
+  trip,
+  analytics,
+  copy,
+  locale,
+}: {
+  trip: Trip | null;
+  analytics: TripAnalytics;
+  copy: FareFlowCopy;
+  locale: Locale;
+}) {
+  const rhythm = trip ? buildJourneyRhythm(trip, analytics, copy, locale) : null;
+
+  return (
+    <section className="rounded-[1.45rem] bg-passport-50 p-4 text-passport-900 shadow-[0_1px_3px_rgba(35,42,40,0.10)]">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <Compass className="size-4" aria-hidden="true" />
+        {copy.home.journeyRhythm}
+      </div>
+      {rhythm ? (
+        <>
+          <div className="mt-4">
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <span className="rounded-full bg-canvas px-2.5 py-1 font-medium text-passport-900 shadow-[0_1px_2px_rgba(35,42,40,0.08)]">
+                {rhythm.status}
+              </span>
+              <span className="tabular-nums text-passport-900/70">
+                {rhythm.dateRange}
+              </span>
+            </div>
+            <div
+              className="relative mt-4 h-8"
+              role="meter"
+              aria-label={copy.home.routeProgress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={rhythm.progressPercent}
+            >
+              <div className="absolute left-2 right-2 top-1/2 h-px -translate-y-1/2 bg-passport-900/18" />
+              <div
+                className="absolute left-2 top-1/2 h-1 -translate-y-1/2 rounded-full bg-passport-900"
+                style={{ width: `calc((100% - 1rem) * ${rhythm.progress})` }}
+              />
+              {[0, 1].map((point) => (
+                <span
+                  key={point}
+                  className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-canvas shadow-[0_0_0_1px_rgba(25,81,121,0.22)]"
+                  style={{ left: point === 0 ? "0.5rem" : "calc(100% - 0.5rem)" }}
+                  aria-hidden="true"
+                />
+              ))}
+              <span
+                className="absolute top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-passport-900 shadow-[0_0_0_4px_color-mix(in_oklch,var(--passport-100),transparent_15%)]"
+                style={{
+                  left: `calc(0.5rem + (100% - 1rem) * ${rhythm.progress})`,
+                }}
+                aria-hidden="true"
+              />
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-passport-900/12 pt-3">
+            <RhythmStat
+              label={copy.home.routeProgress}
+              value={`${rhythm.progressPercent}%`}
+            />
+            <RhythmStat
+              label={copy.home.remainingDays}
+              value={String(rhythm.remainingDays)}
+            />
+            <RhythmStat label={copy.home.averageDaily} value={rhythm.dailyPace} />
+            <RhythmStat label={copy.home.topCategory} value={rhythm.topCategory} />
+          </div>
+        </>
+      ) : (
+        <p className="mt-3 text-sm leading-6 text-passport-900/70">
+          {copy.home.noRhythm}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function RhythmStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-xs text-passport-900/62">{label}</p>
+      <p className="mt-1 truncate text-sm font-semibold tabular-nums">
+        {value}
+      </p>
+    </div>
   );
 }
 
@@ -1706,11 +1877,58 @@ function formatTinyMoney(
   }).format(majorValue);
 }
 
+function buildJourneyRhythm(
+  trip: Trip,
+  analytics: TripAnalytics,
+  copy: FareFlowCopy,
+  locale: Locale,
+) {
+  const start = dateFromInput(trip.startDate);
+  const end = dateFromInput(trip.endDate ?? trip.startDate);
+  const today = dateFromInput(getAppDateInputValue());
+  const totalDays = countTripDays(trip);
+  const elapsedDays =
+    today < start
+      ? 0
+      : today > end
+        ? totalDays
+        : Math.min(totalDays, daysBetween(start, today) + 1);
+  const remainingDays = Math.max(0, totalDays - elapsedDays);
+  const progress = Math.min(1, Math.max(0, elapsedDays / totalDays));
+  const status =
+    today < start
+      ? copy.home.journeyUpcoming
+      : today > end
+        ? copy.home.journeyComplete
+        : copy.home.journeyActive;
+  const topCategory = analytics.categoryTotals[0]?.category;
+
+  return {
+    status,
+    remainingDays,
+    progress,
+    progressPercent: Math.round(progress * 100),
+    dailyPace: formatMoney(
+      analytics.averagePerDay,
+      trip.baseCurrency,
+      copy.localeCode,
+    ),
+    topCategory: topCategory ? copy.categories[topCategory] : copy.common.notSet,
+    dateRange: `${formatShortDateLabel(trip.startDate, locale)}${
+      trip.endDate ? ` ${locale === "zh" ? "至" : "to"} ${formatShortDateLabel(trip.endDate, locale)}` : ""
+    }`,
+  };
+}
+
 function countTripDays(trip: Trip) {
   const start = dateFromInput(trip.startDate);
   const end = dateFromInput(trip.endDate ?? trip.startDate);
   const days = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
   return Math.max(1, days);
+}
+
+function daysBetween(start: Date, end: Date) {
+  return Math.round((end.getTime() - start.getTime()) / 86_400_000);
 }
 
 function buildDailySeries(dailyTotals: DailyTotal[]): DailyTotal[] {
