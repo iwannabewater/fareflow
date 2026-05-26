@@ -219,6 +219,65 @@ describe("trip selection persistence", () => {
     expect(screen.getByText("已用分类")).toBeInTheDocument();
   });
 
+  it("keeps daily trend inside the trip date range", async () => {
+    tripsResult = {
+      data: [{ ...trips[0], endDate: "2026-05-20" }, trips[1]],
+      isLoading: false,
+      isFetched: true,
+    };
+    expensesResult = {
+      data: [buildExpense("food", 78000, "2026-05-23")],
+      isLoading: false,
+      isError: false,
+    };
+
+    render(<FareFlowApp />);
+
+    expect(await screen.findByText("每日走势")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /5月20日.*¥0\.00/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /5月23日.*¥780\.00/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("paginates daily trend when the trip is longer than seven days", async () => {
+    tripsResult = {
+      data: [{ ...trips[0], endDate: "2026-05-24" }, trips[1]],
+      isLoading: false,
+      isFetched: true,
+    };
+    expensesResult = {
+      data: [
+        buildExpense("food", 10000, "2026-05-14"),
+        buildExpense("transport", 23000, "2026-05-23"),
+      ],
+      isLoading: false,
+      isError: false,
+    };
+
+    render(<FareFlowApp />);
+
+    expect(await screen.findByText("第 1/2 段")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /5月14日.*¥100\.00/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /5月23日.*¥230\.00/ }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "下一段日期" }));
+
+    expect(await screen.findByText("第 2/2 段")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /5月23日.*¥230\.00/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /5月14日.*¥100\.00/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("filters the expense timeline by category", async () => {
     expensesResult = {
       data: [

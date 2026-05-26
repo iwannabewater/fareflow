@@ -34,8 +34,12 @@ import {
 } from "@/lib/domain/schema";
 import {
   DEFAULT_BASE_CURRENCY,
-  getAppDateInputValue,
+  formatAppDate,
 } from "@/lib/domain/defaults";
+import {
+  getDefaultExpenseDate,
+  isDateInTripRange,
+} from "@/lib/domain/trip-dates";
 import {
   convertToBaseMinor,
   currencyMeta,
@@ -118,6 +122,9 @@ export function ExpenseDrawer({
       }),
     [amountMajor, exchangeRate, selectedCurrency, t.localeCode, trip],
   );
+  const dateRangeLabel = trip
+    ? formatExpenseDateRange(trip, t.localeCode)
+    : null;
 
   useEffect(() => {
     if (trip && selectedCurrency === trip.baseCurrency) {
@@ -137,6 +144,14 @@ export function ExpenseDrawer({
   }, [expense, form, open, recentCategory, recentCurrency, trip]);
 
   async function onSubmit(input: CreateExpenseInput) {
+    if (trip && !isDateInTripRange(input.expenseDate, trip)) {
+      form.setError("expenseDate", {
+        type: "manual",
+        message: "Expense date must be within trip dates",
+      });
+      return;
+    }
+
     const savedExpense = await (isEditing && expense
       ? updateMutation.mutateAsync({ expense, values: input })
       : createMutation.mutateAsync(input)
@@ -205,6 +220,7 @@ export function ExpenseDrawer({
 
           <form
             onSubmit={form.handleSubmit(onSubmit)}
+            noValidate
             className="mt-5 grid min-w-0 gap-4"
           >
             <Field
@@ -234,7 +250,7 @@ export function ExpenseDrawer({
               </div>
             ) : null}
 
-            <div className="grid min-w-0 grid-cols-1 gap-3 min-[390px]:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-3 min-[430px]:grid-cols-2">
               <Field
                 label={t.expense.currency}
                 error={translateValidationError(
@@ -253,6 +269,11 @@ export function ExpenseDrawer({
               </Field>
               <Field
                 label={t.expense.date}
+                helper={
+                  dateRangeLabel
+                    ? t.expense.dateRangeHelper(dateRangeLabel)
+                    : undefined
+                }
                 error={translateValidationError(
                   form.formState.errors.expenseDate?.message,
                   t,
@@ -262,6 +283,8 @@ export function ExpenseDrawer({
                   type="date"
                   aria-label={t.expense.date}
                   autoComplete="off"
+                  min={trip?.startDate}
+                  max={trip?.endDate ?? undefined}
                   className="h-12 w-full min-w-0 rounded-2xl bg-white"
                   {...form.register("expenseDate")}
                 />
@@ -350,7 +373,7 @@ export function ExpenseDrawer({
             {mutation.isError ? (
               <p className="text-sm text-destructive" role="alert">
                 {mutation.error instanceof Error
-                  ? mutation.error.message
+                  ? translateValidationError(mutation.error.message, t)
                   : isEditing
                     ? t.expense.updateFailed
                     : t.expense.saveFailed}
@@ -388,8 +411,21 @@ function getExpenseDefaults(
     exchangeRate: "1",
     category: preferences.category ?? "food",
     note: "",
-    expenseDate: getAppDateInputValue(),
+    expenseDate: getDefaultExpenseDate(trip),
   };
+}
+
+function formatExpenseDateRange(trip: Trip, localeCode: string) {
+  const start = formatAppDate(trip.startDate, localeCode);
+  const end = trip.endDate ? formatAppDate(trip.endDate, localeCode) : null;
+
+  if (end) {
+    return localeCode.startsWith("zh")
+      ? `${start} 至 ${end}`
+      : `${start} to ${end}`;
+  }
+
+  return localeCode.startsWith("zh") ? `${start} 起` : `${start} onward`;
 }
 
 function buildAmountPreview({
@@ -471,10 +507,10 @@ function Field({
 }) {
   return (
     <div className="grid min-w-0 gap-1.5 text-sm font-medium text-ink">
-      <span className="flex min-w-0 items-center justify-between gap-2">
-        {label}
+      <span className="flex min-w-0 flex-wrap items-start justify-between gap-x-2 gap-y-1">
+        <span className="shrink-0 whitespace-nowrap">{label}</span>
         {error ? (
-          <span className="min-w-0 text-right text-xs font-normal text-destructive">
+          <span className="basis-full text-left text-xs font-normal leading-4 text-destructive min-[430px]:basis-auto min-[430px]:text-right">
             {error}
           </span>
         ) : null}

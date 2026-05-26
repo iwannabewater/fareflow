@@ -11,6 +11,7 @@ import {
   normalizeRate,
   parseMajorToMinor,
 } from "@/lib/domain/money";
+import { isDateInTripRange } from "@/lib/domain/trip-dates";
 import { isSeedExpense, localUserId, seedExpenses } from "@/lib/domain/seed";
 import type { PendingExpenseRecord } from "@/lib/offline/db";
 import { listPendingExpenses } from "@/lib/offline/outbox";
@@ -122,6 +123,11 @@ export function useCreateExpense(trip: Trip | null) {
           new Error("Select a trip before adding an expense."),
         );
       }
+      if (!isDateInTripRange(input.expenseDate, trip)) {
+        return Promise.reject(
+          new Error("Expense date must be within trip dates"),
+        );
+      }
 
       return mutation.mutateAsync(buildExpense(trip, input, "pending"));
     },
@@ -178,6 +184,11 @@ export function useUpdateExpense(trip: Trip | null) {
       if (!trip) {
         return Promise.reject(
           new Error("Select a trip before editing an expense."),
+        );
+      }
+      if (!isDateInTripRange(input.values.expenseDate, trip)) {
+        return Promise.reject(
+          new Error("Expense date must be within trip dates"),
         );
       }
 

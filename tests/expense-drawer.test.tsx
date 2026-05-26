@@ -108,6 +108,34 @@ describe("ExpenseDrawer", () => {
     expect(screen.getByText("CNY 最多支持 2 位小数。")).toBeInTheDocument();
   });
 
+  it("rejects expense dates outside the trip range", async () => {
+    render(<ExpenseDrawer trip={{ ...baseTrip, endDate: "2026-05-17" }} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "添加支出" }));
+
+    const dateInput = screen.getByLabelText("日期");
+    expect(dateInput).toHaveAttribute("min", "2026-05-14");
+    expect(dateInput).toHaveAttribute("max", "2026-05-17");
+    expect(
+      screen.getByText(/可记账日期：.*2026年5月14日.*至.*2026年5月17日/),
+    ).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("金额"), {
+      target: { value: "12.34" },
+    });
+    fireEvent.change(dateInput, {
+      target: { value: "2026-05-23" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "保存支出" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("支出日期需在旅程日期内；如需补记，请先编辑旅程时间。"),
+      ).toBeInTheDocument();
+    });
+    expect(mutateAsync).not.toHaveBeenCalled();
+  });
+
   it("shows an amount preview and remembers recent defaults after save", async () => {
     mutateAsync.mockResolvedValue(baseExpense);
 
