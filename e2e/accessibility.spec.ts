@@ -12,6 +12,12 @@ test("home screen has accessible core controls and keyboard focus", async ({
   await expect(
     page.getByRole("button", { name: "添加支出" }).first(),
   ).toBeVisible();
+  const viewport = page.viewportSize();
+  if (viewport && viewport.width < 700) {
+    const mobileAddExpense = page.getByRole("button", { name: "添加支出" }).last();
+    const box = await mobileAddExpense.boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(viewport.width - 40);
+  }
 
   const unnamedButtons = await page
     .locator("#main-content button")
