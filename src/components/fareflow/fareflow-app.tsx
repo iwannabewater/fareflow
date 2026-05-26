@@ -6,6 +6,8 @@ import {
   CalendarDays,
   ChartPie,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   CircleDollarSign,
   Clock3,
   Compass,
@@ -293,7 +295,11 @@ function FareFlowDashboard() {
               onSelect={setSelectedTripId}
               copy={t}
             />
-            <TripManageActions trip={selectedTrip} copy={t} />
+            <TripManageActions
+              trip={selectedTrip}
+              expenses={expenses.data ?? []}
+              copy={t}
+            />
           </header>
 
           <div className="grid flex-1 gap-5 px-4 py-5 pb-28 lg:grid-cols-[minmax(0,1fr)_18rem] lg:px-6 lg:pb-8 xl:grid-cols-[minmax(0,1fr)_21rem] xl:px-8">
@@ -398,9 +404,11 @@ function FareFlowDashboard() {
 
 function TripManageActions({
   trip,
+  expenses,
   copy,
 }: {
   trip: Trip | null;
+  expenses: Expense[];
   copy: FareFlowCopy;
 }) {
   const deleteMutation = useDeleteTrip();
@@ -415,6 +423,7 @@ function TripManageActions({
       <div className="flex flex-wrap items-center gap-2">
         <TripDrawer
           trip={trip}
+          expenses={expenses}
           trigger={
             <Button
               type="button"
@@ -875,7 +884,9 @@ function TripInsightsPanel({
   const [categoryView, setCategoryView] = useState<"bars" | "donut">("bars");
   const baseCurrency = trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY;
   const topCategory = analytics.categoryTotals[0] ?? null;
-  const visibleDailyTotals = buildDailySeries(analytics.dailyTotals);
+  const visibleDailyTotals = trip
+    ? buildDailySeries(trip, analytics.dailyTotals)
+    : [];
   const trackedCategories = analytics.categoryTotals.length;
   const topCategoryRatio =
     topCategory && analytics.total > 0 ? topCategory.total / analytics.total : 0;
@@ -1339,6 +1350,10 @@ function DailyTrendChart({
 }) {
   const titleId = useId();
   const [activeDate, setActiveDate] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const pageSize = 7;
+  const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
+  const resolvedPage = Math.min(page, pageCount - 1);
 
   if (items.length === 0) {
     return (
@@ -1348,19 +1363,28 @@ function DailyTrendChart({
     );
   }
 
+  const pageStart = resolvedPage * pageSize;
+  const visibleItems = items.slice(pageStart, pageStart + pageSize);
+  const pageRangeLabel = `${formatShortDateLabel(
+    visibleItems[0].date,
+    locale,
+  )} ${locale === "zh" ? "至" : "to"} ${formatShortDateLabel(
+    visibleItems[visibleItems.length - 1].date,
+    locale,
+  )}`;
   const width = 100;
   const height = 118;
   const padTop = 12;
   const padBottom = 18;
   const baseline = height - padBottom;
-  const maxTotal = Math.max(...items.map((item) => item.total), 1);
+  const maxTotal = Math.max(...visibleItems.map((item) => item.total), 1);
   const axisValues = Array.from(
     new Set([maxTotal, Math.round(maxTotal / 2), 0]),
   ).sort((a, b) => b - a);
   const getY = (value: number) =>
     padTop + (1 - value / maxTotal) * (height - padTop - padBottom);
-  const points = items.map((item, index) => {
-    const x = ((index + 0.5) / items.length) * width;
+  const points = visibleItems.map((item, index) => {
+    const x = ((index + 0.5) / visibleItems.length) * width;
     const y = getY(item.total);
     return { ...item, x, y };
   });
@@ -1383,6 +1407,38 @@ function DailyTrendChart({
 
   return (
     <div className="mt-3 rounded-[1.15rem] bg-canvas/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]">
+      {pageCount > 1 ? (
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-canvas text-ink shadow-[0_1px_2px_rgba(35,42,40,0.10)] transition-[background-color,transform] duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-40 active:scale-95"
+            aria-label={copy.home.previousTrendPage}
+            title={copy.home.previousTrendPage}
+            disabled={resolvedPage === 0}
+            onClick={() => setPage(Math.max(0, resolvedPage - 1))}
+          >
+            <ChevronLeft className="size-4" aria-hidden="true" />
+          </button>
+          <div className="min-w-0 text-center">
+            <p className="truncate text-xs font-medium text-ink">
+              {pageRangeLabel}
+            </p>
+            <p className="mt-0.5 text-[0.66rem] text-ink-muted tabular-nums">
+              {copy.home.dailyTrendPage(resolvedPage + 1, pageCount)}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-canvas text-ink shadow-[0_1px_2px_rgba(35,42,40,0.10)] transition-[background-color,transform] duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-40 active:scale-95"
+            aria-label={copy.home.nextTrendPage}
+            title={copy.home.nextTrendPage}
+            disabled={resolvedPage >= pageCount - 1}
+            onClick={() => setPage(Math.min(pageCount - 1, resolvedPage + 1))}
+          >
+            <ChevronRight className="size-4" aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
       <div className="grid grid-cols-[3rem_minmax(0,1fr)] gap-x-3">
         <div className="relative h-32" aria-hidden="true">
           <div className="absolute right-[-0.4rem] top-0 h-full w-px bg-ink/10" />
@@ -1486,7 +1542,7 @@ function DailyTrendChart({
         <div
           className="mt-2 grid gap-1"
           style={{
-            gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
+            gridTemplateColumns: `repeat(${visibleItems.length}, minmax(0, 1fr))`,
           }}
         >
           {points.map((point) => (
@@ -2057,22 +2113,29 @@ function daysBetween(start: Date, end: Date) {
   return Math.round((end.getTime() - start.getTime()) / 86_400_000);
 }
 
-function buildDailySeries(dailyTotals: DailyTotal[]): DailyTotal[] {
-  if (dailyTotals.length === 0) {
+function buildDailySeries(trip: Trip, dailyTotals: DailyTotal[]): DailyTotal[] {
+  const inRangeTotals = dailyTotals.filter(
+    (item) =>
+      item.date >= trip.startDate &&
+      (!trip.endDate || item.date <= trip.endDate),
+  );
+  const endDateInput =
+    trip.endDate ??
+    inRangeTotals.at(-1)?.date ??
+    trip.startDate;
+
+  if (endDateInput < trip.startDate) {
     return [];
   }
 
-  const byDate = new Map(dailyTotals.map((item) => [item.date, item]));
-  const sorted = [...dailyTotals].sort((a, b) => a.date.localeCompare(b.date));
-  const firstDate = dateFromInput(sorted[0].date);
-  const lastDate = dateFromInput(sorted[sorted.length - 1].date);
-  const sevenDayStart = addDays(lastDate, -6);
-  const startDate = firstDate > sevenDayStart ? firstDate : sevenDayStart;
+  const byDate = new Map(inRangeTotals.map((item) => [item.date, item]));
+  const startDate = dateFromInput(trip.startDate);
+  const endDate = dateFromInput(endDateInput);
   const series: DailyTotal[] = [];
 
   for (
     let current = startDate;
-    current.getTime() <= lastDate.getTime();
+    current.getTime() <= endDate.getTime();
     current = addDays(current, 1)
   ) {
     const date = toDateInput(current);

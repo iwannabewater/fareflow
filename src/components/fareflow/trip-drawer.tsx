@@ -26,23 +26,27 @@ import {
   createTripInputSchema,
   currencyCodes,
   type CreateTripInput,
+  type Expense,
   type Trip,
 } from "@/lib/domain/schema";
 import {
   DEFAULT_BASE_CURRENCY,
   getAppDateInputValue,
 } from "@/lib/domain/defaults";
+import { isDateInDateRange } from "@/lib/domain/trip-dates";
 import { currencyMeta } from "@/lib/domain/money";
 import { useCreateTrip, useUpdateTrip } from "@/hooks/use-trips";
 import { translateValidationError, useCopy } from "@/lib/i18n";
 
 export function TripDrawer({
   trip,
+  expenses = [],
   trigger,
   onTripCreated,
   onTripUpdated,
 }: {
   trip?: Trip;
+  expenses?: Expense[];
   trigger?: ReactNode;
   onTripCreated?: (trip: Trip) => void;
   onTripUpdated?: (trip: Trip) => void;
@@ -63,6 +67,24 @@ export function TripDrawer({
   });
 
   async function onSubmit(input: CreateTripInput) {
+    const endDate = input.endDate && input.endDate.length > 0
+      ? input.endDate
+      : null;
+    const outsideExpense = isEditing
+      ? expenses.find(
+          (expense) =>
+            !isDateInDateRange(expense.expenseDate, input.startDate, endDate),
+        )
+      : null;
+
+    if (outsideExpense) {
+      form.setError("endDate", {
+        type: "manual",
+        message: "Trip dates must include existing expenses",
+      });
+      return;
+    }
+
     const savedTrip = await (isEditing && trip
       ? updateMutation.mutateAsync({ trip, values: input })
       : createMutation.mutateAsync(input)
@@ -122,6 +144,7 @@ export function TripDrawer({
 
           <form
             onSubmit={form.handleSubmit(onSubmit)}
+            noValidate
             className="mt-5 grid min-w-0 gap-4"
           >
             <FormRow
@@ -155,7 +178,7 @@ export function TripDrawer({
               />
             </FormRow>
 
-            <div className="grid min-w-0 grid-cols-1 gap-3 min-[390px]:grid-cols-2">
+            <div className="grid min-w-0 grid-cols-1 gap-3 min-[430px]:grid-cols-2">
               <FormRow
                 label={t.trip.start}
                 error={translateValidationError(
@@ -234,7 +257,7 @@ export function TripDrawer({
             {mutation.isError ? (
               <p className="text-sm text-destructive" role="alert">
                 {mutation.error instanceof Error
-                  ? mutation.error.message
+                  ? translateValidationError(mutation.error.message, t)
                   : isEditing
                     ? t.trip.updateFailed
                     : t.trip.createFailed}
@@ -278,10 +301,10 @@ function FormRow({
 }) {
   return (
     <div className="grid min-w-0 gap-1.5 text-sm font-medium text-ink">
-      <span className="flex min-w-0 items-center justify-between gap-2">
-        {label}
+      <span className="flex min-w-0 flex-wrap items-start justify-between gap-x-2 gap-y-1">
+        <span className="shrink-0 whitespace-nowrap">{label}</span>
         {error ? (
-          <span className="min-w-0 text-right text-xs font-normal text-destructive">
+          <span className="basis-full text-left text-xs font-normal leading-4 text-destructive min-[430px]:basis-auto min-[430px]:text-right">
             {error}
           </span>
         ) : null}

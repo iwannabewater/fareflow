@@ -153,6 +153,10 @@ export const dictionaries = {
       categoryViewAria: "Switch category breakdown view",
       categoryDonutAria: "Category share donut chart",
       dailyTrend: "Daily trend",
+      previousTrendPage: "Previous dates",
+      nextTrendPage: "Next dates",
+      dailyTrendPage: (page: number, total: number) =>
+        `Page ${page} of ${total}`,
       topCategory: "Top category",
       exportCsv: "Export CSV",
       exportCsvAria: "Export current trip expenses as CSV",
@@ -205,6 +209,7 @@ export const dictionaries = {
       amountPreview: "Preview",
       currency: "Currency",
       date: "Date",
+      dateRangeHelper: (range: string) => `Allowed dates: ${range}`,
       rate: "Rate",
       category: "Category",
       note: "Note",
@@ -257,6 +262,10 @@ export const dictionaries = {
         "Too many decimal places for this currency",
       "Use a valid rate": "Use a valid rate",
       "Use a valid date": "Use a valid date",
+      "Expense date must be within trip dates":
+        "Expense date must stay within the trip dates. Edit the trip dates to backfill it.",
+      "Trip dates must include existing expenses":
+        "Trip dates must include existing expenses. Move or delete out-of-range expenses first.",
     },
   },
   zh: {
@@ -378,6 +387,10 @@ export const dictionaries = {
       categoryViewAria: "切换分类占比视图",
       categoryDonutAria: "分类占比圆环图",
       dailyTrend: "每日走势",
+      previousTrendPage: "上一段日期",
+      nextTrendPage: "下一段日期",
+      dailyTrendPage: (page: number, total: number) =>
+        `第 ${page}/${total} 段`,
       topCategory: "最高分类",
       exportCsv: "导出 CSV",
       exportCsvAria: "导出当前旅程支出 CSV",
@@ -427,6 +440,7 @@ export const dictionaries = {
       amountPreview: "预览",
       currency: "币种",
       date: "日期",
+      dateRangeHelper: (range: string) => `可记账日期：${range}`,
       rate: "汇率",
       category: "分类",
       note: "备注",
@@ -476,6 +490,10 @@ export const dictionaries = {
       "Too many decimal places for currency": "该币种的小数位数过多",
       "Use a valid rate": "请输入有效汇率",
       "Use a valid date": "请选择有效日期",
+      "Expense date must be within trip dates":
+        "支出日期需在旅程日期内；如需补记，请先编辑旅程时间。",
+      "Trip dates must include existing expenses":
+        "旅程时间需包含已有支出；如需缩短旅程，请先调整或删除超出范围的支出。",
     },
   },
 } as const;

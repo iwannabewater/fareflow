@@ -81,6 +81,31 @@ test("adds an expense offline and keeps it queued after network recovery", async
   await expect(page.getByText("离线章鱼烧")).toBeVisible();
 });
 
+test("rejects an expense dated outside a finished trip", async ({ page }) => {
+  await openTripDrawer(page);
+  await page.getByLabel("旅程名称").fill("日期边界测试");
+  await page.getByLabel("目的地").fill("京都");
+  await page.getByLabel("开始").fill("2026-05-14");
+  await page.getByLabel("结束").fill("2026-05-17");
+  await page.getByRole("button", { name: "创建旅程" }).click();
+
+  await expectCurrentTrip(page, "日期边界测试");
+
+  await openExpenseDrawer(page);
+  await expectNoHorizontalOverflow(page);
+  await expect(
+    page.getByText(/可记账日期：.*2026年5月14日.*至.*2026年5月17日/),
+  ).toBeVisible();
+  await page.getByLabel("金额").fill("23");
+  await page.getByLabel("日期").fill("2026-05-23");
+  await page.getByRole("button", { name: "保存支出" }).click();
+
+  await expect(
+    page.getByText("支出日期需在旅程日期内；如需补记，请先编辑旅程时间。"),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "新增支出" })).toBeVisible();
+});
+
 async function expectCurrentTrip(
   page: import("@playwright/test").Page,
   title: string,
