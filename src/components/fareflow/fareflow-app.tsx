@@ -11,6 +11,7 @@ import {
   Compass,
   Download,
   Flag,
+  ListFilter,
   Pencil,
   Languages,
   MapPinned,
@@ -55,7 +56,7 @@ import {
 } from "@/lib/domain/analytics";
 import { categoryMeta } from "@/lib/domain/categories";
 import { currencyMeta, formatMoney } from "@/lib/domain/money";
-import type { Expense, Trip } from "@/lib/domain/schema";
+import { expenseCategories, type Expense, type Trip } from "@/lib/domain/schema";
 import { type FareFlowCopy, type Locale, useCopy } from "@/lib/i18n";
 import {
   selectCurrentTrip,
@@ -712,9 +713,9 @@ function SummaryPanel({
       initial={reduceMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] }}
-      className="relative isolate overflow-hidden rounded-[1.65rem] bg-ink text-canvas shadow-[0_18px_44px_rgba(35,42,40,0.22)]"
+      className="relative isolate overflow-hidden rounded-[1.65rem] bg-ink text-canvas shadow-[0_18px_44px_rgba(35,42,40,0.22)] ring-1 ring-canvas/8"
     >
-      <AtlasRouteMark />
+      <SummaryLedgerTexture />
       <div className="relative z-10 grid min-w-0 gap-5 p-5 lg:p-7">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-canvas/70">
@@ -746,38 +747,17 @@ function SummaryPanel({
   );
 }
 
-function AtlasRouteMark() {
+function SummaryLedgerTexture() {
   return (
-    <svg
-      className="pointer-events-none absolute right-[-5%] top-[-8%] h-[118%] w-[58%] text-canvas/12"
-      viewBox="0 0 320 280"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M18 226 C82 146 122 198 168 126 C204 70 245 86 304 34"
-        stroke="currentColor"
-        strokeWidth="18"
-        strokeLinecap="round"
-      />
-      <path
-        d="M18 226 C82 146 122 198 168 126 C204 70 245 86 304 34"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeDasharray="7 12"
-        strokeLinecap="round"
-        className="text-canvas/30"
-      />
-      {[18, 168, 304].map((cx, index) => (
-        <circle
-          key={cx}
-          cx={cx}
-          cy={index === 0 ? 226 : index === 1 ? 126 : 34}
-          r={index === 1 ? 8 : 6}
-          fill="currentColor"
-        />
-      ))}
-    </svg>
+    <div className="pointer-events-none absolute inset-0 text-canvas" aria-hidden="true">
+      <div className="absolute inset-0 opacity-[0.075] [background-image:linear-gradient(to_right,rgba(250,246,231,0.45)_1px,transparent_1px),linear-gradient(to_bottom,rgba(250,246,231,0.34)_1px,transparent_1px)] [background-size:3.25rem_3.25rem]" />
+      <div className="absolute inset-x-5 top-5 h-px bg-canvas/14" />
+      <div className="absolute right-6 top-6 hidden size-24 place-items-center rounded-full border border-canvas/12 text-canvas/18 min-[720px]:grid">
+        <div className="grid size-16 place-items-center rounded-full border border-canvas/10">
+          <MapPinned className="size-7" />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -795,7 +775,7 @@ function JourneyRhythmPanel({
   const rhythm = trip ? buildJourneyRhythm(trip, analytics, copy, locale) : null;
 
   return (
-    <section className="rounded-[1.45rem] bg-passport-50 p-4 text-passport-900 shadow-[0_1px_3px_rgba(35,42,40,0.10)]">
+    <section className="rounded-[1.45rem] bg-passport-50 p-4 text-passport-900 shadow-[0_1px_3px_rgba(35,42,40,0.10)] ring-1 ring-passport-900/8">
       <div className="flex items-center gap-2 text-sm font-medium">
         <Compass className="size-4" aria-hidden="true" />
         {copy.home.journeyRhythm}
@@ -944,7 +924,7 @@ function TripInsightsPanel({
 
       <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3 border-y border-ink/8 py-3 min-[620px]:grid-cols-4">
         <InsightMetric
-          label={copy.home.averageDaily}
+          label={copy.home.expenseDayAverage}
           value={formatMoney(analytics.averagePerDay, baseCurrency, copy.localeCode)}
         />
         <InsightMetric
@@ -1583,7 +1563,7 @@ function Metric({
   compact?: boolean;
 }) {
   return (
-    <div className="grid min-h-20 content-between rounded-[1rem] bg-white/[0.08] px-3 py-3">
+    <div className="grid min-h-20 content-between rounded-[1rem] border border-canvas/10 bg-canvas/[0.08] px-3 py-3 shadow-[inset_0_1px_0_rgba(250,246,231,0.08)]">
       <p className="font-casual text-xs text-canvas/60">{label}</p>
       <p
         className={`mt-1 font-semibold tabular-nums [overflow-wrap:anywhere] ${
@@ -1611,6 +1591,25 @@ function ExpenseTimeline({
   copy: FareFlowCopy;
   locale: Locale;
 }) {
+  const [activeCategory, setActiveCategory] =
+    useState<ExpenseCategoryFilter>("all");
+  const categoryFilters = useMemo(
+    () => buildExpenseCategoryFilters(expenses),
+    [expenses],
+  );
+  const resolvedActiveCategory =
+    activeCategory === "all" ||
+    categoryFilters.some((filter) => filter.category === activeCategory)
+      ? activeCategory
+      : "all";
+  const visibleExpenses = useMemo(
+    () =>
+      resolvedActiveCategory === "all"
+        ? expenses
+        : expenses.filter((expense) => expense.category === resolvedActiveCategory),
+    [expenses, resolvedActiveCategory],
+  );
+
   if (isLoading) {
     return (
       <div className="grid gap-3">
@@ -1642,11 +1641,18 @@ function ExpenseTimeline({
           {copy.home.recentExpenses}
         </h2>
         <Badge className="font-casual rounded-full bg-canvas-strong text-ink">
-          {copy.home.itemCount(expenses.length)}
+          {copy.home.itemCount(visibleExpenses.length)}
         </Badge>
       </div>
+      <ExpenseCategoryRail
+        filters={categoryFilters}
+        activeCategory={resolvedActiveCategory}
+        totalCount={expenses.length}
+        copy={copy}
+        onChange={setActiveCategory}
+      />
       <AnimatePresence initial={false}>
-        {expenses.map((expense) => (
+        {visibleExpenses.map((expense) => (
           <ExpenseRow
             key={expense.clientId}
             expense={expense}
@@ -1658,6 +1664,128 @@ function ExpenseTimeline({
         ))}
       </AnimatePresence>
     </section>
+  );
+}
+
+type ExpenseCategoryFilter = Expense["category"] | "all";
+
+type ExpenseCategoryFilterOption = {
+  category: Expense["category"];
+  count: number;
+};
+
+function buildExpenseCategoryFilters(
+  expenses: Expense[],
+): ExpenseCategoryFilterOption[] {
+  const counts = new Map<Expense["category"], number>();
+
+  for (const expense of expenses) {
+    counts.set(expense.category, (counts.get(expense.category) ?? 0) + 1);
+  }
+
+  return expenseCategories
+    .map((category) => ({
+      category,
+      count: counts.get(category) ?? 0,
+    }))
+    .filter((filter) => filter.count > 0);
+}
+
+function ExpenseCategoryRail({
+  filters,
+  activeCategory,
+  totalCount,
+  copy,
+  onChange,
+}: {
+  filters: ExpenseCategoryFilterOption[];
+  activeCategory: ExpenseCategoryFilter;
+  totalCount: number;
+  copy: FareFlowCopy;
+  onChange: (category: ExpenseCategoryFilter) => void;
+}) {
+  if (filters.length <= 1) {
+    return null;
+  }
+
+  return (
+    <div
+      className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      role="group"
+      aria-label={copy.home.expenseFilterAria}
+    >
+      <ExpenseCategoryButton
+        active={activeCategory === "all"}
+        label={copy.home.allExpenses}
+        count={totalCount}
+        Icon={ListFilter}
+        copy={copy}
+        onClick={() => onChange("all")}
+      />
+      {filters.map((filter) => {
+        const meta = categoryMeta[filter.category];
+        return (
+          <ExpenseCategoryButton
+            key={filter.category}
+            active={activeCategory === filter.category}
+            label={copy.categories[filter.category]}
+            count={filter.count}
+            Icon={meta.icon}
+            tone={meta.tone}
+            copy={copy}
+            onClick={() => onChange(filter.category)}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function ExpenseCategoryButton({
+  active,
+  label,
+  count,
+  Icon,
+  tone,
+  copy,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  count: number;
+  Icon: LucideIcon;
+  tone?: string;
+  copy: FareFlowCopy;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`flex h-11 shrink-0 items-center gap-2 rounded-full border px-3 text-sm transition-[background-color,border-color,box-shadow,transform] duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.97] ${
+        active
+          ? "border-ink bg-ink text-canvas shadow-[0_7px_18px_rgba(35,42,40,0.16)]"
+          : "border-ink/8 bg-canvas-strong text-ink-muted shadow-[0_1px_3px_rgba(35,42,40,0.08)] [@media(hover:hover)]:hover:border-passport-900/18 [@media(hover:hover)]:hover:text-ink"
+      }`}
+      aria-pressed={active}
+      aria-label={`${label}, ${copy.home.itemCount(count)}`}
+      onClick={onClick}
+    >
+      <span
+        className={`grid size-7 place-items-center rounded-full ${
+          active ? "bg-canvas/12 text-canvas" : (tone ?? "bg-passport-100 text-passport-900")
+        }`}
+      >
+        <Icon className="size-3.5" aria-hidden="true" />
+      </span>
+      <span>{label}</span>
+      <span
+        className={`rounded-full px-2 py-0.5 text-xs tabular-nums ${
+          active ? "bg-canvas/12 text-canvas/78" : "bg-canvas text-ink-muted"
+        }`}
+      >
+        {count}
+      </span>
+    </button>
   );
 }
 
@@ -1902,17 +2030,15 @@ function buildJourneyRhythm(
         ? copy.home.journeyComplete
         : copy.home.journeyActive;
   const topCategory = analytics.categoryTotals[0]?.category;
+  const averagePerTripDay =
+    totalDays > 0 ? Math.round(analytics.total / totalDays) : 0;
 
   return {
     status,
     remainingDays,
     progress,
     progressPercent: Math.round(progress * 100),
-    dailyPace: formatMoney(
-      analytics.averagePerDay,
-      trip.baseCurrency,
-      copy.localeCode,
-    ),
+    dailyPace: formatMoney(averagePerTripDay, trip.baseCurrency, copy.localeCode),
     topCategory: topCategory ? copy.categories[topCategory] : copy.common.notSet,
     dateRange: `${formatShortDateLabel(trip.startDate, locale)}${
       trip.endDate ? ` ${locale === "zh" ? "至" : "to"} ${formatShortDateLabel(trip.endDate, locale)}` : ""
