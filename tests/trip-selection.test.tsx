@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FareFlowApp } from "@/components/fareflow/fareflow-app";
 import type { Expense, Trip } from "@/lib/domain/schema";
@@ -211,6 +217,53 @@ describe("trip selection persistence", () => {
       screen.getByRole("button", { name: /5月15日.*¥840\.00/ }),
     ).toBeInTheDocument();
     expect(screen.getByText("已用分类")).toBeInTheDocument();
+  });
+
+  it("filters the expense timeline by category", async () => {
+    expensesResult = {
+      data: [
+        buildExpense("lodging", 120000, "2026-05-14"),
+        buildExpense("food", 78000, "2026-05-15"),
+        buildExpense("transport", 6000, "2026-05-15"),
+      ],
+      isLoading: false,
+      isError: false,
+    };
+
+    render(<FareFlowApp />);
+
+    const filterRail = await screen.findByRole("group", {
+      name: "筛选支出记录",
+    });
+    expect(screen.getAllByRole("article")).toHaveLength(3);
+
+    fireEvent.click(within(filterRail).getByRole("button", { name: /餐饮/ }));
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("article")).toHaveLength(1);
+    });
+    const [visibleRow] = screen.getAllByRole("article");
+    expect(within(visibleRow).getByText("¥780.00")).toBeInTheDocument();
+    expect(within(visibleRow).queryByText("¥1,200.00")).not.toBeInTheDocument();
+  });
+
+  it("uses all trip days for journey rhythm daily spend", async () => {
+    tripsResult = {
+      data: [{ ...trips[0], endDate: "2026-05-20" }, trips[1]],
+      isLoading: false,
+      isFetched: true,
+    };
+    expensesResult = {
+      data: [buildExpense("lodging", 1596000, "2026-05-14")],
+      isLoading: false,
+      isError: false,
+    };
+
+    render(<FareFlowApp />);
+
+    expect(await screen.findAllByText("旅程节奏")).toHaveLength(2);
+    expect(screen.getAllByText("¥2,280.00")).toHaveLength(2);
+    expect(screen.getAllByText("¥15,960.00").length).toBeGreaterThan(0);
   });
 });
 
