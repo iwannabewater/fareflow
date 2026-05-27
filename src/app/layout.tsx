@@ -10,13 +10,14 @@ import "lxgw-wenkai-webfont/lxgwwenkai-regular.css";
 import "lxgw-wenkai-webfont/lxgwwenkai-bold.css";
 import "./globals.css";
 import { AppProviders } from "@/lib/query/providers";
+import { withAppBasePath } from "@/lib/app-paths";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "FareFlow",
   description:
     "一款移动优先的旅行支出 PWA，支持本地优先记录和 Supabase 同步。",
-  manifest: "/manifest.webmanifest",
+  manifest: withAppBasePath("/manifest.webmanifest"),
   appleWebApp: {
     capable: true,
     title: "FareFlow",
@@ -24,11 +25,24 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/icons/icon.svg", type: "image/svg+xml" },
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: withAppBasePath("/icons/icon.svg"), type: "image/svg+xml" },
+      {
+        url: withAppBasePath("/icons/icon-192.png"),
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        url: withAppBasePath("/icons/icon-512.png"),
+        sizes: "512x512",
+        type: "image/png",
+      },
     ],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+    apple: [
+      {
+        url: withAppBasePath("/icons/apple-touch-icon.png"),
+        sizes: "180x180",
+      },
+    ],
   },
 };
 

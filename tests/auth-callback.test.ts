@@ -4,7 +4,7 @@ import { parseAuthCallbackUrl } from "@/lib/supabase/auth-callback";
 describe("auth callback parsing", () => {
   it("accepts the default Supabase magic-link hash session", () => {
     const parsed = parseAuthCallbackUrl(
-      "https://fareflow.vercel.app/auth/confirm#access_token=access&refresh_token=refresh&type=magiclink",
+      "https://project.whynotsleep.cc/fareflow/auth/confirm/#access_token=access&refresh_token=refresh&type=magiclink",
     );
 
     expect(parsed).toEqual({
@@ -17,7 +17,7 @@ describe("auth callback parsing", () => {
 
   it("accepts PKCE code callbacks", () => {
     const parsed = parseAuthCallbackUrl(
-      "https://fareflow.vercel.app/auth/confirm?code=abc&next=/",
+      "https://project.whynotsleep.cc/fareflow/auth/confirm/?code=abc&next=/",
     );
 
     expect(parsed).toEqual({
@@ -29,7 +29,7 @@ describe("auth callback parsing", () => {
 
   it("accepts token hash callbacks", () => {
     const parsed = parseAuthCallbackUrl(
-      "https://fareflow.vercel.app/auth/confirm?token_hash=hash&type=magiclink",
+      "https://project.whynotsleep.cc/fareflow/auth/confirm/?token_hash=hash&type=magiclink",
     );
 
     expect(parsed).toEqual({
@@ -42,7 +42,7 @@ describe("auth callback parsing", () => {
 
   it("does not allow open redirects", () => {
     const parsed = parseAuthCallbackUrl(
-      "https://fareflow.vercel.app/auth/confirm?code=abc&next=https://evil.example",
+      "https://project.whynotsleep.cc/fareflow/auth/confirm/?code=abc&next=https://evil.example",
     );
 
     expect(parsed.next).toBe("/");

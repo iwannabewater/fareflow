@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 import withPWAInit from "@ducanh2912/next-pwa";
+import { APP_BASE_PATH } from "./src/lib/app-paths";
 
 const nextConfig: NextConfig = {
+  basePath: APP_BASE_PATH,
+  trailingSlash: true,
   reactStrictMode: true,
 };
 
@@ -13,7 +16,7 @@ const withPWA = withPWAInit({
   cacheStartUrl: true,
   dynamicStartUrl: true,
   fallbacks: {
-    document: "/~offline",
+    document: "/~offline/",
   },
   workboxOptions: {
     cleanupOutdatedCaches: true,

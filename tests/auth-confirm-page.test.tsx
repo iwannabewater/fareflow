@@ -52,7 +52,7 @@ describe("AuthConfirmPage", () => {
     window.history.pushState(
       null,
       "",
-      "/auth/confirm#access_token=access&refresh_token=refresh&type=magiclink",
+      "/fareflow/auth/confirm/#access_token=access&refresh_token=refresh&type=magiclink",
     );
   });
 
@@ -70,6 +70,8 @@ describe("AuthConfirmPage", () => {
     await waitFor(() => {
       expect(routerReplace).toHaveBeenCalledWith("/");
     });
+    expect(window.location.pathname).toBe("/fareflow/auth/confirm/");
+    expect(window.location.hash).toBe("");
     expect(routerRefresh).toHaveBeenCalled();
   });
 });

@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("home screen has accessible core controls and keyboard focus", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/fareflow/");
 
   await expect(
     page.getByRole("button", { name: "切换为英文" }).first(),
