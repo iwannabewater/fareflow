@@ -19,8 +19,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm exec next dev --webpack -p 3100 -H 127.0.0.1",
-    url: "http://127.0.0.1:3100",
+    command: "pnpm build && pnpm exec next start -p 3100 -H 127.0.0.1",
+    url: "http://127.0.0.1:3100/fareflow/",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

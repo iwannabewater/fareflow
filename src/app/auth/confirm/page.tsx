@@ -6,6 +6,7 @@ import { CheckCircle2, Loader2, TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { withAppBasePath } from "@/lib/app-paths";
 import { useCopy } from "@/lib/i18n";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { parseAuthCallbackUrl } from "@/lib/supabase/auth-callback";
@@ -35,7 +36,8 @@ export default function AuthConfirmPage() {
       const callback = parseAuthCallbackUrl(window.location.href);
       const next = callback.next;
 
-      window.history.replaceState(null, "", "/auth/confirm");
+      const confirmPath = withAppBasePath("/auth/confirm/");
+      window.history.replaceState(null, "", confirmPath);
 
       try {
         const supabase = getSupabaseBrowserClient();
@@ -86,8 +88,8 @@ export default function AuthConfirmPage() {
         router.replace(next);
         router.refresh();
         fallbackTimer = window.setTimeout(() => {
-          if (window.location.pathname === "/auth/confirm") {
-            window.location.replace(next);
+          if (window.location.pathname === confirmPath) {
+            window.location.replace(withAppBasePath(next));
           }
         }, 1500);
       } catch (error) {

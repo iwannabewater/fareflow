@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/fareflow/");
   await expect(page.getByRole("button", { name: "旅程" }).first()).toBeVisible();
   await page.waitForTimeout(250);
 });
@@ -77,7 +77,7 @@ test("adds an expense offline and keeps it queued after network recovery", async
   await expect(page.getByText("待同步").first()).toBeVisible();
 
   await context.setOffline(false);
-  await gotoWithNetworkRetry(page, "/");
+  await gotoWithNetworkRetry(page, "/fareflow/");
   await expect(page.getByText("离线章鱼烧")).toBeVisible();
 });
 

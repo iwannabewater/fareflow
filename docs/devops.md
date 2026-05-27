@@ -52,13 +52,13 @@ Dashboard fallback:
 
 Auth URL configuration:
 
-- Site URL: the production Vercel or custom domain.
+- Site URL: `https://project.whynotsleep.cc/fareflow/`.
 - Redirect URLs:
-  - `http://localhost:3000/auth/confirm`
-  - `https://<preview-or-project-domain>.vercel.app/auth/confirm`
-  - `https://<custom-domain>/auth/confirm`
+  - `http://localhost:3000/fareflow/auth/confirm/`
+  - `https://<preview-or-project-domain>.vercel.app/fareflow/auth/confirm/`
+  - `https://project.whynotsleep.cc/fareflow/auth/confirm/`
 
-Supabase's default magic-link email verifies at Supabase first and redirects back with `access_token` and `refresh_token` in the URL hash. The hash is intentionally handled by the client page at `/auth/confirm`; do not replace it with a server-only route unless the email template is also changed to use query parameters.
+Supabase's default magic-link email verifies at Supabase first and redirects back with `access_token` and `refresh_token` in the URL hash. The hash is intentionally handled by the client page at `/fareflow/auth/confirm/`; do not replace it with a server-only route unless the email template is also changed to use query parameters.
 
 GitHub integration:
 
@@ -67,6 +67,15 @@ Supabase GitHub integration is authorized through the Dashboard OAuth flow, not 
 ## Vercel
 
 The Vercel project is connected to `iwannabewater/fareflow`. Pushes to `main` are deployed by Vercel Git Integration after GitHub Actions verification passes. GitHub Actions intentionally runs verification only; do not add a second CLI production deploy job unless the Git Integration is disabled.
+
+The Next.js app is built with `basePath: "/fareflow"` and is exposed publicly through the existing Cloudflare Worker route:
+
+```text
+https://project.whynotsleep.cc/fareflow/ -> https://fareflow.vercel.app/fareflow/
+```
+
+Keep `https://project.whynotsleep.cc/` routed to the static project channel; only the `/fareflow` application prefix is proxied to Vercel.
+The Worker also proxies `/_vercel/insights/*` on the project subdomain so the existing Vercel Web Analytics integration continues to load and report.
 
 Preview deployment:
 
@@ -111,15 +120,16 @@ If a future workflow reintroduces CLI deployments, confirm `VERCEL_TOKEN`, `VERC
 
 Release smoke checks:
 
-1. Generate or receive a Supabase magic link and confirm that it returns to `/` without `auth=confirm_failed`.
-2. Verify one visible login form on desktop and one visible login form on mobile.
-3. Confirm logged-out production state starts without seeded trips and the sync badge reads Offline/离线.
-4. Create two trips in a row and confirm the newly created trip becomes selected each time.
-5. Confirm both trips remain visible in the compact trip switcher and in the picker.
-6. Confirm new Trip and Expense forms default to CNY and the Beijing calendar date.
-7. Confirm Simplified Chinese is the default language, then toggle the language switch and confirm English remains available.
-8. Confirm Chinese copy and the New Trip date fields fit at `390px` width.
-9. Confirm `/manifest.webmanifest`, `/sw.js`, and Vercel Web Analytics requests load successfully.
+1. Open `/fareflow` and confirm it canonicalizes to `/fareflow/`.
+2. Generate or receive a Supabase magic link and confirm that it returns to `/fareflow/` without `auth=confirm_failed`.
+3. Verify one visible login form on desktop and one visible login form on mobile.
+4. Confirm logged-out production state starts without seeded trips and the sync badge reads Offline/离线.
+5. Create two trips in a row and confirm the newly created trip becomes selected each time.
+6. Confirm both trips remain visible in the compact trip switcher and in the picker.
+7. Confirm new Trip and Expense forms default to CNY and the Beijing calendar date.
+8. Confirm Simplified Chinese is the default language, then toggle the language switch and confirm English remains available.
+9. Confirm Chinese copy and the New Trip date fields fit at `390px` width.
+10. Confirm `/fareflow/manifest.webmanifest`, `/fareflow/sw.js`, and Vercel Web Analytics requests load successfully.
 
 ## Cloudflare
 
@@ -127,9 +137,10 @@ Keep DNS proxied through Cloudflare with SSL/TLS mode set to Full (strict). Do n
 
 Recommended cache bypass patterns:
 
-- `/sw.js`
-- `/workbox-*`
-- `/manifest.webmanifest`
-- `/auth/*`
+- `/fareflow/sw.js`
+- `/fareflow/workbox-*`
+- `/fareflow/manifest.webmanifest`
+- `/fareflow/auth/*`
+- `/_vercel/insights/*`
 
 Wrangler is used only for Cloudflare-side inspection/configuration in this architecture; Vercel remains the Next.js runtime.

@@ -82,10 +82,10 @@ Apply `supabase/migrations/20260512123000_initial_fareflow_schema.sql`. The migr
 - RLS policies for authenticated ownership
 - `(user_id, client_id)` uniqueness for idempotent offline retries
 
-Supabase magic links are confirmed at `/auth/confirm`. FareFlow supports hash-session callbacks, PKCE `code` callbacks, and `token_hash` callbacks, then refreshes the shared auth cache before returning to the ledger.
+Supabase magic links are confirmed at `/fareflow/auth/confirm/`. FareFlow supports hash-session callbacks, PKCE `code` callbacks, and `token_hash` callbacks, then refreshes the shared auth cache before returning to the ledger.
 
 ## Deployment
 
-The repository is connected to Vercel Git Integration. Pushes to `main` are verified by GitHub Actions and deployed by Vercel.
+The repository is connected to Vercel Git Integration. Pushes to `main` are verified by GitHub Actions and deployed by Vercel. The canonical public application route is `https://project.whynotsleep.cc/fareflow/`; Cloudflare proxies that path to the Vercel runtime.
 
 Use [docs/devops.md](docs/devops.md) for the Supabase setup, Vercel environment configuration, Cloudflare cache guidance, and release smoke checklist.
