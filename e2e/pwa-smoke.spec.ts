@@ -19,3 +19,25 @@ test("serves manifest and localized offline fallback", async ({ page }) => {
   await page.goto("/fareflow/~offline/");
   await expect(page.getByText("FareFlow 当前离线")).toBeVisible();
 });
+
+test("installs the scoped worker and reloads the application offline", async ({
+  context,
+  page,
+}) => {
+  await page.goto("/fareflow/");
+
+  const registration = await page.evaluate(async () => {
+    const worker = await navigator.serviceWorker.ready;
+    return {
+      scope: worker.scope,
+      scriptURL: worker.active?.scriptURL ?? "",
+    };
+  });
+
+  expect(registration.scope).toBe(new URL("/fareflow/", page.url()).toString());
+  expect(registration.scriptURL).toBe(new URL("/fareflow/sw.js", page.url()).toString());
+
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByText("FareFlow").first()).toBeVisible();
+});
