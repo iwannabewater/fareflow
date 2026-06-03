@@ -294,13 +294,22 @@ describe("trip selection persistence", () => {
     const filterRail = await screen.findByRole("group", {
       name: "筛选支出记录",
     });
+    const may15Group = screen.getByRole("region", { name: "2026年5月15日" });
+    expect(may15Group).toHaveTextContent("2 笔");
+    expect(may15Group).toHaveTextContent("¥840.00");
     expect(screen.getAllByRole("article")).toHaveLength(3);
+    expect(
+      within(screen.getAllByRole("article")[0]).getByText("¥780.00"),
+    ).toBeInTheDocument();
 
     fireEvent.click(within(filterRail).getByRole("button", { name: /餐饮/ }));
 
     await waitFor(() => {
       expect(screen.getAllByRole("article")).toHaveLength(1);
     });
+    expect(screen.getByRole("region", { name: "2026年5月15日" })).toHaveTextContent(
+      "1 笔",
+    );
     const [visibleRow] = screen.getAllByRole("article");
     expect(within(visibleRow).getByText("¥780.00")).toBeInTheDocument();
     expect(within(visibleRow).queryByText("¥1,200.00")).not.toBeInTheDocument();
