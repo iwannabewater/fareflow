@@ -1665,6 +1665,10 @@ function ExpenseTimeline({
         : expenses.filter((expense) => expense.category === resolvedActiveCategory),
     [expenses, resolvedActiveCategory],
   );
+  const timelineGroups = useMemo(
+    () => buildExpenseTimelineGroups(visibleExpenses),
+    [visibleExpenses],
+  );
 
   if (isLoading) {
     return (
@@ -1707,18 +1711,18 @@ function ExpenseTimeline({
         copy={copy}
         onChange={setActiveCategory}
       />
-      <AnimatePresence initial={false}>
-        {visibleExpenses.map((expense) => (
-          <ExpenseRow
-            key={expense.clientId}
-            expense={expense}
+      <div className="grid gap-4">
+        {timelineGroups.map((group) => (
+          <ExpenseDateGroup
+            key={group.date}
+            group={group}
             trip={trip}
             baseCurrency={baseCurrency}
             copy={copy}
             locale={locale}
           />
         ))}
-      </AnimatePresence>
+      </div>
     </section>
   );
 }
@@ -1729,6 +1733,39 @@ type ExpenseCategoryFilterOption = {
   category: Expense["category"];
   count: number;
 };
+
+type ExpenseTimelineGroup = {
+  date: string;
+  total: number;
+  expenses: Expense[];
+};
+
+function buildExpenseTimelineGroups(expenses: Expense[]): ExpenseTimelineGroup[] {
+  const groups = new Map<string, ExpenseTimelineGroup>();
+
+  for (const expense of [...expenses].sort(compareExpensesByRecency)) {
+    const group = groups.get(expense.expenseDate) ?? {
+      date: expense.expenseDate,
+      total: 0,
+      expenses: [],
+    };
+    group.total += expense.baseAmount;
+    group.expenses.push(expense);
+    groups.set(expense.expenseDate, group);
+  }
+
+  return [...groups.values()];
+}
+
+function compareExpensesByRecency(first: Expense, second: Expense) {
+  const dateOrder = second.expenseDate.localeCompare(first.expenseDate);
+
+  if (dateOrder !== 0) {
+    return dateOrder;
+  }
+
+  return second.createdAt.localeCompare(first.createdAt);
+}
 
 function buildExpenseCategoryFilters(
   expenses: Expense[],
@@ -1797,6 +1834,58 @@ function ExpenseCategoryRail({
   );
 }
 
+function ExpenseDateGroup({
+  group,
+  trip,
+  baseCurrency,
+  copy,
+  locale,
+}: {
+  group: ExpenseTimelineGroup;
+  trip: Trip | null;
+  baseCurrency: Trip["baseCurrency"];
+  copy: FareFlowCopy;
+  locale: Locale;
+}) {
+  return (
+    <section
+      className="grid gap-2.5"
+      aria-label={formatDateLabel(group.date, locale)}
+    >
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 px-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-passport-50 text-passport-900 shadow-[0_1px_2px_rgba(35,42,40,0.08)]">
+            <CalendarDays className="size-3.5" aria-hidden="true" />
+          </span>
+          <h3 className="truncate text-sm font-semibold text-ink">
+            {formatDateLabel(group.date, locale)}
+          </h3>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 text-xs text-ink-muted tabular-nums">
+          <span>{copy.home.itemCount(group.expenses.length)}</span>
+          <span className="h-1 w-1 rounded-full bg-ink/18" aria-hidden="true" />
+          <span className="font-medium text-ink">
+            {formatMoney(group.total, baseCurrency, copy.localeCode)}
+          </span>
+        </div>
+      </div>
+      <div className="grid gap-2.5">
+        <AnimatePresence initial={false}>
+          {group.expenses.map((expense) => (
+            <ExpenseRow
+              key={expense.clientId}
+              expense={expense}
+              trip={trip}
+              baseCurrency={baseCurrency}
+              copy={copy}
+            />
+          ))}
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
+
 function ExpenseCategoryButton({
   active,
   label,
@@ -1850,13 +1939,11 @@ function ExpenseRow({
   trip,
   baseCurrency,
   copy,
-  locale,
 }: {
   expense: Expense;
   trip: Trip | null;
   baseCurrency: Trip["baseCurrency"];
   copy: FareFlowCopy;
-  locale: Locale;
 }) {
   const meta = categoryMeta[expense.category];
   const Icon = meta.icon;
@@ -1888,9 +1975,6 @@ function ExpenseRow({
           ) : null}
         </div>
         <div className="mt-1 flex items-center gap-2 text-xs text-ink-muted">
-          <CalendarDays className="size-3.5" aria-hidden="true" />
-          <span>{formatDateLabel(expense.expenseDate, locale)}</span>
-          <span>·</span>
           <span>{copy.categories[expense.category]}</span>
         </div>
       </div>

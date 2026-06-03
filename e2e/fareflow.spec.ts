@@ -78,7 +78,10 @@ test("adds an expense offline and keeps it queued after network recovery", async
 
   await context.setOffline(false);
   await gotoWithNetworkRetry(page, "/fareflow/");
-  await expect(page.getByText("离线章鱼烧")).toBeVisible();
+  await expectCurrentTrip(page, "离线测试");
+  await expect(page.getByText("离线章鱼烧")).toBeVisible({
+    timeout: 10_000,
+  });
 });
 
 test("rejects an expense dated outside a finished trip", async ({ page }) => {

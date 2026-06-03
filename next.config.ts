@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import withPWAInit from "@ducanh2912/next-pwa";
-import { APP_BASE_PATH } from "./src/lib/app-paths";
 
+const APP_BASE_PATH = "/fareflow";
 const FONT_PRECACHE_ASSET_PATTERN = /static\/media\/.*\.(?:woff2?|ttf|otf)$/;
 
 const nextConfig: NextConfig = {
