@@ -26,6 +26,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
         maxAge: 1000 * 60 * 60 * 24 * 7,
       }}
       onSuccess={() => {
+        // Restored query data can still be fresh while the Dexie outbox changed.
+        void queryClient.invalidateQueries({ queryKey: ["trips"] });
+        void queryClient.invalidateQueries({ queryKey: ["expenses"] });
         void queryClient.resumePausedMutations();
       }}
     >
@@ -33,4 +36,3 @@ export function AppProviders({ children }: { children: ReactNode }) {
     </PersistQueryClientProvider>
   );
 }
-
