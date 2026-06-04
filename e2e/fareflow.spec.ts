@@ -40,6 +40,20 @@ test("creates a trip, adds, edits, exports, and deletes an expense", async ({
     page.getByRole("article").filter({ hasText: "机场巴士" }).getByText(/99\.00/),
   ).toBeVisible();
 
+  await page.getByRole("button", { name: /在账本中聚焦分类：交通/ }).click();
+  await expect(page.getByText("账本聚焦")).toBeVisible();
+  await expect(page.getByText("分类：交通")).toBeVisible();
+  await expect(
+    page.getByRole("article").filter({ hasText: "机场巴士" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "清除" }).click();
+  await expect(page.getByText("账本聚焦")).toBeHidden();
+
+  await page.getByRole("button", { name: /在账本中聚焦日期：/ }).click();
+  await expect(page.getByText("账本聚焦")).toBeVisible();
+  await expect(page.getByText(/日期：/)).toBeVisible();
+  await page.getByRole("button", { name: "清除" }).click();
+
   const downloadPromise = page.waitForEvent("download");
   await page
     .getByRole("button", { name: "导出当前旅程支出 CSV" })

@@ -158,6 +158,14 @@ export const dictionaries = {
       dailyTrendPage: (page: number, total: number) =>
         `Page ${page} of ${total}`,
       topCategory: "Top category",
+      ledgerFocus: "Ledger focus",
+      focusedCategory: (category: string) => `Category: ${category}`,
+      focusedDate: (date: string) => `Date: ${date}`,
+      focusCategoryAria: (category: string) =>
+        `Focus category in ledger: ${category}`,
+      focusDateAria: (date: string) => `Focus date in ledger: ${date}`,
+      clearLedgerFocus: "Clear",
+      noFocusedExpenses: "No expenses match this focus.",
       exportCsv: "Export CSV",
       exportCsvAria: "Export current trip expenses as CSV",
       noAnalytics: "Add expenses to unlock trip insights.",
@@ -392,6 +400,14 @@ export const dictionaries = {
       dailyTrendPage: (page: number, total: number) =>
         `第 ${page}/${total} 段`,
       topCategory: "最高分类",
+      ledgerFocus: "账本聚焦",
+      focusedCategory: (category: string) => `分类：${category}`,
+      focusedDate: (date: string) => `日期：${date}`,
+      focusCategoryAria: (category: string) =>
+        `在账本中聚焦分类：${category}`,
+      focusDateAria: (date: string) => `在账本中聚焦日期：${date}`,
+      clearLedgerFocus: "清除",
+      noFocusedExpenses: "当前聚焦下没有支出。",
       exportCsv: "导出 CSV",
       exportCsvAria: "导出当前旅程支出 CSV",
       noAnalytics: "记录支出后即可查看旅程洞察。",
