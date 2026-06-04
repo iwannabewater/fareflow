@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import {
   useEffect,
+  useCallback,
   useId,
   useMemo,
   useRef,
@@ -70,6 +71,18 @@ import { useDeleteTrip, useTrips } from "@/hooks/use-trips";
 
 let hasHydratedDashboard = false;
 const hydrationListeners = new Set<() => void>();
+
+type ExpenseLedgerFocus =
+  | { type: "all" }
+  | { type: "category"; category: Expense["category"] }
+  | { type: "date"; date: string };
+
+type ExpenseLedgerFocusState = {
+  tripId: string | null;
+  focus: ExpenseLedgerFocus;
+};
+
+const allExpenseLedgerFocus: ExpenseLedgerFocus = { type: "all" };
 
 export function FareFlowApp() {
   const isClient = useSyncExternalStore(
@@ -185,6 +198,21 @@ function FareFlowDashboard() {
   );
   const selectedTrip = selectCurrentTrip(trips.data ?? [], selectedTripId);
   const expenses = useExpenses(selectedTrip?.id ?? null);
+  const selectedTripKey = selectedTrip?.id ?? null;
+  const [expenseFocusState, setExpenseFocusState] =
+    useState<ExpenseLedgerFocusState>({
+      tripId: null,
+      focus: allExpenseLedgerFocus,
+    });
+  const expenseFocus =
+    expenseFocusState.tripId === selectedTripKey
+      ? expenseFocusState.focus
+      : allExpenseLedgerFocus;
+  const setExpenseFocus = useCallback(
+    (focus: ExpenseLedgerFocus) =>
+      setExpenseFocusState({ tripId: selectedTripKey, focus }),
+    [selectedTripKey],
+  );
 
   useEffect(() => {
     void useTripSelectionStore.persist.rehydrate();
@@ -343,6 +371,8 @@ function FareFlowDashboard() {
                 locale={locale}
                 tripDayCount={tripDayCount}
                 expenseDayCount={expenseDayCount}
+                focus={expenseFocus}
+                onFocusChange={setExpenseFocus}
               />
               {expenses.isError ? (
                 <InlineRecoveryPanel
@@ -359,6 +389,8 @@ function FareFlowDashboard() {
                   baseCurrency={baseCurrency}
                   copy={t}
                   locale={locale}
+                  focus={expenseFocus}
+                  onFocusChange={setExpenseFocus}
                 />
               )}
             </section>
@@ -871,6 +903,8 @@ function TripInsightsPanel({
   locale,
   tripDayCount,
   expenseDayCount,
+  focus,
+  onFocusChange,
 }: {
   trip: Trip | null;
   expenses: Expense[];
@@ -879,6 +913,8 @@ function TripInsightsPanel({
   locale: Locale;
   tripDayCount: number;
   expenseDayCount: number;
+  focus: ExpenseLedgerFocus;
+  onFocusChange: (focus: ExpenseLedgerFocus) => void;
 }) {
   const reduceMotion = useReducedMotion();
   const [categoryView, setCategoryView] = useState<"bars" | "donut">("bars");
@@ -890,6 +926,9 @@ function TripInsightsPanel({
   const trackedCategories = analytics.categoryTotals.length;
   const topCategoryRatio =
     topCategory && analytics.total > 0 ? topCategory.total / analytics.total : 0;
+  const focusedCategory =
+    focus.type === "category" ? focus.category : null;
+  const focusedDate = focus.type === "date" ? focus.date : null;
   const categorySlices = analytics.categoryTotals.map((item) => {
     const meta = categoryMeta[item.category];
     const ratio = analytics.total > 0 ? item.total / analytics.total : 0;
@@ -1016,7 +1055,20 @@ function TripInsightsPanel({
             {categoryView === "bars" ? (
               <div className="mt-3 grid gap-2">
                 {categorySlices.map((slice) => (
-                  <CategoryBreakdownRow key={slice.category} slice={slice} />
+                  <CategoryBreakdownRow
+                    key={slice.category}
+                    slice={slice}
+                    focused={focusedCategory === slice.category}
+                    ariaLabel={copy.home.focusCategoryAria(
+                      `${slice.label} ${slice.percent} ${slice.value}`,
+                    )}
+                    onFocusCategory={() =>
+                      onFocusChange({
+                        type: "category",
+                        category: slice.category,
+                      })
+                    }
+                  />
                 ))}
               </div>
             ) : (
@@ -1024,6 +1076,10 @@ function TripInsightsPanel({
                 slices={categorySlices}
                 copy={copy}
                 reduceMotion={reduceMotion}
+                focusedCategory={focusedCategory}
+                onFocusCategory={(category) =>
+                  onFocusChange({ type: "category", category })
+                }
               />
             )}
           </div>
@@ -1039,6 +1095,8 @@ function TripInsightsPanel({
               copy={copy}
               locale={locale}
               reduceMotion={reduceMotion}
+              focusedDate={focusedDate}
+              onFocusDate={(date) => onFocusChange({ type: "date", date })}
             />
           </div>
         </div>
@@ -1068,12 +1126,32 @@ type CategoryInsightSlice = {
   chartColor: string;
 };
 
-function CategoryBreakdownRow({ slice }: { slice: CategoryInsightSlice }) {
+function CategoryBreakdownRow({
+  slice,
+  focused,
+  ariaLabel,
+  onFocusCategory,
+}: {
+  slice: CategoryInsightSlice;
+  focused: boolean;
+  ariaLabel: string;
+  onFocusCategory: () => void;
+}) {
   const Icon = slice.icon;
   const percentValue = Math.round(slice.ratio * 100);
 
   return (
-    <div className="group grid gap-2 rounded-[1rem] px-2 py-2 transition-[background-color,transform] duration-200 [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:bg-canvas/70">
+    <button
+      type="button"
+      className={`group grid w-full gap-2 rounded-[1rem] px-2 py-2 text-left transition-[background-color,box-shadow,transform] duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.98] [@media(hover:hover)]:hover:-translate-y-0.5 ${
+        focused
+          ? "bg-canvas shadow-[0_1px_3px_rgba(35,42,40,0.10)]"
+          : "[@media(hover:hover)]:hover:bg-canvas/70"
+      }`}
+      aria-label={ariaLabel}
+      aria-pressed={focused}
+      onClick={onFocusCategory}
+    >
       <div className="flex min-w-0 items-center gap-3 text-sm">
         <span className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${slice.tone}`}>
           <Icon className="size-4" aria-hidden="true" />
@@ -1101,7 +1179,7 @@ function CategoryBreakdownRow({ slice }: { slice: CategoryInsightSlice }) {
           style={{ width: `${Math.max(4, slice.ratio * 100)}%` }}
         />
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -1109,19 +1187,24 @@ function CategoryDonutChart({
   slices,
   copy,
   reduceMotion,
+  focusedCategory,
+  onFocusCategory,
 }: {
   slices: CategoryInsightSlice[];
   copy: FareFlowCopy;
   reduceMotion: boolean | null;
+  focusedCategory: Expense["category"] | null;
+  onFocusCategory: (category: Expense["category"]) => void;
 }) {
   const titleId = useId();
   const [activeCategory, setActiveCategory] = useState<
     CategoryInsightSlice["category"] | null
-  >(slices[0]?.category ?? null);
+  >(null);
+
   const resolvedActiveCategory = slices.some(
-    (slice) => slice.category === activeCategory,
+    (slice) => slice.category === (activeCategory ?? focusedCategory),
   )
-    ? activeCategory
+    ? activeCategory ?? focusedCategory
     : slices[0]?.category;
   const activeSlice =
     slices.find((slice) => slice.category === resolvedActiveCategory) ??
@@ -1149,6 +1232,11 @@ function CategoryDonutChart({
             />
             {donutSegments.map((segment, index) => {
               const isActive = activeSlice?.category === segment.slice.category;
+              const isFocused = focusedCategory === segment.slice.category;
+              const selectSegment = () => {
+                setActiveCategory(segment.slice.category);
+                onFocusCategory(segment.slice.category);
+              };
 
               if (segment.fullCircle) {
                 return (
@@ -1159,18 +1247,18 @@ function CategoryDonutChart({
                     r="42"
                     fill="none"
                     stroke={segment.slice.chartColor}
-                    strokeWidth={isActive ? 18 : 16}
+                    strokeWidth={isActive || isFocused ? 18 : 16}
                     aria-hidden="true"
                     className="cursor-pointer transition-[opacity,stroke-width] duration-200"
                     initial={reduceMotion ? false : { opacity: 0 }}
-                    animate={{ opacity: isActive ? 1 : 0.82 }}
+                    animate={{ opacity: isActive || isFocused ? 1 : 0.82 }}
                     transition={{
                       duration: reduceMotion ? 0 : 0.24,
                       delay: reduceMotion ? 0 : index * 0.025,
                       ease: [0.16, 1, 0.3, 1],
                     }}
                     onMouseEnter={() => setActiveCategory(segment.slice.category)}
-                    onPointerDown={() => setActiveCategory(segment.slice.category)}
+                    onPointerDown={selectSegment}
                   />
                 );
               }
@@ -1181,19 +1269,19 @@ function CategoryDonutChart({
                   d={segment.path}
                   fill="none"
                   stroke={segment.slice.chartColor}
-                  strokeWidth={isActive ? 18 : 16}
+                  strokeWidth={isActive || isFocused ? 18 : 16}
                   strokeLinecap="butt"
                   aria-hidden="true"
                   className="cursor-pointer transition-[opacity,stroke-width] duration-200"
                   initial={reduceMotion ? false : { opacity: 0 }}
-                  animate={{ opacity: isActive ? 1 : 0.82 }}
+                  animate={{ opacity: isActive || isFocused ? 1 : 0.82 }}
                   transition={{
                     duration: reduceMotion ? 0 : 0.24,
                     delay: reduceMotion ? 0 : index * 0.025,
                     ease: [0.16, 1, 0.3, 1],
                   }}
                   onMouseEnter={() => setActiveCategory(segment.slice.category)}
-                  onPointerDown={() => setActiveCategory(segment.slice.category)}
+                  onPointerDown={selectSegment}
                 />
               );
             })}
@@ -1221,18 +1309,25 @@ function CategoryDonutChart({
         {slices.map((slice) => {
           const Icon = slice.icon;
           const isActive = activeSlice?.category === slice.category;
+          const isFocused = focusedCategory === slice.category;
 
           return (
             <button
               type="button"
               key={slice.category}
               className={`grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm transition-[background-color,box-shadow,transform] duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 [@media(hover:hover)]:hover:-translate-y-0.5 ${
-                isActive
+                isActive || isFocused
                   ? "bg-canvas shadow-[0_1px_3px_rgba(35,42,40,0.10)]"
                   : "hover:bg-canvas"
               }`}
-              aria-pressed={isActive}
-              onClick={() => setActiveCategory(slice.category)}
+              aria-label={copy.home.focusCategoryAria(
+                `${slice.label} ${slice.percent} ${slice.value}`,
+              )}
+              aria-pressed={isFocused}
+              onClick={() => {
+                setActiveCategory(slice.category);
+                onFocusCategory(slice.category);
+              }}
               onFocus={() => setActiveCategory(slice.category)}
               onMouseEnter={() => setActiveCategory(slice.category)}
             >
@@ -1259,7 +1354,8 @@ function CategoryDonutChart({
               <span
                 className="h-9 w-1 rounded-full transition-colors"
                 style={{
-                  backgroundColor: isActive ? slice.chartColor : "transparent",
+                  backgroundColor:
+                    isActive || isFocused ? slice.chartColor : "transparent",
                 }}
                 aria-hidden="true"
               />
@@ -1341,12 +1437,16 @@ function DailyTrendChart({
   copy,
   locale,
   reduceMotion,
+  focusedDate,
+  onFocusDate,
 }: {
   items: DailyTotal[];
   baseCurrency: Trip["baseCurrency"];
   copy: FareFlowCopy;
   locale: Locale;
   reduceMotion: boolean | null;
+  focusedDate: string | null;
+  onFocusDate: (date: string) => void;
 }) {
   const titleId = useId();
   const [activeDate, setActiveDate] = useState<string | null>(null);
@@ -1403,7 +1503,9 @@ function DailyTrendChart({
   const peak = points.reduce((currentPeak, point) =>
     point.total > currentPeak.total ? point : currentPeak,
   );
-  const activePoint = points.find((point) => point.date === activeDate) ?? peak;
+  const selectedDate = activeDate ?? focusedDate;
+  const activePoint =
+    points.find((point) => point.date === selectedDate) ?? peak;
 
   return (
     <div className="mt-3 rounded-[1.15rem] bg-canvas/70 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.42)]">
@@ -1509,31 +1611,18 @@ function DailyTrendChart({
               </div>
             ) : null}
             {points.map((point) => (
-              <button
-                type="button"
+              <DailyTrendPoint
                 key={point.date}
-                className={`absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-passport-900 bg-canvas shadow-[0_0_0_2px_var(--canvas)] transition-[box-shadow,transform] duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 [@media(hover:hover)]:hover:scale-125 ${
-                  activePoint?.date === point.date
-                    ? "scale-125 shadow-[0_0_0_3px_var(--canvas),0_8px_18px_rgba(12,79,112,0.20)]"
-                    : ""
-                }`}
-                style={{
-                  left: `${(point.x / width) * 100}%`,
-                  top: `${(point.y / height) * 100}%`,
-                }}
-                aria-label={`${formatDateLabel(point.date, locale)} · ${formatMoney(
-                  point.total,
-                  baseCurrency,
-                  copy.localeCode,
-                )}`}
-                title={`${formatDateLabel(point.date, locale)} · ${formatMoney(
-                  point.total,
-                  baseCurrency,
-                  copy.localeCode,
-                )}`}
-                onFocus={() => setActiveDate(point.date)}
-                onMouseEnter={() => setActiveDate(point.date)}
-                onClick={() => setActiveDate(point.date)}
+                point={point}
+                width={width}
+                height={height}
+                baseCurrency={baseCurrency}
+                copy={copy}
+                locale={locale}
+                active={activePoint?.date === point.date}
+                focused={focusedDate === point.date}
+                onActivate={() => setActiveDate(point.date)}
+                onFocusDate={() => onFocusDate(point.date)}
               />
             ))}
           </div>
@@ -1555,6 +1644,57 @@ function DailyTrendChart({
         </div>
       </div>
     </div>
+  );
+}
+
+function DailyTrendPoint({
+  point,
+  width,
+  height,
+  baseCurrency,
+  copy,
+  locale,
+  active,
+  focused,
+  onActivate,
+  onFocusDate,
+}: {
+  point: DailyTotal & { x: number; y: number };
+  width: number;
+  height: number;
+  baseCurrency: Trip["baseCurrency"];
+  copy: FareFlowCopy;
+  locale: Locale;
+  active: boolean;
+  focused: boolean;
+  onActivate: () => void;
+  onFocusDate: () => void;
+}) {
+  const dateLabel = formatDateLabel(point.date, locale);
+  const valueLabel = formatMoney(point.total, baseCurrency, copy.localeCode);
+
+  return (
+    <button
+      type="button"
+      className={`absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-passport-900 bg-canvas shadow-[0_0_0_2px_var(--canvas)] transition-[box-shadow,transform] duration-200 focus-visible:ring-3 focus-visible:ring-ring/50 [@media(hover:hover)]:hover:scale-125 ${
+        active || focused
+          ? "scale-125 shadow-[0_0_0_3px_var(--canvas),0_8px_18px_rgba(12,79,112,0.20)]"
+          : ""
+      }`}
+      style={{
+        left: `${(point.x / width) * 100}%`,
+        top: `${(point.y / height) * 100}%`,
+      }}
+      aria-label={`${copy.home.focusDateAria(dateLabel)} · ${valueLabel}`}
+      aria-pressed={focused}
+      title={`${dateLabel} · ${valueLabel}`}
+      onFocus={onActivate}
+      onMouseEnter={onActivate}
+      onClick={() => {
+        onActivate();
+        onFocusDate();
+      }}
+    />
   );
 }
 
@@ -1639,6 +1779,8 @@ function ExpenseTimeline({
   baseCurrency,
   copy,
   locale,
+  focus,
+  onFocusChange,
 }: {
   trip: Trip | null;
   expenses: Expense[];
@@ -1646,24 +1788,35 @@ function ExpenseTimeline({
   baseCurrency: Trip["baseCurrency"];
   copy: FareFlowCopy;
   locale: Locale;
+  focus: ExpenseLedgerFocus;
+  onFocusChange: (focus: ExpenseLedgerFocus) => void;
 }) {
-  const [activeCategory, setActiveCategory] =
-    useState<ExpenseCategoryFilter>("all");
   const categoryFilters = useMemo(
     () => buildExpenseCategoryFilters(expenses),
     [expenses],
   );
+  const activeCategory =
+    focus.type === "category" ? focus.category : "all";
   const resolvedActiveCategory =
     activeCategory === "all" ||
     categoryFilters.some((filter) => filter.category === activeCategory)
       ? activeCategory
       : "all";
   const visibleExpenses = useMemo(
-    () =>
-      resolvedActiveCategory === "all"
-        ? expenses
-        : expenses.filter((expense) => expense.category === resolvedActiveCategory),
-    [expenses, resolvedActiveCategory],
+    () => {
+      if (focus.type === "date") {
+        return expenses.filter((expense) => expense.expenseDate === focus.date);
+      }
+
+      if (resolvedActiveCategory !== "all") {
+        return expenses.filter(
+          (expense) => expense.category === resolvedActiveCategory,
+        );
+      }
+
+      return expenses;
+    },
+    [expenses, focus, resolvedActiveCategory],
   );
   const timelineGroups = useMemo(
     () => buildExpenseTimelineGroups(visibleExpenses),
@@ -1709,21 +1862,80 @@ function ExpenseTimeline({
         activeCategory={resolvedActiveCategory}
         totalCount={expenses.length}
         copy={copy}
-        onChange={setActiveCategory}
+        onChange={(category) =>
+          onFocusChange(
+            category === "all"
+              ? allExpenseLedgerFocus
+              : { type: "category", category },
+          )
+        }
       />
-      <div className="grid gap-4">
-        {timelineGroups.map((group) => (
-          <ExpenseDateGroup
-            key={group.date}
-            group={group}
-            trip={trip}
-            baseCurrency={baseCurrency}
-            copy={copy}
-            locale={locale}
-          />
-        ))}
-      </div>
+      <ExpenseFocusStrip
+        focus={focus}
+        copy={copy}
+        locale={locale}
+        onClear={() => onFocusChange(allExpenseLedgerFocus)}
+      />
+      {timelineGroups.length === 0 ? (
+        <div className="rounded-[1.15rem] bg-canvas-strong px-4 py-5 text-sm leading-6 text-ink-muted shadow-[0_1px_3px_rgba(35,42,40,0.08)]">
+          {copy.home.noFocusedExpenses}
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {timelineGroups.map((group) => (
+            <ExpenseDateGroup
+              key={group.date}
+              group={group}
+              trip={trip}
+              baseCurrency={baseCurrency}
+              copy={copy}
+              locale={locale}
+            />
+          ))}
+        </div>
+      )}
     </section>
+  );
+}
+
+function ExpenseFocusStrip({
+  focus,
+  copy,
+  locale,
+  onClear,
+}: {
+  focus: ExpenseLedgerFocus;
+  copy: FareFlowCopy;
+  locale: Locale;
+  onClear: () => void;
+}) {
+  if (focus.type === "all") {
+    return null;
+  }
+
+  const value =
+    focus.type === "category"
+      ? copy.home.focusedCategory(copy.categories[focus.category])
+      : copy.home.focusedDate(formatDateLabel(focus.date, locale));
+
+  return (
+    <div
+      className="flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-2xl bg-passport-50 px-3 py-2 text-sm text-passport-900 shadow-[0_1px_3px_rgba(35,42,40,0.08)]"
+      role="status"
+    >
+      <div className="min-w-0">
+        <p className="text-xs text-passport-900/64">{copy.home.ledgerFocus}</p>
+        <p className="truncate font-semibold">{value}</p>
+      </div>
+      <Button
+        type="button"
+        variant="secondary"
+        className="h-8 rounded-full bg-canvas px-3 text-xs text-passport-900 shadow-[0_1px_2px_rgba(35,42,40,0.08)] active:scale-95"
+        onClick={onClear}
+      >
+        {copy.home.clearLedgerFocus}
+      </Button>
+    </div>
   );
 }
 
