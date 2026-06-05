@@ -333,7 +333,39 @@ function buildQuickCaptureNote(value: string, amountMajor: string | null) {
     " ",
   );
 
-  return note.replace(/\s+/g, " ").trim().slice(0, 180);
+  note = cleanQuickCapturePhrase(note);
+
+  return note.slice(0, 180);
+}
+
+function cleanQuickCapturePhrase(value: string) {
+  let phrase = value
+    .replace(/[，,。.!！?？、；;:：]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  phrase = phrase.replace(
+    /^(?:一共|总共|总计|合计|大概|大约|约|差不多|花了?|花费|消费|支付|付了?|付款|支出|用了?|用掉|买了?|购买|购入|吃了?|喝了?)\s*/i,
+    "",
+  );
+  phrase = phrase.replace(
+    /\s*(?:一共|总共|总计|合计|大概|大约|约|差不多|花了?|花费|消费|支付|付了?|付款|支出|用了?|用掉|买了?|购买|购入|cost|costs|spent|paid|pay|for|on)\s*$/i,
+    "",
+  );
+  phrase = phrase.replace(
+    /\s*(?:一共|总共|总计|合计|花了?|花费|消费|支付|付了?|付款|支出|用了?|用掉)\s*/gi,
+    " ",
+  );
+  phrase = phrase.replace(
+    /^(?:去(?:了)?|到|在|买了?|购买|购入|吃了?|喝了?)\s*/i,
+    "",
+  );
+  phrase = phrase.replace(/\s+(?:cost|costs|spent|paid|pay|for|on)\s+/gi, " ");
+  phrase = phrase.replace(/^(?:spent|paid|pay|cost|costs|for|on)\s+/i, "");
+  phrase = phrase.replace(/\s+(?:spent|paid|pay|cost|costs|for|on)$/i, "");
+  phrase = phrase.replace(/ktv/gi, "KTV");
+
+  return phrase.replace(/\s+/g, " ").trim();
 }
 
 function stripQuickCaptureDateTokens(value: string) {

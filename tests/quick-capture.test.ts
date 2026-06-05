@@ -39,6 +39,117 @@ describe("quick capture parser", () => {
     });
   });
 
+  it("cleans Chinese spend verbs from natural transport notes", () => {
+    const parsed = parseQuickCaptureDraft(
+      "今天打车花了15元",
+      baseTrip,
+      "2026-06-05",
+    );
+
+    expect(parsed).toMatchObject({
+      amountMajor: "15",
+      amountMinor: 1500,
+      currency: "CNY",
+      category: "transport",
+      expenseDate: "2026-06-05",
+      note: "打车",
+      issues: [],
+      isReady: true,
+    });
+  });
+
+  it("keeps the note clean when the amount comes before the activity", () => {
+    const parsed = parseQuickCaptureDraft(
+      "花了15元打车",
+      baseTrip,
+      "2026-06-05",
+    );
+
+    expect(parsed).toMatchObject({
+      amountMajor: "15",
+      category: "transport",
+      note: "打车",
+      isReady: true,
+    });
+  });
+
+  it("removes purchase verbs while preserving the useful noun phrase", () => {
+    const parsed = parseQuickCaptureDraft(
+      "今天买门票花了120元",
+      baseTrip,
+      "2026-06-05",
+    );
+
+    expect(parsed).toMatchObject({
+      amountMajor: "120",
+      category: "sights",
+      note: "门票",
+      isReady: true,
+    });
+  });
+
+  it("normalizes casual entertainment notes without leaving filler verbs", () => {
+    const parsed = parseQuickCaptureDraft(
+      "去ktv唱歌花了200元",
+      baseTrip,
+      "2026-06-05",
+    );
+
+    expect(parsed).toMatchObject({
+      amountMajor: "200",
+      category: "other",
+      note: "KTV唱歌",
+      isReady: true,
+    });
+  });
+
+  it("cleans notes even when the amount is missing", () => {
+    const parsed = parseQuickCaptureDraft(
+      "今天打车花了",
+      baseTrip,
+      "2026-06-05",
+    );
+
+    expect(parsed).toMatchObject({
+      amountMajor: null,
+      category: "transport",
+      note: "打车",
+      isReady: false,
+    });
+    expect(parsed?.issues).toContain("amount");
+  });
+
+  it("cleans casual entertainment notes when the amount is missing", () => {
+    const parsed = parseQuickCaptureDraft(
+      "去ktv唱歌花了",
+      baseTrip,
+      "2026-06-05",
+    );
+
+    expect(parsed).toMatchObject({
+      amountMajor: null,
+      category: "other",
+      note: "KTV唱歌",
+      isReady: false,
+    });
+    expect(parsed?.issues).toContain("amount");
+  });
+
+  it("cleans English cost phrases", () => {
+    const parsed = parseQuickCaptureDraft(
+      "taxi cost 24 today",
+      baseTrip,
+      "2026-06-05",
+    );
+
+    expect(parsed).toMatchObject({
+      amountMajor: "24",
+      category: "transport",
+      note: "taxi",
+      isReady: true,
+    });
+  });
+
   it("parses an overseas cash entry and relative date", () => {
     const parsed = parseQuickCaptureDraft(
       "拉面 1800 JPY 昨天",
