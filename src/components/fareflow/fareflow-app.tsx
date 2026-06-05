@@ -53,8 +53,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   buildTripAnalytics,
+  buildTripPaceBrief,
   expensesToCsv,
   type DailyTotal,
+  type TripPaceBrief,
   type TripAnalytics,
 } from "@/lib/domain/analytics";
 import { categoryMeta } from "@/lib/domain/categories";
@@ -355,12 +357,16 @@ function FareFlowDashboard() {
                 copy={t}
                 locale={locale}
               />
-              <div className="lg:hidden">
+              <div className="pt-14 lg:hidden">
                 <JourneyRhythmPanel
                   trip={selectedTrip}
                   analytics={analytics}
                   copy={t}
                   locale={locale}
+                  todayDate={todayDate}
+                  onFocusToday={() =>
+                    setExpenseFocus({ type: "date", date: todayDate })
+                  }
                 />
               </div>
               <TripInsightsPanel
@@ -401,6 +407,10 @@ function FareFlowDashboard() {
                 analytics={analytics}
                 copy={t}
                 locale={locale}
+                todayDate={todayDate}
+                onFocusToday={() =>
+                  setExpenseFocus({ type: "date", date: todayDate })
+                }
               />
               <TripHealthPanel
                 trip={selectedTrip}
@@ -807,21 +817,34 @@ function JourneyRhythmPanel({
   analytics,
   copy,
   locale,
+  todayDate,
+  onFocusToday,
 }: {
   trip: Trip | null;
   analytics: TripAnalytics;
   copy: FareFlowCopy;
   locale: Locale;
+  todayDate: string;
+  onFocusToday: () => void;
 }) {
-  const rhythm = trip ? buildJourneyRhythm(trip, analytics, copy, locale) : null;
+  const rhythm = trip
+    ? buildJourneyRhythm(trip, analytics, copy, locale, todayDate)
+    : null;
 
   return (
     <section className="rounded-[1.45rem] bg-passport-50 p-4 text-passport-900 shadow-[0_1px_3px_rgba(35,42,40,0.10)] ring-1 ring-passport-900/8">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <Compass className="size-4" aria-hidden="true" />
-        {copy.home.journeyRhythm}
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2 text-sm font-medium">
+          <Compass className="size-4 shrink-0" aria-hidden="true" />
+          <span className="truncate">{copy.home.journeyRhythm}</span>
+        </div>
+        {rhythm ? (
+          <span className="shrink-0 rounded-full bg-canvas px-2.5 py-1 text-xs font-medium text-passport-900 shadow-[0_1px_2px_rgba(35,42,40,0.08)]">
+            {rhythm.dayMarker}
+          </span>
+        ) : null}
       </div>
-      {rhythm ? (
+      {trip && rhythm ? (
         <>
           <div className="mt-4">
             <div className="flex items-center justify-between gap-3 text-xs">
@@ -862,6 +885,12 @@ function JourneyRhythmPanel({
               />
             </div>
           </div>
+          <JourneyRhythmBrief
+            trip={trip}
+            rhythm={rhythm}
+            copy={copy}
+            onFocusToday={onFocusToday}
+          />
           <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-passport-900/12 pt-3">
             <RhythmStat
               label={copy.home.routeProgress}
@@ -881,6 +910,67 @@ function JourneyRhythmPanel({
         </p>
       )}
     </section>
+  );
+}
+
+function JourneyRhythmBrief({
+  trip,
+  rhythm,
+  copy,
+  onFocusToday,
+}: {
+  trip: Trip;
+  rhythm: ReturnType<typeof buildJourneyRhythm>;
+  copy: FareFlowCopy;
+  onFocusToday: () => void;
+}) {
+  return (
+    <div className="mt-3 rounded-[1.05rem] bg-canvas/82 p-3 text-passport-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.54),0_1px_2px_rgba(35,42,40,0.06)]">
+      <div className="flex min-w-0 items-start gap-2">
+        <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-passport-100 text-passport-900">
+          <ReceiptText className="size-3.5" aria-hidden="true" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold">{copy.home.todayRhythmBrief}</p>
+          <p className="mt-1 text-sm leading-5 text-passport-900/72">
+            {rhythm.brief}
+          </p>
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-3 gap-2 border-t border-passport-900/10 pt-3">
+        <RhythmStat label={copy.home.todaySpend} value={rhythm.todaySpend} />
+        <RhythmStat label={copy.home.paceForecast} value={rhythm.forecastTotal} />
+        <RhythmStat
+          label={copy.home.loggedCoverage}
+          value={rhythm.loggedCoverage}
+        />
+      </div>
+      {rhythm.action === "focusToday" ? (
+        <Button
+          type="button"
+          variant="secondary"
+          className="mt-3 h-9 rounded-full bg-passport-900 px-3 text-xs text-canvas shadow-[0_7px_16px_rgba(25,81,121,0.16)] active:scale-95"
+          onClick={onFocusToday}
+        >
+          <ReceiptText className="size-3.5" aria-hidden="true" />
+          {copy.home.reviewTodayExpenses}
+        </Button>
+      ) : rhythm.action === "addToday" ? (
+        <ExpenseDrawer
+          trip={trip}
+          trigger={
+            <Button
+              type="button"
+              variant="secondary"
+              className="mt-3 h-9 rounded-full bg-passport-900 px-3 text-xs text-canvas shadow-[0_7px_16px_rgba(25,81,121,0.16)] active:scale-95"
+            >
+              <Plus className="size-3.5" aria-hidden="true" />
+              {copy.home.addTodayExpense}
+            </Button>
+          }
+        />
+      ) : null}
+    </div>
   );
 }
 
@@ -2362,40 +2452,83 @@ function buildJourneyRhythm(
   analytics: TripAnalytics,
   copy: FareFlowCopy,
   locale: Locale,
+  todayDate: string,
 ) {
-  const start = dateFromInput(trip.startDate);
-  const end = dateFromInput(trip.endDate ?? trip.startDate);
-  const today = dateFromInput(getAppDateInputValue());
-  const totalDays = countTripDays(trip);
-  const elapsedDays =
-    today < start
-      ? 0
-      : today > end
-        ? totalDays
-        : Math.min(totalDays, daysBetween(start, today) + 1);
-  const remainingDays = Math.max(0, totalDays - elapsedDays);
-  const progress = Math.min(1, Math.max(0, elapsedDays / totalDays));
+  const pace = buildTripPaceBrief(trip, analytics, todayDate);
   const status =
-    today < start
+    pace.status === "upcoming"
       ? copy.home.journeyUpcoming
-      : today > end
+      : pace.status === "complete"
         ? copy.home.journeyComplete
         : copy.home.journeyActive;
   const topCategory = analytics.categoryTotals[0]?.category;
-  const averagePerTripDay =
-    totalDays > 0 ? Math.round(analytics.total / totalDays) : 0;
+  const dailyPace = formatMoney(
+    pace.averagePerTripDay,
+    trip.baseCurrency,
+    copy.localeCode,
+  );
+  const forecastTotal = formatMoney(
+    pace.forecastTotal,
+    trip.baseCurrency,
+    copy.localeCode,
+  );
+  const todaySpend = formatMoney(
+    pace.todayTotal,
+    trip.baseCurrency,
+    copy.localeCode,
+  );
 
   return {
     status,
-    remainingDays,
-    progress,
-    progressPercent: Math.round(progress * 100),
-    dailyPace: formatMoney(averagePerTripDay, trip.baseCurrency, copy.localeCode),
+    remainingDays: pace.remainingDays,
+    progress: pace.progress,
+    progressPercent: pace.progressPercent,
+    dailyPace,
     topCategory: topCategory ? copy.categories[topCategory] : copy.common.notSet,
+    dayMarker: copy.home.journeyDay(pace.elapsedDays, pace.totalDays),
+    brief: formatJourneyBrief(pace, copy, todaySpend, forecastTotal, dailyPace),
+    todaySpend,
+    forecastTotal,
+    loggedCoverage: `${pace.loggedDayCount}/${pace.loggedWindowDays}`,
+    action:
+      pace.status === "active"
+        ? pace.todayHasExpense
+          ? "focusToday"
+          : "addToday"
+        : null,
     dateRange: `${formatShortDateLabel(trip.startDate, locale)}${
       trip.endDate ? ` ${locale === "zh" ? "至" : "to"} ${formatShortDateLabel(trip.endDate, locale)}` : ""
     }`,
   };
+}
+
+function formatJourneyBrief(
+  pace: TripPaceBrief,
+  copy: FareFlowCopy,
+  todaySpend: string,
+  forecastTotal: string,
+  dailyPace: string,
+) {
+  if (pace.status === "upcoming") {
+    return copy.home.journeyBriefUpcoming(pace.daysUntilStart);
+  }
+
+  if (pace.status === "complete") {
+    return copy.home.journeyBriefComplete(dailyPace);
+  }
+
+  if (pace.todayHasExpense) {
+    return copy.home.journeyBriefActiveToday(todaySpend, forecastTotal);
+  }
+
+  if (pace.loggedDayCount > 0) {
+    return copy.home.journeyBriefActiveQuiet(forecastTotal);
+  }
+
+  return copy.home.journeyBriefActiveEmpty(
+    Math.max(1, pace.elapsedDays),
+    pace.totalDays,
+  );
 }
 
 function countTripDays(trip: Trip) {
@@ -2403,10 +2536,6 @@ function countTripDays(trip: Trip) {
   const end = dateFromInput(trip.endDate ?? trip.startDate);
   const days = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
   return Math.max(1, days);
-}
-
-function daysBetween(start: Date, end: Date) {
-  return Math.round((end.getTime() - start.getTime()) / 86_400_000);
 }
 
 function buildDailySeries(trip: Trip, dailyTotals: DailyTotal[]): DailyTotal[] {

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildTripAnalytics, expensesToCsv } from "@/lib/domain/analytics";
+import {
+  buildTripAnalytics,
+  buildTripPaceBrief,
+  expensesToCsv,
+} from "@/lib/domain/analytics";
 import { seedExpenses, seedTrips } from "@/lib/domain/seed";
 
 describe("trip analytics", () => {
@@ -21,6 +25,24 @@ describe("trip analytics", () => {
       "2026-05-10",
       "2026-05-11",
     ]);
+  });
+
+  it("builds a trip pace brief from current trip timing and logged days", () => {
+    const analytics = buildTripAnalytics(seedExpenses);
+    const pace = buildTripPaceBrief(seedTrips[0], analytics, "2026-05-12");
+
+    expect(pace.status).toBe("active");
+    expect(pace.totalDays).toBe(11);
+    expect(pace.elapsedDays).toBe(5);
+    expect(pace.remainingDays).toBe(6);
+    expect(pace.progressPercent).toBe(45);
+    expect(pace.loggedDayCount).toBe(3);
+    expect(pace.loggedWindowDays).toBe(5);
+    expect(pace.todayTotal).toBe(0);
+    expect(pace.todayHasExpense).toBe(false);
+    expect(pace.averagePerTripDay).toBe(76106);
+    expect(pace.averagePerElapsedDay).toBe(167433);
+    expect(pace.forecastTotal).toBe(1841763);
   });
 
   it("exports CSV with escaped human-entered text and readable money columns", () => {
