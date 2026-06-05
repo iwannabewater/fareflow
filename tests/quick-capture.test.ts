@@ -168,7 +168,37 @@ describe("quick capture parser", () => {
       input: "药店买药36元",
       amountMajor: "36",
       category: "health",
-      note: "药店•药",
+      note: "药",
+    },
+    {
+      input: "医院看病120元",
+      amountMajor: "120",
+      category: "health",
+      note: "看病",
+    },
+    {
+      input: "今天去医院挂号花了20元",
+      amountMajor: "20",
+      category: "health",
+      note: "挂号",
+    },
+    {
+      input: "诊所看病80元",
+      amountMajor: "80",
+      category: "health",
+      note: "看病",
+    },
+    {
+      input: "看病120元",
+      amountMajor: "120",
+      category: "health",
+      note: "看病",
+    },
+    {
+      input: "医院•看病120元",
+      amountMajor: "120",
+      category: "health",
+      note: "看病",
     },
     {
       input: "支付酒店押金500元",
@@ -334,6 +364,21 @@ describe("quick capture parser", () => {
       input: "KTV200元",
       category: "other",
       note: "KTV",
+    },
+    {
+      input: "医院120元",
+      category: "health",
+      note: "医院",
+    },
+    {
+      input: "药店36元",
+      category: "health",
+      note: "药店",
+    },
+    {
+      input: "诊所80元",
+      category: "health",
+      note: "诊所",
     },
   ])("does not over-segment object-only notes: $input", ({ input, category, note }) => {
     const parsed = parseQuickCaptureDraft(input, baseTrip, "2026-06-05");

@@ -266,14 +266,26 @@ function FareFlowDashboard() {
     [expenses.data, todayDate],
   );
   const todaySpend = formatMoney(todayTotal, baseCurrency, t.localeCode);
-  const budgetRemaining =
+  const budgetTotal =
     selectedTrip?.budgetAmount !== null && selectedTrip?.budgetAmount !== undefined
       ? formatMoney(
-          Math.max(0, selectedTrip.budgetAmount - analytics.total),
+          selectedTrip.budgetAmount,
           baseCurrency,
           t.localeCode,
         )
       : null;
+  const budgetRemainingValue =
+    selectedTrip?.budgetAmount !== null && selectedTrip?.budgetAmount !== undefined
+      ? selectedTrip.budgetAmount - analytics.total
+      : null;
+  const budgetRemaining =
+    budgetRemainingValue !== null
+      ? formatMoney(Math.abs(budgetRemainingValue), baseCurrency, t.localeCode)
+      : null;
+  const budgetRemainingLabel =
+    budgetRemainingValue !== null && budgetRemainingValue < 0
+      ? t.home.budgetSpentOver
+      : t.home.budgetRemaining;
   const tripDayCount = selectedTrip ? countTripDays(selectedTrip) : 0;
   const expenseDayCount = analytics.dailyTotals.length;
   const focusDate = useCallback(
@@ -387,9 +399,9 @@ function FareFlowDashboard() {
                 total={total}
                 todaySpend={todaySpend}
                 count={analytics.count}
-                pending={analytics.pending}
-                dayCount={tripDayCount}
+                budgetTotal={budgetTotal}
                 budgetRemaining={budgetRemaining}
+                budgetRemainingLabel={budgetRemainingLabel}
                 copy={t}
                 locale={locale}
               />
@@ -537,18 +549,20 @@ function QuickCaptureRail({
 
   if (!trip) {
     return (
-      <section className="relative overflow-hidden rounded-[1.15rem] border border-ink/10 bg-canvas p-4 text-ink shadow-soft">
+      <section className="relative overflow-hidden rounded-[1.35rem] border border-ink/10 bg-[linear-gradient(180deg,rgba(255,252,244,0.98),rgba(241,237,226,0.92))] p-4 text-ink shadow-[0_18px_44px_rgba(35,42,40,0.12)]">
         <QuickCaptureTexture />
         <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-ink text-canvas">
-              <Keyboard className="size-4" aria-hidden="true" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">{copy.home.quickCapture}</p>
-              <p className="mt-0.5 text-xs text-ink-muted">
-                {copy.home.quickCaptureBadge}
-              </p>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-[0.9rem] bg-ink text-canvas shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_10px_24px_rgba(35,42,40,0.16)]">
+                <Keyboard className="size-4" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">{copy.home.quickCapture}</p>
+                <p className="mt-0.5 text-xs text-ink-muted">
+                  {copy.home.quickCaptureBadge}
+                </p>
+              </div>
             </div>
           </div>
           <h2 className="mt-4 text-xl font-semibold leading-7">
@@ -557,7 +571,7 @@ function QuickCaptureRail({
           <p className="mt-2 text-sm leading-6 text-ink-muted">
             {copy.home.quickCaptureEmptyDescription}
           </p>
-          <div className="mt-5 border-y border-dashed border-ink/12 py-4">
+          <div className="mt-5 rounded-[1rem] border border-dashed border-ink/14 bg-canvas/55 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.68)]">
             <p className="font-casual text-2xl font-semibold text-ink">
               {copy.home.quickCaptureSample}
             </p>
@@ -590,12 +604,12 @@ function QuickCaptureRail({
         : savedMessage;
 
   return (
-    <section className="relative overflow-hidden rounded-[1.15rem] border border-ink/10 bg-canvas p-4 text-ink shadow-soft">
+    <section className="relative overflow-hidden rounded-[1.35rem] border border-ink/10 bg-[linear-gradient(180deg,rgba(255,252,244,0.98),rgba(241,237,226,0.92))] p-4 text-ink shadow-[0_18px_44px_rgba(35,42,40,0.12)]">
       <QuickCaptureTexture />
       <div className="relative z-10">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-start gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-ink text-canvas">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-[0.9rem] bg-ink text-canvas shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_10px_24px_rgba(35,42,40,0.16)]">
               <Keyboard className="size-4" aria-hidden="true" />
             </div>
             <div className="min-w-0">
@@ -607,64 +621,72 @@ function QuickCaptureRail({
               </p>
             </div>
           </div>
-          <span className="shrink-0 rounded-full bg-mint-50 px-2.5 py-1 text-xs font-semibold text-mint-900 shadow-soft">
+          <span className="shrink-0 rounded-full border border-mint-900/10 bg-mint-50 px-2.5 py-1 text-xs font-semibold text-mint-900 shadow-[0_1px_3px_rgba(35,42,40,0.08)]">
             {copy.home.quickCaptureBadge}
           </span>
         </div>
 
-        <div className="mt-4 border-y border-ink/10 py-3">
-          <Textarea
-            value={draft}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              setSavedMessage(null);
-              createMutation.reset();
-            }}
-            aria-label={copy.home.quickCapture}
-            placeholder={copy.home.quickCapturePlaceholder(trip.baseCurrency)}
-            className="min-h-16 resize-none rounded-none border-0 bg-transparent px-0 py-0 text-base leading-7 text-ink shadow-none placeholder:text-ink-muted/70 focus-visible:ring-0"
-          />
-          <div className="mt-3 flex flex-wrap gap-2">
-            {examples.map((example) => (
-              <button
-                key={example}
-                type="button"
-                className="rounded-full border border-ink/10 bg-canvas-strong px-2.5 py-1 text-xs text-ink-muted transition-colors hover:border-ink/18 hover:bg-passport-50 hover:text-passport-900 active:scale-95"
-                onClick={() => {
-                  setDraft(example);
-                  setSavedMessage(null);
-                  createMutation.reset();
-                }}
-              >
-                {example}
-              </button>
-            ))}
+        <div className="mt-4 overflow-hidden rounded-[1.1rem] border border-ink/10 bg-canvas/72 shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_9px_22px_rgba(35,42,40,0.08)]">
+          <div className="grid gap-3 p-3">
+            <Textarea
+              value={draft}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                setSavedMessage(null);
+                createMutation.reset();
+              }}
+              aria-label={copy.home.quickCapture}
+              placeholder={copy.home.quickCapturePlaceholder(trip.baseCurrency)}
+              className="min-h-[5.25rem] resize-none rounded-none border-0 bg-transparent px-0 py-0 text-[0.95rem] leading-7 text-ink shadow-none placeholder:text-ink-muted/70 focus-visible:ring-0"
+            />
+            <div className="flex flex-wrap gap-2">
+              {examples.map((example) => (
+                <button
+                  key={example}
+                  type="button"
+                  className="rounded-[0.7rem] border border-ink/8 bg-canvas-strong/85 px-2.5 py-1 text-xs text-ink-muted shadow-[0_1px_2px_rgba(35,42,40,0.05)] transition-colors hover:border-passport-900/18 hover:bg-passport-50 hover:text-passport-900 active:scale-95"
+                  onClick={() => {
+                    setDraft(example);
+                    setSavedMessage(null);
+                    createMutation.reset();
+                  }}
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         {hasDraft ? (
-          <div className="mt-3 rounded-xl border border-ink/10 bg-canvas-strong/70 px-3 py-2.5">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-medium text-ink-muted">
+          <div className="mt-3 overflow-hidden rounded-[1rem] border border-ink/10 bg-ink text-canvas shadow-[0_12px_28px_rgba(35,42,40,0.16)]">
+            <div className="flex items-center justify-between gap-3 border-b border-canvas/10 px-3 py-2">
+              <p className="text-xs font-medium text-canvas/62">
                 {copy.home.quickCapturePreview}
               </p>
-              <span className="rounded-full bg-canvas px-2.5 py-1 text-xs font-semibold text-ink shadow-soft">
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  parsed?.isReady && !requiresRate
+                    ? "bg-mint-100 text-mint-900"
+                    : "bg-canvas/12 text-canvas/74"
+                }`}
+              >
                 {previewState}
               </span>
             </div>
-            <div className="mt-2 grid gap-2">
+            <div className="grid gap-2 px-3 py-3">
               <div className="flex min-w-0 items-baseline justify-between gap-3">
-                <span className="truncate text-sm text-ink-muted">
+                <span className="truncate text-sm text-canvas/70">
                   {copy.categories[parsed?.category ?? "other"]}
                   {previewNote !== copy.home.quickCaptureNoNote
                     ? ` · ${previewNote}`
                     : ""}
                 </span>
-                <span className="shrink-0 text-lg font-semibold tabular-nums">
+                <span className="shrink-0 text-xl font-semibold tabular-nums">
                   {previewAmount}
                 </span>
               </div>
-              <div className="flex min-w-0 items-center justify-between gap-3 text-xs text-ink-muted">
+              <div className="flex min-w-0 items-center justify-between gap-3 text-xs text-canvas/52">
                 <span className="truncate">{previewDate}</span>
                 <span className="truncate">
                   {parsed?.currency ?? trip.baseCurrency}
@@ -673,7 +695,7 @@ function QuickCaptureRail({
             </div>
           </div>
         ) : (
-          <div className="mt-3 rounded-xl border border-dashed border-ink/12 px-3 py-2.5 text-xs leading-5 text-ink-muted">
+          <div className="mt-3 rounded-[1rem] border border-dashed border-ink/14 bg-canvas/48 px-3 py-3 text-xs leading-5 text-ink-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
             {copy.home.quickCaptureIdle}
           </div>
         )}
@@ -686,7 +708,7 @@ function QuickCaptureRail({
               onChange={(event) => setExchangeRate(event.target.value)}
               inputMode="decimal"
               aria-label={copy.home.quickCaptureRate}
-              className="h-10 rounded-xl border-ink/12 bg-white text-sm text-ink focus-visible:ring-passport-100"
+              className="h-10 rounded-[0.85rem] border-ink/12 bg-white text-sm text-ink focus-visible:ring-passport-100"
             />
             <span className="text-ink-muted/80">
               {copy.home.quickCaptureRateHelper(
@@ -699,7 +721,7 @@ function QuickCaptureRail({
 
         <Button
           type="button"
-          className="mt-4 h-10 w-full rounded-full bg-ink text-canvas shadow-[0_10px_22px_rgba(35,42,40,0.18)] active:scale-95 disabled:bg-ink/35 disabled:opacity-100"
+          className="mt-4 h-11 w-full rounded-[0.95rem] bg-ink text-canvas shadow-[0_13px_26px_rgba(35,42,40,0.2)] hover:bg-ink/95 active:scale-[0.98] disabled:bg-ink/35 disabled:opacity-100"
           disabled={!canSave}
           onClick={() => void saveQuickCapture()}
         >
@@ -733,9 +755,14 @@ function QuickCaptureRail({
 function QuickCaptureTexture() {
   return (
     <div className="pointer-events-none absolute inset-0 text-ink" aria-hidden="true">
-      <div className="absolute inset-y-4 left-0 w-0.5 rounded-r-full bg-ink/45" />
-      <div className="absolute inset-x-4 bottom-16 border-t border-dashed border-ink/8" />
-      <div className="absolute -right-12 top-6 size-28 rounded-full border border-ink/6" />
+      <div className="absolute inset-x-4 top-0 h-px bg-ink/8" />
+      <div className="absolute inset-x-4 bottom-0 h-px bg-ink/8" />
+      <div className="absolute bottom-5 left-4 top-5 border-l border-dashed border-ink/12" />
+      <div className="absolute bottom-5 right-4 top-5 border-r border-dashed border-ink/8" />
+      <div className="absolute left-0 top-20 h-9 w-1 rounded-r-full bg-ink/38" />
+      <div className="absolute right-0 top-28 h-9 w-1 rounded-l-full bg-mint-900/18" />
+      <div className="absolute inset-x-5 top-[5.35rem] border-t border-dashed border-ink/8" />
+      <div className="absolute inset-x-5 bottom-14 h-px bg-[repeating-linear-gradient(90deg,rgba(35,42,40,0.14)_0_7px,transparent_7px_12px)]" />
     </div>
   );
 }
@@ -1037,9 +1064,9 @@ function SummaryPanel({
   total,
   todaySpend,
   count,
-  pending,
-  dayCount,
+  budgetTotal,
   budgetRemaining,
+  budgetRemainingLabel,
   copy,
   locale,
 }: {
@@ -1047,9 +1074,9 @@ function SummaryPanel({
   total: string;
   todaySpend: string;
   count: number;
-  pending: number;
-  dayCount: number;
+  budgetTotal: string | null;
   budgetRemaining: string | null;
+  budgetRemainingLabel: string;
   copy: FareFlowCopy;
   locale: Locale;
 }) {
@@ -1085,17 +1112,15 @@ function SummaryPanel({
         <div className="grid grid-cols-2 gap-2 min-[620px]:grid-cols-4">
           <Metric label={copy.home.tripTotal} value={total} compact />
           <Metric label={copy.home.todaySpend} value={todaySpend} compact />
-          <Metric label={copy.home.items} value={String(count)} />
           <Metric
-            label={
-              pending > 0
-                ? copy.home.pending
-                : budgetRemaining
-                  ? copy.home.budgetRemaining
-                  : copy.home.tripDays
-            }
-            value={pending > 0 ? String(pending) : (budgetRemaining ?? String(dayCount))}
-            compact={pending === 0 && Boolean(budgetRemaining)}
+            label={copy.home.budgetTotal}
+            value={budgetTotal ?? copy.home.budgetPlaceholder}
+            compact={Boolean(budgetTotal)}
+          />
+          <Metric
+            label={budgetRemaining ? budgetRemainingLabel : copy.home.items}
+            value={budgetRemaining ?? String(count)}
+            compact={Boolean(budgetRemaining)}
           />
         </div>
       </div>
@@ -1253,19 +1278,31 @@ function JourneyRhythmBrief({
           </p>
         </div>
       </div>
-      <div className="mt-3 grid grid-cols-3 gap-2 border-t border-passport-900/10 pt-3">
-        <RhythmStat
-          label={rhythm.hasBudget ? copy.home.budgetRunway : copy.home.todaySpend}
-          value={rhythm.hasBudget ? rhythm.budgetRunway : rhythm.todaySpend}
-        />
-        <RhythmStat
-          label={rhythm.hasBudget ? copy.home.budgetLeft : copy.home.paceForecast}
-          value={rhythm.hasBudget ? rhythm.budgetRemaining : rhythm.forecastTotal}
-        />
-        <RhythmStat
-          label={rhythm.hasBudget ? rhythm.budgetDeltaLabel : copy.home.loggedCoverage}
-          value={rhythm.hasBudget ? rhythm.budgetDelta : rhythm.loggedCoverage}
-        />
+      <div
+        className={`mt-3 grid gap-2 border-t border-passport-900/10 pt-3 ${
+          rhythm.hasBudget ? "grid-cols-2" : "grid-cols-3"
+        }`}
+      >
+        {rhythm.hasBudget ? (
+          <>
+            <RhythmStat label={copy.home.budgetRunway} value={rhythm.budgetRunway} />
+            <RhythmStat label={copy.home.todaySpend} value={rhythm.todaySpend} />
+            <RhythmStat
+              label={rhythm.budgetDeltaLabel}
+              value={rhythm.budgetDelta}
+            />
+            <RhythmStat
+              label={rhythm.budgetRemainingLabel}
+              value={rhythm.budgetRemaining}
+            />
+          </>
+        ) : (
+          <>
+            <RhythmStat label={copy.home.todaySpend} value={rhythm.todaySpend} />
+            <RhythmStat label={copy.home.paceForecast} value={rhythm.forecastTotal} />
+            <RhythmStat label={copy.home.loggedCoverage} value={rhythm.loggedCoverage} />
+          </>
+        )}
       </div>
       {rhythm.action === "focusToday" ? (
         <Button
@@ -2558,6 +2595,38 @@ function ExpenseCategoryButton({
   );
 }
 
+const healthExpenseDisplayPrefixes = ["医院", "药店", "诊所"] as const;
+
+function getExpenseDisplayNote(expense: Expense, copy: FareFlowCopy) {
+  const note = expense.note?.trim();
+  if (!note) {
+    return copy.categories[expense.category];
+  }
+
+  if (expense.category !== "health") {
+    return note;
+  }
+
+  return stripHealthExpenseDisplayPrefix(note);
+}
+
+function stripHealthExpenseDisplayPrefix(note: string) {
+  for (const prefix of healthExpenseDisplayPrefixes) {
+    if (note.startsWith(prefix) && note.length > prefix.length) {
+      const stripped = note
+        .slice(prefix.length)
+        .replace(/^[\s•·-]+/, "")
+        .trim();
+
+      if (stripped) {
+        return stripped;
+      }
+    }
+  }
+
+  return note;
+}
+
 function ExpenseRow({
   expense,
   trip,
@@ -2574,6 +2643,7 @@ function ExpenseRow({
   const deleteMutation = useDeleteExpense(expense.tripId);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const reduceMotion = useReducedMotion();
+  const displayNote = getExpenseDisplayNote(expense, copy);
 
   return (
     <motion.article
@@ -2589,9 +2659,7 @@ function ExpenseRow({
       </div>
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <p className="truncate font-medium">
-            {expense.note ?? copy.categories[expense.category]}
-          </p>
+          <p className="truncate font-medium">{displayNote}</p>
           {expense.syncStatus !== "synced" ? (
             <Badge className="h-5 rounded-full bg-stamp-100 px-2 text-[0.68rem] text-stamp-900">
               {copy.sync.status[expense.syncStatus]}
@@ -2711,11 +2779,11 @@ function TripHealthPanel({
           <Info
             label={copy.home.baseCurrency}
             value={trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY}
-          />
-          <Info
-            label={copy.home.budgetRemaining}
-            value={
-              trip?.budgetAmount
+            />
+            <Info
+              label={copy.home.budgetTotal}
+              value={
+                trip?.budgetAmount
                 ? formatMoney(
                     trip.budgetAmount,
                     trip.baseCurrency,
@@ -2815,23 +2883,36 @@ function buildJourneyRhythm(
   const budgetAmount = pace.budgetAmount
     ? formatMoney(pace.budgetAmount, trip.baseCurrency, copy.localeCode)
     : copy.home.budgetPlaceholder;
+  const budgetRemainingValue = pace.budgetRemaining ?? 0;
   const budgetRemaining = formatMoney(
-    Math.max(0, pace.budgetRemaining ?? 0),
+    Math.abs(budgetRemainingValue),
     trip.baseCurrency,
     copy.localeCode,
   );
+  const budgetRemainingLabel =
+    budgetRemainingValue < 0 ? copy.home.budgetSpentOver : copy.home.budgetRemaining;
   const budgetRunway = formatMoney(
     Math.max(0, pace.budgetRunwayPerDay ?? 0),
     trip.baseCurrency,
     copy.localeCode,
   );
+  const todayBudgetBalanceValue = pace.todayBudgetBalance ?? 0;
   const budgetDelta = formatBudgetDeltaValue(
-    pace.forecastDelta,
+    todayBudgetBalanceValue,
     trip.baseCurrency,
     copy,
   );
+  const budgetDeltaLabel =
+    todayBudgetBalanceValue >= 0
+      ? copy.home.budgetBuffer
+      : copy.home.budgetOverrun;
   const budgetDeltaText = formatBudgetDeltaText(
-    pace.forecastDelta,
+    todayBudgetBalanceValue,
+    trip.baseCurrency,
+    copy,
+  );
+  const budgetResultText = formatBudgetResultText(
+    budgetRemainingValue,
     trip.baseCurrency,
     copy,
   );
@@ -2850,6 +2931,7 @@ function buildJourneyRhythm(
       budgetAmount,
       budgetRunway,
       budgetDelta: budgetDeltaText,
+      budgetResult: budgetResultText,
       todaySpend,
       forecastTotal,
       dailyPace,
@@ -2860,10 +2942,8 @@ function buildJourneyRhythm(
     budgetLabel: hasBudget ? formatBudgetLabel(pace, copy) : null,
     budgetRunway,
     budgetRemaining,
-    budgetDeltaLabel:
-      (pace.forecastDelta ?? 0) >= 0
-        ? copy.home.budgetBuffer
-        : copy.home.budgetOverrun,
+    budgetRemainingLabel,
+    budgetDeltaLabel,
     budgetDelta,
     loggedCoverage: `${pace.loggedDayCount}/${pace.loggedWindowDays}`,
     action:
@@ -2884,6 +2964,7 @@ function formatJourneyBrief({
   budgetAmount,
   budgetRunway,
   budgetDelta,
+  budgetResult,
   todaySpend,
   forecastTotal,
   dailyPace,
@@ -2893,6 +2974,7 @@ function formatJourneyBrief({
   budgetAmount: string;
   budgetRunway: string;
   budgetDelta: string;
+  budgetResult: string;
   todaySpend: string;
   forecastTotal: string;
   dailyPace: string;
@@ -2903,7 +2985,7 @@ function formatJourneyBrief({
     }
 
     if (pace.status === "complete") {
-      return copy.home.journeyBudgetBriefComplete(budgetDelta);
+      return copy.home.journeyBudgetBriefComplete(budgetResult);
     }
 
     if (pace.todayHasExpense) {
@@ -2915,7 +2997,7 @@ function formatJourneyBrief({
     }
 
     if (pace.loggedDayCount > 0) {
-      return copy.home.journeyBudgetBriefActiveQuiet(budgetRunway, budgetDelta);
+      return copy.home.journeyBudgetBriefActiveQuiet(budgetRunway, budgetResult);
     }
 
     return copy.home.journeyBudgetBriefActiveEmpty(
@@ -2976,12 +3058,24 @@ function formatBudgetDeltaText(
   const formatted = formatBudgetDeltaValue(value, currency, copy);
 
   if (copy.localeCode.startsWith("zh")) {
-    return (value ?? 0) >= 0
-      ? `仍有 ${formatted} ${copy.home.budgetBuffer}`
-      : `${copy.home.budgetOverrun} ${formatted}`;
+    return `${(value ?? 0) >= 0 ? copy.home.budgetBuffer : copy.home.budgetOverrun} ${formatted}`;
   }
 
-  return `${formatted} ${(value ?? 0) >= 0 ? "buffer" : "over"}`;
+  return `${(value ?? 0) >= 0 ? "left today" : "over today"} ${formatted}`;
+}
+
+function formatBudgetResultText(
+  value: number,
+  currency: Trip["baseCurrency"],
+  copy: FareFlowCopy,
+) {
+  const formatted = formatMoney(Math.abs(value), currency, copy.localeCode);
+
+  if (copy.localeCode.startsWith("zh")) {
+    return `${value >= 0 ? copy.home.budgetRemaining : copy.home.budgetSpentOver} ${formatted}`;
+  }
+
+  return `${value >= 0 ? "budget left" : "over budget"} ${formatted}`;
 }
 
 function countTripDays(trip: Trip) {

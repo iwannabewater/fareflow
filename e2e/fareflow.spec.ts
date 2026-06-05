@@ -28,6 +28,19 @@ test("creates a trip, adds, edits, exports, and deletes an expense", async ({
     await expect(
       page.getByRole("article").filter({ hasText: "食堂•饺子" }),
     ).toBeVisible();
+    await page.getByLabel("随手记").fill("医院看病120元");
+    await expectVisibleText(page, "健康 · 看病");
+    await page.getByRole("button", { name: "确认入账" }).click();
+    await expectVisibleText(page, "已入账");
+    await expect(
+      page
+        .getByRole("article")
+        .filter({ hasText: "看病" })
+        .filter({ hasText: "健康" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("article").filter({ hasText: "医院•看病" }),
+    ).toHaveCount(0);
   }
   await expectVisibleText(page, "预算节奏");
 
@@ -117,6 +130,38 @@ test("adds an expense offline and keeps it queued after network recovery", async
   });
 });
 
+test("shows the daily budget guide without projecting first-day overage", async ({
+  page,
+}) => {
+  const today = getShanghaiTodayInput();
+
+  await openTripDrawer(page);
+  await expectNoHorizontalOverflow(page);
+  await page.getByLabel("旅程名称").fill("预算口径测试");
+  await page.getByLabel("目的地").fill("成都");
+  await page.getByLabel("开始").fill(today);
+  await page.getByLabel("结束").fill(addDaysInput(today, 2));
+  await page.getByLabel("旅程预算").fill("3600");
+  await page.getByRole("button", { name: "创建旅程" }).click();
+  await expectCurrentTrip(page, "预算口径测试");
+
+  await openExpenseDrawer(page);
+  await expectNoHorizontalOverflow(page);
+  await page.getByLabel("金额").fill("2000");
+  await page.getByLabel("备注").fill("首日支出");
+  await page.getByRole("button", { name: "保存支出" }).click();
+  await expect(page.getByRole("heading", { name: "新增支出" })).toBeHidden();
+
+  await expectVisibleText(page, "今日建议");
+  await expectVisibleText(page, "今日超出");
+  await expectVisibleText(page, "预算剩余");
+  await expectVisibleText(page, "¥1,200.00");
+  await expectVisibleText(page, "¥800.00");
+  await expectVisibleText(page, "¥1,600.00");
+  await expect(page.getByText(/预计超出/)).toHaveCount(0);
+  await expect(page.getByText("已超总预算")).toBeHidden();
+});
+
 test("rejects an expense dated outside a finished trip", async ({ page }) => {
   await openTripDrawer(page);
   await page.getByLabel("旅程名称").fill("日期边界测试");
@@ -167,6 +212,29 @@ async function expectVisibleText(
 
 function isDesktopViewport(page: import("@playwright/test").Page) {
   return (page.viewportSize()?.width ?? 0) >= 1024;
+}
+
+function getShanghaiTodayInput() {
+  const parts = new Intl.DateTimeFormat("en", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+  }).formatToParts(new Date());
+  const value = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
+
+  return `${value.year}-${value.month}-${value.day}`;
+}
+
+function addDaysInput(value: string, days: number) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days))
+    .toISOString()
+    .slice(0, 10);
 }
 
 async function openExpenseDrawer(page: import("@playwright/test").Page) {

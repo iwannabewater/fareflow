@@ -106,6 +106,12 @@ const quickCaptureCategoryKeywords = {
     "药",
     "药店",
     "医院",
+    "诊所",
+    "看病",
+    "挂号",
+    "问诊",
+    "检查",
+    "体检",
     "医疗",
     "保险",
     "pharmacy",
@@ -135,9 +141,12 @@ const quickCaptureNoteSegmentPrefixes = [
   "超市",
   "便利店",
   "商场",
-  "药店",
-  "医院",
 ] as const;
+const quickCaptureCategoryEvidencePrefixes: Partial<
+  Record<ExpenseCategory, readonly string[]>
+> = {
+  health: ["医院", "药店", "诊所"],
+};
 
 export function parseQuickCaptureDraft(
   draft: string,
@@ -171,7 +180,7 @@ export function parseQuickCaptureDraft(
   }
 
   const category = detectQuickCaptureCategory(normalized);
-  const note = buildQuickCaptureNote(normalized, amountEntity);
+  const note = buildQuickCaptureNote(normalized, amountEntity, category);
 
   return {
     amountMajor,
@@ -606,6 +615,7 @@ function formatLooseDate(year: number, month: number, day: number) {
 function buildQuickCaptureNote(
   value: string,
   amountEntity: QuickCaptureAmountEntity | null,
+  category: ExpenseCategory,
 ) {
   let note = value;
 
@@ -625,12 +635,12 @@ function buildQuickCaptureNote(
     " ",
   );
 
-  note = cleanQuickCapturePhrase(note);
+  note = cleanQuickCapturePhrase(note, category);
 
   return note.slice(0, 180);
 }
 
-function cleanQuickCapturePhrase(value: string) {
+function cleanQuickCapturePhrase(value: string, category: ExpenseCategory) {
   let phrase = value
     .replace(/[，,。.!！?？、；;:：]/g, " ")
     .replace(/\s+/g, " ")
@@ -681,12 +691,35 @@ function cleanQuickCapturePhrase(value: string) {
   phrase = phrase.replace(/钱$/i, "");
   phrase = phrase.replace(/ktv/gi, "KTV");
 
-  return formatQuickCaptureNoteSegments(
-    phrase
+  const compactPhrase = phrase
     .replace(/\s+/g, " ")
     .replace(/([\u4e00-\u9fff])\s+([\u4e00-\u9fff])/g, "$1$2")
-      .trim(),
+    .trim();
+
+  return formatQuickCaptureNoteSegments(
+    stripQuickCaptureCategoryEvidence(category, compactPhrase),
   );
+}
+
+function stripQuickCaptureCategoryEvidence(
+  category: ExpenseCategory,
+  value: string,
+) {
+  const prefixes = quickCaptureCategoryEvidencePrefixes[category];
+  if (!prefixes) {
+    return value;
+  }
+
+  for (const prefix of prefixes) {
+    if (value.startsWith(prefix) && value.length > prefix.length) {
+      return value
+        .slice(prefix.length)
+        .replace(/^[\s•·-]+/, "")
+        .trim();
+    }
+  }
+
+  return value;
 }
 
 function formatQuickCaptureNoteSegments(value: string) {
