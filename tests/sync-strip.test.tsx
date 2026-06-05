@@ -34,7 +34,7 @@ describe("SyncStrip", () => {
 
     expect(screen.getByLabelText("在线 · 1 项失败")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "重试同步失败记录" }));
+    fireEvent.click(screen.getByRole("button", { name: "重试同步失败项" }));
     expect(retryNow).toHaveBeenCalledTimes(1);
   });
 });

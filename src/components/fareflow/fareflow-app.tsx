@@ -13,6 +13,7 @@ import {
   Compass,
   Download,
   Flag,
+  Keyboard,
   ListFilter,
   Pencil,
   Languages,
@@ -21,6 +22,8 @@ import {
   Plus,
   Route,
   Rows3,
+  SendHorizontal,
+  Sparkles,
   ReceiptText,
   TrendingUp,
   Trash2,
@@ -45,12 +48,14 @@ import { SyncStrip } from "@/components/fareflow/sync-strip";
 import { TripDrawer } from "@/components/fareflow/trip-drawer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DEFAULT_BASE_CURRENCY,
   formatAppDate,
   getAppDateInputValue,
 } from "@/lib/domain/defaults";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import {
   buildTripAnalytics,
   buildTripPaceBrief,
@@ -61,14 +66,23 @@ import {
 } from "@/lib/domain/analytics";
 import { categoryMeta } from "@/lib/domain/categories";
 import { currencyMeta, formatMoney } from "@/lib/domain/money";
-import { expenseCategories, type Expense, type Trip } from "@/lib/domain/schema";
+import {
+  expenseCategories,
+  type CreateExpenseInput,
+  type Expense,
+  type Trip,
+} from "@/lib/domain/schema";
 import { type FareFlowCopy, type Locale, useCopy } from "@/lib/i18n";
+import {
+  isValidQuickCaptureRate,
+  parseQuickCaptureDraft,
+} from "@/lib/expenses/quick-capture";
 import {
   selectCurrentTrip,
   useTripSelectionHydrated,
   useTripSelectionStore,
 } from "@/lib/trips/selection";
-import { useDeleteExpense, useExpenses } from "@/hooks/use-expenses";
+import { useCreateExpense, useDeleteExpense, useExpenses } from "@/hooks/use-expenses";
 import { useDeleteTrip, useTrips } from "@/hooks/use-trips";
 
 let hasHydratedDashboard = false;
@@ -263,6 +277,14 @@ function FareFlowDashboard() {
       : null;
   const tripDayCount = selectedTrip ? countTripDays(selectedTrip) : 0;
   const expenseDayCount = analytics.dailyTotals.length;
+  const focusDate = useCallback(
+    (date: string) => setExpenseFocus({ type: "date", date }),
+    [setExpenseFocus],
+  );
+  const focusToday = useCallback(() => focusDate(todayDate), [
+    focusDate,
+    todayDate,
+  ]);
 
   return (
     <main
@@ -283,6 +305,12 @@ function FareFlowDashboard() {
           <div className="mt-6 grid gap-4">
             <AuthPanel />
             <TripDrawer onTripCreated={(trip) => setSelectedTripId(trip.id)} />
+            <QuickCaptureRail
+              trip={selectedTrip}
+              copy={t}
+              todayDate={todayDate}
+              onSavedDate={focusDate}
+            />
           </div>
         </aside>
 
@@ -373,9 +401,7 @@ function FareFlowDashboard() {
                   copy={t}
                   locale={locale}
                   todayDate={todayDate}
-                  onFocusToday={() =>
-                    setExpenseFocus({ type: "date", date: todayDate })
-                  }
+                  onFocusToday={focusToday}
                 />
               </div>
               <TripInsightsPanel
@@ -417,9 +443,7 @@ function FareFlowDashboard() {
                 copy={t}
                 locale={locale}
                 todayDate={todayDate}
-                onFocusToday={() =>
-                  setExpenseFocus({ type: "date", date: todayDate })
-                }
+                onFocusToday={focusToday}
               />
               <TripHealthPanel
                 trip={selectedTrip}
@@ -450,6 +474,275 @@ function FareFlowDashboard() {
         </section>
       </div>
     </main>
+  );
+}
+
+function QuickCaptureRail({
+  trip,
+  copy,
+  todayDate,
+  onSavedDate,
+}: {
+  trip: Trip | null;
+  copy: FareFlowCopy;
+  todayDate: string;
+  onSavedDate: (date: string) => void;
+}) {
+  const createMutation = useCreateExpense(trip);
+  const [draft, setDraft] = useState("");
+  const [exchangeRate, setExchangeRate] = useState("1");
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const parsed = useMemo(
+    () => parseQuickCaptureDraft(draft, trip, todayDate),
+    [draft, todayDate, trip],
+  );
+  const requiresRate = Boolean(
+    trip && parsed && parsed.currency !== trip.baseCurrency,
+  );
+  const rateIsValid = !requiresRate || isValidQuickCaptureRate(exchangeRate);
+  const canSave = Boolean(
+    trip && parsed?.isReady && rateIsValid && !createMutation.isPending,
+  );
+  const examples = copy.home.quickCaptureExamples(
+    trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY,
+  );
+
+  async function saveQuickCapture() {
+    if (!trip || !parsed?.amountMajor || !canSave) {
+      return;
+    }
+
+    const input: CreateExpenseInput = {
+      amountMajor: parsed.amountMajor,
+      currency: parsed.currency,
+      exchangeRate: requiresRate ? exchangeRate.trim() : "1",
+      category: parsed.category,
+      note: parsed.note,
+      expenseDate: parsed.expenseDate,
+    };
+    const savedExpense = await createMutation.mutateAsync(input).catch(() => null);
+
+    if (!savedExpense) {
+      return;
+    }
+
+    setDraft("");
+    setSavedMessage(
+      copy.home.quickCaptureSaved(
+        formatMoney(savedExpense.amount, savedExpense.currency, copy.localeCode),
+      ),
+    );
+    onSavedDate(savedExpense.expenseDate);
+  }
+
+  if (!trip) {
+    return (
+      <section className="relative overflow-hidden rounded-[1.35rem] bg-ink p-4 text-canvas shadow-[0_14px_32px_rgba(35,42,40,0.18)]">
+        <QuickCaptureTexture />
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 text-xs font-medium text-canvas/70">
+            <Keyboard className="size-3.5" aria-hidden="true" />
+            {copy.home.quickCapture}
+          </div>
+          <h2 className="mt-4 text-xl font-semibold leading-7">
+            {copy.home.quickCaptureEmptyTitle}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-canvas/68">
+            {copy.home.quickCaptureEmptyDescription}
+          </p>
+          <div className="mt-5 border-y border-dashed border-canvas/14 py-4">
+            <p className="font-casual text-2xl font-semibold text-mint-50">
+              {copy.home.quickCaptureSample}
+            </p>
+            <p className="mt-2 text-xs leading-5 text-canvas/50">
+              {copy.home.quickCapturePlaceholder(DEFAULT_BASE_CURRENCY)}
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const previewAmount = parsed?.amountMinor
+    ? formatMoney(parsed.amountMinor, parsed.currency, copy.localeCode)
+    : copy.home.quickCaptureMissingAmount;
+  const previewDate = parsed?.expenseDate
+    ? formatAppDate(parsed.expenseDate, copy.localeCode)
+    : copy.home.quickCaptureOutOfRange;
+  const previewNote = parsed?.note || copy.home.quickCaptureNoNote;
+  const previewState = requiresRate
+    ? copy.home.quickCaptureNeedsRate
+    : parsed?.isReady
+      ? copy.home.quickCaptureReady
+      : copy.home.quickCaptureMissingAmount;
+  const statusMessage =
+    parsed?.issues.includes("date")
+      ? copy.home.quickCaptureOutOfRange
+      : createMutation.isError
+        ? copy.home.quickCaptureFailed
+        : savedMessage;
+
+  return (
+    <section className="relative overflow-hidden rounded-[1.35rem] bg-ink p-4 text-canvas shadow-[0_14px_32px_rgba(35,42,40,0.18)]">
+      <QuickCaptureTexture />
+      <div className="relative z-10">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-xs font-medium text-canvas/70">
+              <Keyboard className="size-3.5" aria-hidden="true" />
+              {copy.home.quickCapture}
+            </div>
+            <p className="mt-1 text-sm leading-5 text-canvas/58">
+              {copy.home.quickCaptureDescription}
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-mint-50 px-2.5 py-1 text-xs font-semibold text-mint-900 shadow-[0_1px_2px_rgba(0,0,0,0.10)]">
+            {copy.home.quickCaptureBadge}
+          </span>
+        </div>
+
+        <div className="mt-4 rounded-[1rem] border border-canvas/10 bg-canvas/[0.08] p-3">
+          <Textarea
+            value={draft}
+            onChange={(event) => {
+              setDraft(event.target.value);
+              setSavedMessage(null);
+              createMutation.reset();
+            }}
+            aria-label={copy.home.quickCapture}
+            placeholder={copy.home.quickCapturePlaceholder(trip.baseCurrency)}
+            className="min-h-24 resize-none rounded-xl border-canvas/12 bg-canvas/95 px-3 py-2.5 text-sm leading-6 text-ink placeholder:text-ink-muted/70 focus-visible:ring-mint-100"
+          />
+          <div className="mt-3 flex flex-wrap gap-2">
+            {examples.map((example) => (
+              <button
+                key={example}
+                type="button"
+                className="rounded-full border border-canvas/12 bg-canvas/[0.08] px-2.5 py-1 text-xs text-canvas/70 transition-colors hover:bg-canvas/[0.14] hover:text-canvas"
+                onClick={() => {
+                  setDraft(example);
+                  setSavedMessage(null);
+                  createMutation.reset();
+                }}
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 overflow-hidden rounded-[1rem] bg-mint-50 text-ink shadow-[0_12px_26px_rgba(0,0,0,0.18)]">
+          <div className="flex items-center justify-between gap-3 border-b border-ink/10 px-3 py-2.5">
+            <div className="flex items-center gap-2 text-xs font-semibold text-ink/55">
+              <Sparkles className="size-3.5" aria-hidden="true" />
+              {copy.home.quickCapturePreview}
+            </div>
+            <span className="rounded-full bg-ink px-2.5 py-1 text-xs font-semibold text-canvas">
+              {previewState}
+            </span>
+          </div>
+          <div className="grid gap-3 px-3 py-3">
+            <div>
+              <p className="text-[0.68rem] text-ink-muted">
+                {copy.home.quickCaptureAmount}
+              </p>
+              <p className="mt-1 truncate text-2xl font-semibold tabular-nums">
+                {previewAmount}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <QuickCapturePreviewItem
+                label={copy.home.quickCaptureCategory}
+                value={copy.categories[parsed?.category ?? "other"]}
+              />
+              <QuickCapturePreviewItem
+                label={copy.home.quickCaptureDate}
+                value={previewDate}
+              />
+            </div>
+            <QuickCapturePreviewItem
+              label={copy.home.quickCaptureNote}
+              value={previewNote}
+            />
+          </div>
+        </div>
+
+        {requiresRate ? (
+          <label className="mt-3 grid gap-1.5 text-xs font-medium text-canvas/70">
+            <span>{copy.home.quickCaptureRate}</span>
+            <Input
+              value={exchangeRate}
+              onChange={(event) => setExchangeRate(event.target.value)}
+              inputMode="decimal"
+              aria-label={copy.home.quickCaptureRate}
+              className="h-10 rounded-xl border-canvas/12 bg-canvas/95 text-sm text-ink focus-visible:ring-mint-100"
+            />
+            <span className="text-canvas/45">
+              {copy.home.quickCaptureRateHelper(
+                parsed?.currency ?? trip.baseCurrency,
+                trip.baseCurrency,
+              )}
+            </span>
+          </label>
+        ) : null}
+
+        <Button
+          type="button"
+          className="mt-4 h-10 w-full rounded-full bg-mint-50 text-ink shadow-[0_10px_22px_rgba(0,0,0,0.18)] active:scale-95 disabled:opacity-55"
+          disabled={!canSave}
+          onClick={() => void saveQuickCapture()}
+        >
+          <SendHorizontal className="size-4" aria-hidden="true" />
+          {createMutation.isPending
+            ? copy.common.saving
+            : copy.home.quickCaptureSave}
+        </Button>
+
+        {statusMessage ? (
+          <p
+            className={`mt-3 text-xs leading-5 ${
+              createMutation.isError || parsed?.issues.includes("date")
+                ? "text-canvas/72"
+                : "text-mint-50"
+            }`}
+            role={
+              createMutation.isError || parsed?.issues.includes("date")
+                ? "alert"
+                : "status"
+            }
+          >
+            {statusMessage}
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function QuickCapturePreviewItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate text-[0.68rem] text-ink-muted">{label}</p>
+      <p className="mt-1 truncate text-sm font-semibold tabular-nums">{value}</p>
+    </div>
+  );
+}
+
+function QuickCaptureTexture() {
+  return (
+    <div className="pointer-events-none absolute inset-0 text-canvas" aria-hidden="true">
+      <div className="absolute inset-0 opacity-[0.055] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:2.5rem_2.5rem]" />
+      <div className="absolute -right-7 top-8 size-24 rounded-full border border-mint-100/18" />
+      <div className="absolute -right-1 top-14 size-12 rounded-full bg-mint-100/10" />
+      <div className="absolute inset-x-4 bottom-24 border-t border-dashed border-canvas/14" />
+      <div className="absolute bottom-10 left-4 right-4 h-px bg-gradient-to-r from-transparent via-mint-100/45 to-transparent" />
+    </div>
   );
 }
 
@@ -2690,7 +2983,7 @@ function formatBudgetDeltaText(
 
   if (copy.localeCode.startsWith("zh")) {
     return (value ?? 0) >= 0
-      ? `有 ${formatted} ${copy.home.budgetBuffer}`
+      ? `仍有 ${formatted} ${copy.home.budgetBuffer}`
       : `${copy.home.budgetOverrun} ${formatted}`;
   }
 
