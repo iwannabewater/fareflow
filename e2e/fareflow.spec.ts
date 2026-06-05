@@ -130,7 +130,7 @@ test("adds an expense offline and keeps it queued after network recovery", async
   });
 });
 
-test("shows the daily budget guide without projecting first-day overage", async ({
+test("shows today's available budget without relabeling it as a daily average", async ({
   page,
 }) => {
   const today = getShanghaiTodayInput();
@@ -140,24 +140,26 @@ test("shows the daily budget guide without projecting first-day overage", async 
   await page.getByLabel("旅程名称").fill("预算口径测试");
   await page.getByLabel("目的地").fill("成都");
   await page.getByLabel("开始").fill(today);
-  await page.getByLabel("结束").fill(addDaysInput(today, 2));
-  await page.getByLabel("旅程预算").fill("3600");
+  await page.getByLabel("结束").fill(addDaysInput(today, 5));
+  await page.getByLabel("旅程预算").fill("3500");
   await page.getByRole("button", { name: "创建旅程" }).click();
   await expectCurrentTrip(page, "预算口径测试");
 
   await openExpenseDrawer(page);
   await expectNoHorizontalOverflow(page);
-  await page.getByLabel("金额").fill("2000");
-  await page.getByLabel("备注").fill("首日支出");
+  await page.getByLabel("金额").fill("68");
+  await page.getByLabel("备注").fill("首日打车");
   await page.getByRole("button", { name: "保存支出" }).click();
   await expect(page.getByRole("heading", { name: "新增支出" })).toBeHidden();
 
-  await expectVisibleText(page, "今日建议");
-  await expectVisibleText(page, "今日超出");
+  await expectVisibleText(page, "今日可用");
+  await expectVisibleText(page, "日均参考");
   await expectVisibleText(page, "预算剩余");
-  await expectVisibleText(page, "¥1,200.00");
-  await expectVisibleText(page, "¥800.00");
-  await expectVisibleText(page, "¥1,600.00");
+  await expectVisibleText(page, "¥515.33");
+  await expectVisibleText(page, "¥583.33");
+  await expectVisibleText(page, "¥3,432.00");
+  await expect(page.getByText("今日额度")).toHaveCount(0);
+  await expect(page.getByText("¥572.00")).toHaveCount(0);
   await expect(page.getByText(/预计超出/)).toHaveCount(0);
   await expect(page.getByText("已超总预算")).toBeHidden();
 });

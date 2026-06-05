@@ -1285,12 +1285,12 @@ function JourneyRhythmBrief({
       >
         {rhythm.hasBudget ? (
           <>
-            <RhythmStat label={copy.home.budgetRunway} value={rhythm.budgetRunway} />
-            <RhythmStat label={copy.home.todaySpend} value={rhythm.todaySpend} />
             <RhythmStat
               label={rhythm.budgetDeltaLabel}
               value={rhythm.budgetDelta}
             />
+            <RhythmStat label={copy.home.todaySpend} value={rhythm.todaySpend} />
+            <RhythmStat label={copy.home.budgetRunway} value={rhythm.budgetRunway} />
             <RhythmStat
               label={rhythm.budgetRemainingLabel}
               value={rhythm.budgetRemaining}

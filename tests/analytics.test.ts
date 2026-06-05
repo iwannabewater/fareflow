@@ -82,6 +82,39 @@ describe("trip analytics", () => {
     expect(pace.budgetState).toBe("watch");
   });
 
+  it("separates today's available budget from the remaining daily average", () => {
+    const trip = {
+      ...seedTrips[1],
+      budgetAmount: 350000,
+      startDate: "2026-06-05",
+      endDate: "2026-06-10",
+    };
+    const analytics = buildTripAnalytics([
+      {
+        ...seedExpenses[0],
+        tripId: trip.id,
+        amount: 6800,
+        currency: "CNY",
+        baseAmount: 6800,
+        baseCurrency: "CNY",
+        expenseDate: "2026-06-05",
+      },
+    ]);
+    const pace = buildTripPaceBrief(trip, analytics, "2026-06-05");
+
+    expect(pace.totalDays).toBe(6);
+    expect(pace.elapsedDays).toBe(1);
+    expect(pace.remainingDays).toBe(5);
+    expect(pace.todayTotal).toBe(6800);
+    expect(pace.budgetRemaining).toBe(343200);
+    expect(pace.budgetRunwayPerDay).toBe(58333);
+    expect(pace.todayBudgetAllowance).toBe(58333);
+    expect(pace.todayBudgetBalance).toBe(51533);
+    expect(pace.forecastDelta).toBe(309200);
+    expect(Math.floor((pace.budgetRemaining ?? 0) / pace.totalDays)).toBe(57200);
+    expect(pace.budgetState).toBe("under");
+  });
+
   it("marks over budget only when actual trip spend exceeds the total budget", () => {
     const trip = {
       ...seedTrips[1],

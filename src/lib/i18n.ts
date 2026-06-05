@@ -119,12 +119,12 @@ export const dictionaries = {
       budgetSpentOver: "Over budget",
       budgetPlaceholder: "Not set",
       budgetAutopilot: "Budget pace",
-      budgetRunway: "Today guide",
+      budgetRunway: "Daily guide",
       budgetLeft: "Budget left",
-      budgetBuffer: "Today left",
+      budgetBuffer: "Today available",
       budgetOverrun: "Today over",
       budgetUnsetPrompt:
-        "Set a trip budget to calculate a daily guide and budget left.",
+        "Set a trip budget to calculate today available, daily guide, and budget left.",
       budgetOnTrack: "On budget",
       budgetWatch: "Tight today",
       budgetOver: "Over total budget",
@@ -198,7 +198,7 @@ export const dictionaries = {
       journeyBriefUpcoming: (days: number) =>
         `Starts in ${days} day${days === 1 ? "" : "s"}. Set the route now, then spend pace will appear after the first expense.`,
       journeyBudgetBriefUpcoming: (budget: string, runway: string) =>
-        `${budget} budget set. Daily reference is about ${runway}.`,
+        `${budget} budget set. Daily guide is about ${runway}.`,
       journeyBriefActiveEmpty: (day: number, total: number) =>
         `Day ${day}/${total}, with no spend logged yet. Add the first expense to see today's pace.`,
       journeyBudgetBriefActiveEmpty: (
@@ -206,7 +206,7 @@ export const dictionaries = {
         total: number,
         runway: string,
       ) =>
-        `Day ${day}/${total}, with no spend logged yet. Today's guide is ${runway}.`,
+        `Day ${day}/${total}, with no spend logged yet. Today available is about ${runway}.`,
       journeyBriefActiveToday: (today: string, forecast: string) =>
         `Today is at ${today}. Based on current records, the full trip is forecast at ${forecast}.`,
       journeyBudgetBriefActiveToday: (
@@ -214,11 +214,11 @@ export const dictionaries = {
         runway: string,
         delta: string,
       ) =>
-        `Today is at ${today}. Today's guide is ${runway}; ${delta}.`,
+        `Today is at ${today}. ${delta}; daily guide is ${runway}.`,
       journeyBriefActiveQuiet: (forecast: string) =>
         `No spend logged today yet. Based on current records, the full trip is forecast at ${forecast}.`,
       journeyBudgetBriefActiveQuiet: (runway: string, result: string) =>
-        `No spend logged today yet. Today's guide is ${runway}; ${result}.`,
+        `No spend logged today yet. Today available is ${runway}; ${result}.`,
       journeyBriefComplete: (pace: string) =>
         `Trip complete. Final daily average was ${pace}.`,
       journeyBudgetBriefComplete: (delta: string) => `Trip complete. ${delta}.`,
@@ -273,8 +273,8 @@ export const dictionaries = {
         `${example} ${currency}`,
         budgetHelper: (currency: CurrencyCode, decimals: number) =>
           decimals === 0
-            ? `Optional. Used for the daily guide and budget left. ${currency} accepts whole amounts only.`
-            : `Optional. Used for the daily guide and budget left. Up to ${decimals} decimal places.`,
+            ? `Optional. Used for today available, daily guide, and budget left. ${currency} accepts whole amounts only.`
+            : `Optional. Used for today available, daily guide, and budget left. Up to ${decimals} decimal places.`,
       createFailed: "Trip could not be saved.",
       updateFailed: "Trip could not be updated.",
       delete: "Delete trip",
@@ -455,11 +455,11 @@ export const dictionaries = {
       budgetSpentOver: "已超支",
       budgetPlaceholder: "未设置",
       budgetAutopilot: "预算节奏",
-      budgetRunway: "今日建议",
+      budgetRunway: "日均参考",
       budgetLeft: "预算剩余",
-      budgetBuffer: "今日剩余",
+      budgetBuffer: "今日可用",
       budgetOverrun: "今日超出",
-      budgetUnsetPrompt: "设置旅程预算后，可计算每日建议额度和预算剩余。",
+      budgetUnsetPrompt: "设置旅程预算后，可计算今日可用、日均参考和预算剩余。",
       budgetOnTrack: "预算正常",
       budgetWatch: "今日需收紧",
       budgetOver: "已超总预算",
@@ -540,7 +540,7 @@ export const dictionaries = {
         total: number,
         runway: string,
       ) =>
-        `今天是第 ${day}/${total} 天。按今天开始前的剩余预算计算，今日建议约 ${runway}。`,
+        `今天是第 ${day}/${total} 天，今日可用约 ${runway}。`,
       journeyBriefActiveToday: (today: string, forecast: string) =>
         `今天已记录 ${today}。按当前记录估算，全程支出约 ${forecast}。`,
       journeyBudgetBriefActiveToday: (
@@ -548,11 +548,11 @@ export const dictionaries = {
         runway: string,
         delta: string,
       ) =>
-        `今天已记录 ${today}。今日建议 ${runway}，${delta}。`,
+        `今天已记录 ${today}，${delta}；日均参考 ${runway}。`,
       journeyBriefActiveQuiet: (forecast: string) =>
         `今天还没有新支出。按当前记录估算，全程支出约 ${forecast}。`,
       journeyBudgetBriefActiveQuiet: (runway: string, result: string) =>
-        `今天还没有新支出。今日建议 ${runway}，当前总预算${result}。`,
+        `今天还没有新支出，今日可用 ${runway}；${result}。`,
       journeyBriefComplete: (pace: string) =>
         `旅程已完成，日均支出 ${pace}。`,
       journeyBudgetBriefComplete: (delta: string) => `旅程已完成，${delta}。`,
@@ -605,8 +605,8 @@ export const dictionaries = {
         `${example} ${currency}`,
         budgetHelper: (currency: CurrencyCode, decimals: number) =>
           decimals === 0
-            ? `可选，用于计算每日建议和预算剩余。${currency} 仅支持整数金额。`
-            : `可选，用于计算每日建议和预算剩余，最多 ${decimals} 位小数。`,
+            ? `可选，用于计算今日可用、日均参考和预算剩余。${currency} 仅支持整数金额。`
+            : `可选，用于计算今日可用、日均参考和预算剩余，最多 ${decimals} 位小数。`,
       createFailed: "旅程保存失败。",
       updateFailed: "旅程更新失败。",
       delete: "删除旅程",
