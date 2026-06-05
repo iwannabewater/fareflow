@@ -78,7 +78,7 @@ export const dictionaries = {
       localDemo: "Local demo mode",
       localDemoDescription:
         "Add Supabase env vars to enable auth, RLS, and cloud sync.",
-      cloudReady: "Cloud sync ready",
+      cloudReady: "Cloud connected",
       signOut: "Sign out",
     },
     confirm: {
@@ -108,7 +108,7 @@ export const dictionaries = {
     },
     home: {
       currentJourney: "Current journey",
-      actionCenter: "Current trip action center",
+      actionCenter: "Current trip overview",
       firstTripTitle: "Set up your first trip",
       createTripPrompt: "Create a trip to start tracking expenses.",
       selectTrip: "Select trip",
@@ -116,20 +116,53 @@ export const dictionaries = {
       todaySpend: "Today",
       budgetRemaining: "Budget",
       budgetPlaceholder: "Not set",
-      budgetAutopilot: "Budget autopilot",
-      budgetRunway: "Today's runway",
+      budgetAutopilot: "Budget pace",
+      budgetRunway: "Daily budget",
       budgetLeft: "Budget left",
       budgetBuffer: "Buffer",
       budgetOverrun: "Over",
       budgetUnsetPrompt:
-        "Set a trip budget to turn the rhythm panel into a daily spend guardrail.",
+        "Set a trip budget to calculate daily budget and forecast buffer.",
       budgetOnTrack: "On budget",
-      budgetWatch: "Watch pace",
+      budgetWatch: "Near limit",
       budgetOver: "Over budget",
       tripDays: "Trip days",
       expenseDays: "Expense days",
       categoriesTracked: "Categories",
       noTripSelected: "No trip selected",
+      quickCapture: "Quick capture",
+      quickCaptureBadge: "Offline ready",
+      quickCaptureSample: "taxi 24 today",
+      quickCaptureEmptyTitle: "Pick a trip first",
+      quickCaptureEmptyDescription:
+        "Once a trip is selected, capture a spend line without opening the full form.",
+      quickCaptureDescription:
+        "Type amount, category, and date. FareFlow parses the line and saves it locally first.",
+      quickCapturePlaceholder: (currency: CurrencyCode) =>
+        `Try: taxi 24 ${currency} today`,
+      quickCaptureExamples: (currency: CurrencyCode) => [
+        `taxi 24 ${currency} today`,
+        "ramen 1800 JPY yesterday",
+        `museum 18 ${currency}`,
+      ],
+      quickCapturePreview: "Parsed entry",
+      quickCaptureAmount: "Amount",
+      quickCaptureCategory: "Category",
+      quickCaptureDate: "Date",
+      quickCaptureNote: "Note",
+      quickCaptureRate: "Exchange rate",
+      quickCaptureRateHelper: (
+        currency: CurrencyCode,
+        baseCurrency: CurrencyCode,
+      ) => `How many ${baseCurrency} is 1 ${currency}?`,
+      quickCaptureMissingAmount: "Add an amount",
+      quickCaptureOutOfRange: "Date is outside this trip",
+      quickCaptureSave: "Confirm entry",
+      quickCaptureSaved: (amount: string) => `${amount} saved`,
+      quickCaptureFailed: "Could not save this entry.",
+      quickCaptureNoNote: "No note",
+      quickCaptureReady: "Ready",
+      quickCaptureNeedsRate: "Needs rate",
       items: "Items",
       pending: "Pending",
       noExpensesTitle: "No expenses yet",
@@ -153,40 +186,40 @@ export const dictionaries = {
       journeyUpcoming: "Preparing",
       journeyActive: "On route",
       journeyComplete: "Complete",
-      noRhythm: "Create a trip to see its travel rhythm.",
-      todayRhythmBrief: "Today's pace brief",
+      noRhythm: "Create a trip to see spend pace.",
+      todayRhythmBrief: "Today's brief",
       paceForecast: "Forecast",
       loggedCoverage: "Logged days",
       journeyDay: (current: number, total: number) =>
         current > 0 ? `Day ${current}/${total}` : `${total} days`,
       journeyBriefUpcoming: (days: number) =>
-        `Starts in ${days} day${days === 1 ? "" : "s"}. Set the route now, then FareFlow will watch the pace once spending begins.`,
+        `Starts in ${days} day${days === 1 ? "" : "s"}. Set the route now, then spend pace will appear after the first expense.`,
       journeyBudgetBriefUpcoming: (budget: string, runway: string) =>
-        `${budget} budget set. Before departure, each travel day has about ${runway} of runway.`,
+        `${budget} budget set. Estimated daily budget is about ${runway}.`,
       journeyBriefActiveEmpty: (day: number, total: number) =>
-        `Day ${day}/${total}, with no spend logged yet. Add the first receipt so the travel pace has something real to read.`,
+        `Day ${day}/${total}, with no spend logged yet. Add the first expense to see today's pace.`,
       journeyBudgetBriefActiveEmpty: (
         day: number,
         total: number,
         runway: string,
       ) =>
-        `Day ${day}/${total}, with no spend logged yet. Your budget runway allows about ${runway} per day from today.`,
+        `Day ${day}/${total}, with no spend logged yet. Remaining budget allows about ${runway} per day.`,
       journeyBriefActiveToday: (today: string, forecast: string) =>
-        `Today is at ${today}. At the current pace, this trip is tracking toward ${forecast}.`,
+        `Today is at ${today}. Based on current records, the full trip is forecast at ${forecast}.`,
       journeyBudgetBriefActiveToday: (
         today: string,
         runway: string,
         delta: string,
       ) =>
-        `Today is at ${today}. Your budget runway leaves ${runway} per day, with ${delta} against the forecast.`,
+        `Today is at ${today}. Daily budget is ${runway}, forecast ${delta}.`,
       journeyBriefActiveQuiet: (forecast: string) =>
-        `No spend logged today yet. The current trip pace is tracking toward ${forecast}.`,
+        `No spend logged today yet. Based on current records, the full trip is forecast at ${forecast}.`,
       journeyBudgetBriefActiveQuiet: (runway: string, delta: string) =>
-        `No spend logged today yet. Your budget runway leaves ${runway} per day, with ${delta} against the forecast.`,
+        `No spend logged today yet. Daily budget is ${runway}, forecast ${delta}.`,
       journeyBriefComplete: (pace: string) =>
-        `Trip complete. The final daily pace settled at ${pace}.`,
+        `Trip complete. Final daily average was ${pace}.`,
       journeyBudgetBriefComplete: (delta: string) =>
-        `Trip complete. The final budget result landed at ${delta}.`,
+        `Trip complete. Final budget result: ${delta}.`,
       addTodayExpense: "Log today's spend",
       reviewTodayExpenses: "Review today",
       averageDaily: "Daily average",
@@ -238,8 +271,8 @@ export const dictionaries = {
         `${example} ${currency}`,
       budgetHelper: (currency: CurrencyCode, decimals: number) =>
         decimals === 0
-          ? `Optional guardrail in ${currency}. Use whole amounts only.`
-          : `Optional guardrail in ${currency}. Up to ${decimals} decimal places.`,
+          ? `Optional. Used for daily budget and forecast buffer. ${currency} accepts whole amounts only.`
+          : `Optional. Used for daily budget and forecast buffer. Up to ${decimals} decimal places.`,
       createFailed: "Trip could not be saved.",
       updateFailed: "Trip could not be updated.",
       delete: "Delete trip",
@@ -340,7 +373,7 @@ export const dictionaries = {
     switchLanguageAria: "切换为英文",
     localeCode: "zh-CN",
     appName: "FareFlow",
-    tagline: "旅行记账伙伴",
+    tagline: "旅行支出账本",
     common: {
       backToApp: "返回 FareFlow",
       notSet: "未设置",
@@ -376,10 +409,10 @@ export const dictionaries = {
       fallbackError: "登录链接发送失败。",
       rateLimit: "邮件服务正在冷却，请先使用最新登录邮件，稍后可重新发送。",
       retryAfter: (seconds: number) => `${seconds} 秒后可重新发送`,
-      localDemo: "本地演示模式",
+      localDemo: "本地模式",
       localDemoDescription:
-        "添加 Supabase 环境变量后即可启用登录、RLS 和云端同步。",
-      cloudReady: "云端同步已就绪",
+        "配置 Supabase 后可启用登录、RLS 和云端同步。",
+      cloudReady: "云端已连接",
       signOut: "退出登录",
     },
     confirm: {
@@ -398,8 +431,8 @@ export const dictionaries = {
       synced: (count: number) => `已同步 ${count} 项`,
       pendingCount: (count: number) => `${count} 项待同步`,
       failedCount: (count: number) => `${count} 项失败`,
-      retryFailed: "重试失败同步",
-      retryFailedAria: "重试同步失败记录",
+      retryFailed: "重试同步",
+      retryFailedAria: "重试同步失败项",
       status: {
         pending: "待同步",
         syncing: "同步中",
@@ -409,7 +442,7 @@ export const dictionaries = {
     },
     home: {
       currentJourney: "当前旅程",
-      actionCenter: "当前旅程行动台",
+      actionCenter: "当前旅程概览",
       firstTripTitle: "创建第一段旅程",
       createTripPrompt: "创建旅程后即可开始记录旅行支出。",
       selectTrip: "选择旅程",
@@ -417,19 +450,52 @@ export const dictionaries = {
       todaySpend: "今日支出",
       budgetRemaining: "预算",
       budgetPlaceholder: "未设置",
-      budgetAutopilot: "预算自动驾驶",
-      budgetRunway: "今日可花",
+      budgetAutopilot: "预算节奏",
+      budgetRunway: "今日额度",
       budgetLeft: "预算剩余",
       budgetBuffer: "余量",
       budgetOverrun: "超出",
-      budgetUnsetPrompt: "设置旅程预算后，节奏面板会变成每日消费护栏。",
-      budgetOnTrack: "预算内",
-      budgetWatch: "注意节奏",
+      budgetUnsetPrompt: "设置旅程预算后，可计算每日额度和预计余量。",
+      budgetOnTrack: "预算正常",
+      budgetWatch: "接近预算",
       budgetOver: "已超预算",
       tripDays: "旅程天数",
       expenseDays: "记账天数",
       categoriesTracked: "已用分类",
       noTripSelected: "尚未选择旅程",
+      quickCapture: "随手记",
+      quickCaptureBadge: "离线可用",
+      quickCaptureSample: "打车 68 今天",
+      quickCaptureEmptyTitle: "先选择一段旅程",
+      quickCaptureEmptyDescription:
+        "选择旅程后，可直接用一句话记录支出，无需打开完整表单。",
+      quickCaptureDescription:
+        "输入金额、分类和日期，确认后直接写入本地账本。",
+      quickCapturePlaceholder: (currency: CurrencyCode) =>
+        `例如：打车 68 ${currency} 今天`,
+      quickCaptureExamples: (currency: CurrencyCode) => [
+        `打车 68 ${currency} 今天`,
+        "拉面 1800 JPY 昨天",
+        `门票 120 ${currency}`,
+      ],
+      quickCapturePreview: "识别结果",
+      quickCaptureAmount: "金额",
+      quickCaptureCategory: "分类",
+      quickCaptureDate: "日期",
+      quickCaptureNote: "备注",
+      quickCaptureRate: "折算汇率",
+      quickCaptureRateHelper: (
+        currency: CurrencyCode,
+        baseCurrency: CurrencyCode,
+      ) => `1 ${currency} 可折算为多少 ${baseCurrency}`,
+      quickCaptureMissingAmount: "请补充金额",
+      quickCaptureOutOfRange: "日期不在当前旅程内",
+      quickCaptureSave: "确认入账",
+      quickCaptureSaved: (amount: string) => `已入账 ${amount}`,
+      quickCaptureFailed: "这笔支出保存失败，请稍后重试。",
+      quickCaptureNoNote: "未填写备注",
+      quickCaptureReady: "可入账",
+      quickCaptureNeedsRate: "需补汇率",
       items: "笔数",
       pending: "待同步",
       noExpensesTitle: "还没有支出",
@@ -446,46 +512,46 @@ export const dictionaries = {
       currentTotal: "当前总额",
       pendingSync: "待同步",
       dashboard: "数据看板",
-      journeyRhythm: "旅程节奏",
+      journeyRhythm: "花费节奏",
       routeProgress: "行程进度",
       remainingDays: "剩余天数",
       journeyUpcoming: "准备中",
       journeyActive: "行程中",
       journeyComplete: "已完成",
-      noRhythm: "创建旅程后即可查看行程节奏。",
-      todayRhythmBrief: "今日节奏简报",
+      noRhythm: "创建旅程后可查看花费节奏。",
+      todayRhythmBrief: "今日简报",
       paceForecast: "预计总额",
       loggedCoverage: "记账覆盖",
       journeyDay: (current: number, total: number) =>
         current > 0 ? `第 ${current}/${total} 天` : `${total} 天行程`,
       journeyBriefUpcoming: (days: number) =>
-        `还有 ${days} 天出发。先把行程建好，开始记录后 FareFlow 会自动看节奏。`,
+        `还有 ${days} 天出发。先建好旅程，开始记账后会显示花费节奏。`,
       journeyBudgetBriefUpcoming: (budget: string, runway: string) =>
-        `已设置 ${budget} 预算。出发前，每个旅行日约有 ${runway} 的余量。`,
+        `预算 ${budget} 已设置，平均每日额度约 ${runway}。`,
       journeyBriefActiveEmpty: (day: number, total: number) =>
-        `今天是第 ${day}/${total} 天，还没有记录支出。先记第一笔，后面的节奏才有参考。`,
+        `今天是第 ${day}/${total} 天，还没有支出记录。记一笔后即可查看今日花费。`,
       journeyBudgetBriefActiveEmpty: (
         day: number,
         total: number,
         runway: string,
       ) =>
-        `今天是第 ${day}/${total} 天，还没有记录支出。从今天起，每天约可花 ${runway}。`,
+        `今天是第 ${day}/${total} 天。按剩余预算计算，今日额度约 ${runway}。`,
       journeyBriefActiveToday: (today: string, forecast: string) =>
-        `今天已记录 ${today}，按当前速度预计整段旅程会到 ${forecast}。`,
+        `今天已记录 ${today}。按当前记录估算，全程支出约 ${forecast}。`,
       journeyBudgetBriefActiveToday: (
         today: string,
         runway: string,
         delta: string,
       ) =>
-        `今天已记录 ${today}，预算护栏还给你每天 ${runway}，预计结果${delta}。`,
+        `今天已记录 ${today}。今日额度 ${runway}，预计${delta}。`,
       journeyBriefActiveQuiet: (forecast: string) =>
-        `今天还没有新支出。按当前速度，整段旅程预计会到 ${forecast}。`,
+        `今天还没有新支出。按当前记录估算，全程支出约 ${forecast}。`,
       journeyBudgetBriefActiveQuiet: (runway: string, delta: string) =>
-        `今天还没有新支出。预算护栏还给你每天 ${runway}，预计结果${delta}。`,
+        `今天还没有新支出。今日额度 ${runway}，预计${delta}。`,
       journeyBriefComplete: (pace: string) =>
-        `旅程已完成，最终日均节奏停在 ${pace}。`,
+        `旅程已完成，日均支出 ${pace}。`,
       journeyBudgetBriefComplete: (delta: string) =>
-        `旅程已完成，最终预算结果${delta}。`,
+        `旅程已完成，预算${delta}。`,
       addTodayExpense: "记今日支出",
       reviewTodayExpenses: "查看今日记录",
       averageDaily: "日均支出",
@@ -517,10 +583,10 @@ export const dictionaries = {
     trip: {
       trigger: "旅程",
       newTitle: "新建旅程",
-      description: "旅程会先保存到本机，云端可用时自动同步。",
+      description: "旅程会先保存到本机，网络可用时同步到云端。",
       editTrigger: "编辑旅程",
       editTitle: "编辑旅程",
-      editDescription: "旅程修改会先保存到本机，云端可用时继续同步。",
+      editDescription: "修改会先保存到本机，网络可用时同步到云端。",
       name: "旅程名称",
       namePlaceholder: "里斯本工作周…",
       destination: "目的地",
@@ -535,15 +601,15 @@ export const dictionaries = {
         `${example} ${currency}`,
       budgetHelper: (currency: CurrencyCode, decimals: number) =>
         decimals === 0
-          ? `可选消费护栏，按 ${currency} 整数金额保存。`
-          : `可选消费护栏，按 ${currency} 保存，最多 ${decimals} 位小数。`,
+          ? `可选，用于计算每日额度和预计余量。${currency} 仅支持整数金额。`
+          : `可选，用于计算每日额度和预计余量，最多 ${decimals} 位小数。`,
       createFailed: "旅程保存失败。",
       updateFailed: "旅程更新失败。",
       delete: "删除旅程",
       deleteAria: "删除当前旅程",
       deleteConfirmTitle: "删除这个旅程及其支出？",
       deleteConfirmDescription:
-        "该旅程中的所有支出都会被删除；云端可用时会同步删除。",
+        "该旅程中的所有支出都会被删除，网络可用时同步到云端。",
       confirmDelete: "删除旅程",
       cancelDelete: "取消",
       deleteFailed: "旅程删除失败。",
@@ -551,10 +617,10 @@ export const dictionaries = {
     expense: {
       trigger: "添加支出",
       newTitle: "新增支出",
-      description: "先保存到本机；网络可用时自动同步到 Supabase。",
+      description: "支出会先保存到本机，网络可用时同步到 Supabase。",
       editTrigger: "编辑支出",
       editTitle: "编辑支出",
-      editDescription: "修改会先保存到本机，云端可用时继续同步。",
+      editDescription: "修改会先保存到本机，网络可用时同步到云端。",
       amount: "金额",
       amountPlaceholder: (currency: CurrencyCode, example: string) =>
         `${example} ${currency}`,
@@ -579,7 +645,7 @@ export const dictionaries = {
       deleteAria: "删除支出",
       deleteConfirmTitle: "删除这笔支出？",
       deleteConfirmDescription:
-        "这会从当前旅程移除该支出；云端可用时会同步删除。",
+        "这会从当前旅程移除该支出，网络可用时同步到云端。",
       confirmDelete: "删除",
       cancelDelete: "取消",
       deleteFailed: "支出删除失败。",

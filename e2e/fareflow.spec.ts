@@ -17,7 +17,18 @@ test("creates a trip, adds, edits, exports, and deletes an expense", async ({
   await page.getByRole("button", { name: "创建旅程" }).click();
 
   await expectCurrentTrip(page, "首尔周末");
-  await expectVisibleText(page, "预算自动驾驶");
+  if (isDesktopViewport(page)) {
+    await expectVisibleText(page, "随手记");
+    await page.getByLabel("随手记").fill("市区地铁 68 CNY 今天");
+    await expectVisibleText(page, "识别结果");
+    await expectVisibleText(page, "可入账");
+    await page.getByRole("button", { name: "确认入账" }).click();
+    await expectVisibleText(page, "已入账");
+    await expect(
+      page.getByRole("article").filter({ hasText: "市区地铁" }),
+    ).toBeVisible();
+  }
+  await expectVisibleText(page, "预算节奏");
 
   await openExpenseDrawer(page);
   await expectNoHorizontalOverflow(page);
@@ -30,11 +41,14 @@ test("creates a trip, adds, edits, exports, and deletes an expense", async ({
   await expect(page.getByRole("heading", { name: "新增支出" })).toBeHidden();
 
   await expect(page.getByText("机场巴士")).toBeVisible();
+  const airportBusRecord = page
+    .getByRole("article")
+    .filter({ hasText: "机场巴士" });
   await page.getByRole("button", { name: "圆环" }).click();
   await expect(page.getByRole("img", { name: "分类占比圆环图" })).toBeVisible();
   await page.getByRole("button", { name: "条形" }).click();
 
-  await page.getByRole("button", { name: "编辑支出" }).click();
+  await airportBusRecord.getByRole("button", { name: "编辑支出" }).click();
   await expectNoHorizontalOverflow(page);
   await page.getByLabel("金额").fill("99.00");
   await page.getByRole("button", { name: "更新支出" }).click();
@@ -64,7 +78,7 @@ test("creates a trip, adds, edits, exports, and deletes an expense", async ({
   expect(download.suggestedFilename()).toContain("首尔周末");
   expect(download.suggestedFilename()).toContain("expenses.csv");
 
-  await page.getByRole("button", { name: "删除支出" }).click();
+  await airportBusRecord.getByRole("button", { name: "删除支出" }).click();
   await expect(page.getByText("删除这笔支出？")).toBeVisible();
   await page.getByRole("button", { name: "删除", exact: true }).click();
   await expect(page.getByText("机场巴士")).toBeHidden();
@@ -90,7 +104,9 @@ test("adds an expense offline and keeps it queued after network recovery", async
   await expect(page.getByRole("heading", { name: "新增支出" })).toBeHidden();
 
   await expect(page.getByText("离线章鱼烧")).toBeVisible();
-  await expect(page.getByText("待同步").first()).toBeVisible();
+  await expect(
+    page.getByText("待同步").filter({ visible: true }).first(),
+  ).toBeVisible();
 
   await context.setOffline(false);
   await gotoWithNetworkRetry(page, "/fareflow/");
@@ -116,7 +132,7 @@ test("rejects an expense dated outside a finished trip", async ({ page }) => {
     page.getByText(/可记账日期：.*2026年5月14日.*至.*2026年5月17日/),
   ).toBeVisible();
   await page.getByLabel("金额").fill("23");
-  await page.getByLabel("日期").fill("2026-05-23");
+  await page.getByRole("textbox", { name: "日期" }).fill("2026-05-23");
   await page.getByRole("button", { name: "保存支出" }).click();
 
   await expect(
@@ -146,6 +162,10 @@ async function expectVisibleText(
   await expect(
     page.getByText(text).filter({ visible: true }).first(),
   ).toBeVisible();
+}
+
+function isDesktopViewport(page: import("@playwright/test").Page) {
+  return (page.viewportSize()?.width ?? 0) >= 1024;
 }
 
 async function openExpenseDrawer(page: import("@playwright/test").Page) {

@@ -331,7 +331,7 @@ describe("trip selection persistence", () => {
 
     render(<FareFlowApp />);
 
-    expect(await screen.findAllByText("旅程节奏")).toHaveLength(2);
+    expect(await screen.findAllByText("花费节奏")).toHaveLength(2);
     expect(screen.getAllByText("¥2,280.00")).toHaveLength(2);
     expect(screen.getAllByText("¥15,960.00").length).toBeGreaterThan(0);
   });
