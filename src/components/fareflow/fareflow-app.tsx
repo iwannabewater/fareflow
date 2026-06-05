@@ -253,6 +253,14 @@ function FareFlowDashboard() {
     [expenses.data, todayDate],
   );
   const todaySpend = formatMoney(todayTotal, baseCurrency, t.localeCode);
+  const budgetRemaining =
+    selectedTrip?.budgetAmount !== null && selectedTrip?.budgetAmount !== undefined
+      ? formatMoney(
+          Math.max(0, selectedTrip.budgetAmount - analytics.total),
+          baseCurrency,
+          t.localeCode,
+        )
+      : null;
   const tripDayCount = selectedTrip ? countTripDays(selectedTrip) : 0;
   const expenseDayCount = analytics.dailyTotals.length;
 
@@ -354,6 +362,7 @@ function FareFlowDashboard() {
                 count={analytics.count}
                 pending={analytics.pending}
                 dayCount={tripDayCount}
+                budgetRemaining={budgetRemaining}
                 copy={t}
                 locale={locale}
               />
@@ -743,6 +752,7 @@ function SummaryPanel({
   count,
   pending,
   dayCount,
+  budgetRemaining,
   copy,
   locale,
 }: {
@@ -752,6 +762,7 @@ function SummaryPanel({
   count: number;
   pending: number;
   dayCount: number;
+  budgetRemaining: string | null;
   copy: FareFlowCopy;
   locale: Locale;
 }) {
@@ -789,8 +800,15 @@ function SummaryPanel({
           <Metric label={copy.home.todaySpend} value={todaySpend} compact />
           <Metric label={copy.home.items} value={String(count)} />
           <Metric
-            label={pending > 0 ? copy.home.pending : copy.home.tripDays}
-            value={String(pending > 0 ? pending : dayCount)}
+            label={
+              pending > 0
+                ? copy.home.pending
+                : budgetRemaining
+                  ? copy.home.budgetRemaining
+                  : copy.home.tripDays
+            }
+            value={pending > 0 ? String(pending) : (budgetRemaining ?? String(dayCount))}
+            compact={pending === 0 && Boolean(budgetRemaining)}
           />
         </div>
       </div>
@@ -931,18 +949,35 @@ function JourneyRhythmBrief({
           <ReceiptText className="size-3.5" aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <p className="text-xs font-semibold">{copy.home.todayRhythmBrief}</p>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <p className="text-xs font-semibold">
+              {rhythm.hasBudget
+                ? copy.home.budgetAutopilot
+                : copy.home.todayRhythmBrief}
+            </p>
+            {rhythm.budgetLabel ? (
+              <span className="rounded-full bg-passport-100 px-2 py-0.5 text-[0.66rem] font-semibold text-passport-900">
+                {rhythm.budgetLabel}
+              </span>
+            ) : null}
+          </div>
           <p className="mt-1 text-sm leading-5 text-passport-900/72">
             {rhythm.brief}
           </p>
         </div>
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2 border-t border-passport-900/10 pt-3">
-        <RhythmStat label={copy.home.todaySpend} value={rhythm.todaySpend} />
-        <RhythmStat label={copy.home.paceForecast} value={rhythm.forecastTotal} />
         <RhythmStat
-          label={copy.home.loggedCoverage}
-          value={rhythm.loggedCoverage}
+          label={rhythm.hasBudget ? copy.home.budgetRunway : copy.home.todaySpend}
+          value={rhythm.hasBudget ? rhythm.budgetRunway : rhythm.todaySpend}
+        />
+        <RhythmStat
+          label={rhythm.hasBudget ? copy.home.budgetLeft : copy.home.paceForecast}
+          value={rhythm.hasBudget ? rhythm.budgetRemaining : rhythm.forecastTotal}
+        />
+        <RhythmStat
+          label={rhythm.hasBudget ? rhythm.budgetDeltaLabel : copy.home.loggedCoverage}
+          value={rhythm.hasBudget ? rhythm.budgetDelta : rhythm.loggedCoverage}
         />
       </div>
       {rhythm.action === "focusToday" ? (
@@ -2390,6 +2425,18 @@ function TripHealthPanel({
             label={copy.home.baseCurrency}
             value={trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY}
           />
+          <Info
+            label={copy.home.budgetRemaining}
+            value={
+              trip?.budgetAmount
+                ? formatMoney(
+                    trip.budgetAmount,
+                    trip.baseCurrency,
+                    copy.localeCode,
+                  )
+                : copy.home.budgetPlaceholder
+            }
+          />
           <Info label={copy.home.currentTotal} value={total} />
           <Info label={copy.home.tripDays} value={String(dayCount)} />
           <Info label={copy.home.expenseDays} value={String(expenseDayCount)} />
@@ -2477,6 +2524,30 @@ function buildJourneyRhythm(
     trip.baseCurrency,
     copy.localeCode,
   );
+  const hasBudget = pace.budgetAmount !== null;
+  const budgetAmount = pace.budgetAmount
+    ? formatMoney(pace.budgetAmount, trip.baseCurrency, copy.localeCode)
+    : copy.home.budgetPlaceholder;
+  const budgetRemaining = formatMoney(
+    Math.max(0, pace.budgetRemaining ?? 0),
+    trip.baseCurrency,
+    copy.localeCode,
+  );
+  const budgetRunway = formatMoney(
+    Math.max(0, pace.budgetRunwayPerDay ?? 0),
+    trip.baseCurrency,
+    copy.localeCode,
+  );
+  const budgetDelta = formatBudgetDeltaValue(
+    pace.forecastDelta,
+    trip.baseCurrency,
+    copy,
+  );
+  const budgetDeltaText = formatBudgetDeltaText(
+    pace.forecastDelta,
+    trip.baseCurrency,
+    copy,
+  );
 
   return {
     status,
@@ -2486,9 +2557,27 @@ function buildJourneyRhythm(
     dailyPace,
     topCategory: topCategory ? copy.categories[topCategory] : copy.common.notSet,
     dayMarker: copy.home.journeyDay(pace.elapsedDays, pace.totalDays),
-    brief: formatJourneyBrief(pace, copy, todaySpend, forecastTotal, dailyPace),
+    brief: formatJourneyBrief({
+      pace,
+      copy,
+      budgetAmount,
+      budgetRunway,
+      budgetDelta: budgetDeltaText,
+      todaySpend,
+      forecastTotal,
+      dailyPace,
+    }),
     todaySpend,
     forecastTotal,
+    hasBudget,
+    budgetLabel: hasBudget ? formatBudgetLabel(pace, copy) : null,
+    budgetRunway,
+    budgetRemaining,
+    budgetDeltaLabel:
+      (pace.forecastDelta ?? 0) >= 0
+        ? copy.home.budgetBuffer
+        : copy.home.budgetOverrun,
+    budgetDelta,
     loggedCoverage: `${pace.loggedDayCount}/${pace.loggedWindowDays}`,
     action:
       pace.status === "active"
@@ -2502,13 +2591,53 @@ function buildJourneyRhythm(
   };
 }
 
-function formatJourneyBrief(
-  pace: TripPaceBrief,
-  copy: FareFlowCopy,
-  todaySpend: string,
-  forecastTotal: string,
-  dailyPace: string,
-) {
+function formatJourneyBrief({
+  pace,
+  copy,
+  budgetAmount,
+  budgetRunway,
+  budgetDelta,
+  todaySpend,
+  forecastTotal,
+  dailyPace,
+}: {
+  pace: TripPaceBrief;
+  copy: FareFlowCopy;
+  budgetAmount: string;
+  budgetRunway: string;
+  budgetDelta: string;
+  todaySpend: string;
+  forecastTotal: string;
+  dailyPace: string;
+}) {
+  if (pace.budgetAmount !== null) {
+    if (pace.status === "upcoming") {
+      return copy.home.journeyBudgetBriefUpcoming(budgetAmount, budgetRunway);
+    }
+
+    if (pace.status === "complete") {
+      return copy.home.journeyBudgetBriefComplete(budgetDelta);
+    }
+
+    if (pace.todayHasExpense) {
+      return copy.home.journeyBudgetBriefActiveToday(
+        todaySpend,
+        budgetRunway,
+        budgetDelta,
+      );
+    }
+
+    if (pace.loggedDayCount > 0) {
+      return copy.home.journeyBudgetBriefActiveQuiet(budgetRunway, budgetDelta);
+    }
+
+    return copy.home.journeyBudgetBriefActiveEmpty(
+      Math.max(1, pace.elapsedDays),
+      pace.totalDays,
+      budgetRunway,
+    );
+  }
+
   if (pace.status === "upcoming") {
     return copy.home.journeyBriefUpcoming(pace.daysUntilStart);
   }
@@ -2529,6 +2658,43 @@ function formatJourneyBrief(
     Math.max(1, pace.elapsedDays),
     pace.totalDays,
   );
+}
+
+function formatBudgetLabel(pace: TripPaceBrief, copy: FareFlowCopy) {
+  if (pace.budgetState === "over") {
+    return copy.home.budgetOver;
+  }
+
+  if (pace.budgetState === "watch") {
+    return copy.home.budgetWatch;
+  }
+
+  return copy.home.budgetOnTrack;
+}
+
+function formatBudgetDeltaValue(
+  value: number | null,
+  currency: Trip["baseCurrency"],
+  copy: FareFlowCopy,
+) {
+  const amount = Math.abs(value ?? 0);
+  return formatMoney(amount, currency, copy.localeCode);
+}
+
+function formatBudgetDeltaText(
+  value: number | null,
+  currency: Trip["baseCurrency"],
+  copy: FareFlowCopy,
+) {
+  const formatted = formatBudgetDeltaValue(value, currency, copy);
+
+  if (copy.localeCode.startsWith("zh")) {
+    return (value ?? 0) >= 0
+      ? `有 ${formatted} ${copy.home.budgetBuffer}`
+      : `${copy.home.budgetOverrun} ${formatted}`;
+  }
+
+  return `${formatted} ${(value ?? 0) >= 0 ? "buffer" : "over"}`;
 }
 
 function countTripDays(trip: Trip) {

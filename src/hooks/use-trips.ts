@@ -8,6 +8,7 @@ import { listPendingTrips } from "@/lib/offline/outbox";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { fetchTrips } from "@/lib/sync/remote";
 import { deleteTrip, saveTrip, updateTrip } from "@/lib/sync/sync-engine";
+import { parseMajorToMinor } from "@/lib/domain/money";
 
 export function useTrips() {
   return useQuery({
@@ -177,6 +178,7 @@ function buildTrip(input: CreateTripInput, syncStatus: Trip["syncStatus"]): Trip
     title: input.title.trim(),
     destination: input.destination.trim(),
     baseCurrency: input.baseCurrency,
+    budgetAmount: parseBudgetAmount(input),
     startDate: input.startDate,
     endDate: input.endDate && input.endDate.length > 0 ? input.endDate : null,
     createdAt: new Date().toISOString(),
@@ -194,10 +196,20 @@ function buildUpdatedTrip(
     title: input.title.trim(),
     destination: input.destination.trim(),
     baseCurrency: input.baseCurrency,
+    budgetAmount: parseBudgetAmount(input),
     startDate: input.startDate,
     endDate: input.endDate && input.endDate.length > 0 ? input.endDate : null,
     syncStatus,
   };
+}
+
+function parseBudgetAmount(input: CreateTripInput): number | null {
+  const budgetMajor = input.budgetMajor?.trim();
+  if (!budgetMajor) {
+    return null;
+  }
+
+  return parseMajorToMinor(budgetMajor, input.baseCurrency);
 }
 
 async function safePendingTrips(): Promise<PendingTripRecord[]> {

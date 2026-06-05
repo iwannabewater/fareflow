@@ -22,6 +22,7 @@ export function tripFromRow(row: TripRow): Trip {
     title: row.title,
     destination: row.destination,
     baseCurrency: asCurrency(row.base_currency),
+    budgetAmount: row.budget_amount,
     startDate: row.start_date,
     endDate: row.end_date,
     createdAt: row.created_at,
@@ -37,6 +38,7 @@ export function tripToInsert(trip: Trip): TripInsert {
     title: trip.title,
     destination: trip.destination,
     base_currency: trip.baseCurrency,
+    budget_amount: trip.budgetAmount,
     start_date: trip.startDate,
     end_date: trip.endDate,
     created_at: trip.createdAt,
@@ -48,6 +50,7 @@ export function tripToUpdate(trip: Trip): TripUpdate {
     title: trip.title,
     destination: trip.destination,
     base_currency: trip.baseCurrency,
+    budget_amount: trip.budgetAmount,
     start_date: trip.startDate,
     end_date: trip.endDate,
   };

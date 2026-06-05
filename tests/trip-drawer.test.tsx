@@ -30,6 +30,7 @@ const baseTrip: Trip = {
   title: "Tokyo spring loop",
   destination: "Tokyo",
   baseCurrency: "CNY",
+  budgetAmount: 980000,
   startDate: "2026-05-14",
   endDate: "2026-05-18",
   createdAt: "2026-05-13T16:00:00.000Z",
@@ -77,16 +78,23 @@ describe("TripDrawer", () => {
 
     expect(screen.getByRole("heading", { name: "编辑旅程" })).toBeInTheDocument();
     expect(screen.getByLabelText("旅程名称")).toHaveValue("Tokyo spring loop");
+    expect(screen.getByLabelText("旅程预算")).toHaveValue("9800.00");
 
     fireEvent.change(screen.getByLabelText("旅程名称"), {
       target: { value: "Tokyo autumn loop" },
+    });
+    fireEvent.change(screen.getByLabelText("旅程预算"), {
+      target: { value: "12000.00" },
     });
     fireEvent.click(screen.getByRole("button", { name: "更新旅程" }));
 
     await waitFor(() => {
       expect(updateMutateAsync).toHaveBeenCalledWith({
         trip: baseTrip,
-        values: expect.objectContaining({ title: "Tokyo autumn loop" }),
+        values: expect.objectContaining({
+          budgetMajor: "12000.00",
+          title: "Tokyo autumn loop",
+        }),
       });
     });
   });

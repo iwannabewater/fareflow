@@ -34,7 +34,7 @@ import {
   getAppDateInputValue,
 } from "@/lib/domain/defaults";
 import { isDateInDateRange } from "@/lib/domain/trip-dates";
-import { currencyMeta } from "@/lib/domain/money";
+import { currencyMeta, minorToMajorText } from "@/lib/domain/money";
 import { useCreateTrip, useUpdateTrip } from "@/hooks/use-trips";
 import { translateValidationError, useCopy } from "@/lib/i18n";
 
@@ -65,6 +65,9 @@ export function TripDrawer({
     control: form.control,
     name: "baseCurrency",
   });
+  const budgetExponent = currencyMeta[baseCurrency].exponent;
+  const budgetExample =
+    budgetExponent === 0 ? "120000" : `3500.${"0".repeat(budgetExponent)}`;
 
   async function onSubmit(input: CreateTripInput) {
     const endDate = input.endDate && input.endDate.length > 0
@@ -243,6 +246,27 @@ export function TripDrawer({
               </Select>
             </FormRow>
 
+            <FormRow
+              label={t.trip.budget}
+              helper={t.trip.budgetHelper(baseCurrency, budgetExponent)}
+              error={translateValidationError(
+                form.formState.errors.budgetMajor?.message,
+                t,
+              )}
+            >
+              <Input
+                inputMode={budgetExponent === 0 ? "numeric" : "decimal"}
+                className="h-12 w-full min-w-0 rounded-2xl bg-white tabular-nums"
+                aria-label={t.trip.budget}
+                autoComplete="off"
+                placeholder={t.trip.budgetPlaceholder(
+                  baseCurrency,
+                  budgetExample,
+                )}
+                {...form.register("budgetMajor")}
+              />
+            </FormRow>
+
             <Button
               type="submit"
               className="mt-2 h-12 w-full rounded-full bg-ink text-canvas active:scale-95"
@@ -276,6 +300,9 @@ function getTripDefaults(trip?: Trip): CreateTripInput {
       title: trip.title,
       destination: trip.destination,
       baseCurrency: trip.baseCurrency,
+      budgetMajor: trip.budgetAmount
+        ? minorToMajorText(trip.budgetAmount, trip.baseCurrency)
+        : "",
       startDate: trip.startDate,
       endDate: trip.endDate ?? "",
     };
@@ -285,6 +312,7 @@ function getTripDefaults(trip?: Trip): CreateTripInput {
     title: "",
     destination: "",
     baseCurrency: DEFAULT_BASE_CURRENCY,
+    budgetMajor: "",
     startDate: getAppDateInputValue(),
     endDate: "",
   };
@@ -292,10 +320,12 @@ function getTripDefaults(trip?: Trip): CreateTripInput {
 
 function FormRow({
   label,
+  helper,
   error,
   children,
 }: {
   label: string;
+  helper?: string;
   error?: string;
   children: React.ReactNode;
 }) {
@@ -310,6 +340,11 @@ function FormRow({
         ) : null}
       </span>
       {children}
+      {helper ? (
+        <span className="text-xs font-normal leading-5 text-ink-muted">
+          {helper}
+        </span>
+      ) : null}
     </div>
   );
 }

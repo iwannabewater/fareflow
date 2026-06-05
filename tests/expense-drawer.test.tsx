@@ -31,6 +31,7 @@ const baseTrip: Trip = {
   title: "Tokyo",
   destination: "Tokyo",
   baseCurrency: "CNY",
+  budgetAmount: null,
   startDate: "2026-05-14",
   endDate: null,
   createdAt: "2026-05-13T16:00:00.000Z",

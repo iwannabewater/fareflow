@@ -7,9 +7,11 @@ create table if not exists public.trips (
   title text not null check (char_length(title) between 1 and 80),
   destination text not null check (char_length(destination) between 1 and 80),
   base_currency text not null check (char_length(base_currency) = 3),
+  budget_amount bigint,
   start_date date not null,
   end_date date,
   created_at timestamptz not null default now(),
+  constraint trips_budget_amount_positive check (budget_amount is null or budget_amount > 0),
   constraint trips_end_after_start check (end_date is null or end_date >= start_date),
   constraint trips_user_client_unique unique (user_id, client_id)
 );
