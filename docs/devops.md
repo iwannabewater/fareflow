@@ -127,9 +127,10 @@ Release smoke checks:
 5. Create two trips in a row and confirm the newly created trip becomes selected each time.
 6. Confirm both trips remain visible in the compact trip switcher and in the picker.
 7. Confirm new Trip and Expense forms default to CNY and the Beijing calendar date.
-8. Confirm Simplified Chinese is the default language, then toggle the language switch and confirm English remains available.
-9. Confirm Chinese copy and the New Trip date fields fit at `390px` width.
-10. Confirm `/fareflow/manifest.webmanifest`, `/fareflow/sw.js`, and Vercel Web Analytics requests load successfully.
+8. On desktop, enter `今天打车花了15元` in Quick Capture and confirm the parsed result shows `交通 · 打车`, then save and confirm the ledger note is `打车`.
+9. Confirm Simplified Chinese is the default language, then toggle the language switch and confirm English remains available.
+10. Confirm Chinese copy and the New Trip date fields fit at `390px` width.
+11. Confirm `/fareflow/manifest.webmanifest`, `/fareflow/sw.js`, and Vercel Web Analytics requests load successfully.
 
 ## Cloudflare
 

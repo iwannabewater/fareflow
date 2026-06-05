@@ -9,11 +9,12 @@ FareFlow is a mobile-first, offline-first travel expense PWA. It lets travelers 
 ## Capabilities
 
 - Fast trip and expense capture with local persistence before network sync.
+- Desktop quick capture for natural travel notes such as `今天打车花了15元`, with local parsing for amount, date, currency, category, and clean ledger notes.
 - Multi-currency expense storage with a base-currency exchange-rate snapshot per record.
 - Category breakdowns, daily trends, CSV export, and trip-level health indicators.
 - Supabase magic-link authentication with RLS-backed cloud data.
 - Simplified Chinese default UI with a persisted English switch.
-- Installable PWA behavior through Workbox service worker generation.
+- Installable PWA behavior through a Workbox service worker.
 
 ## Architecture
 
@@ -22,9 +23,10 @@ FareFlow is a mobile-first, offline-first travel expense PWA. It lets travelers 
 | `src/components/fareflow/` | Dashboard, drawers, analytics, recovery states, sync UI |
 | `src/hooks/` | React Query hooks for trips, expenses, auth, network, and sync |
 | `src/lib/domain/` | Zod schemas, money handling, analytics, defaults, seed data |
+| `src/lib/expenses/` | Expense preferences and quick-capture parsing |
 | `src/lib/offline/` | Dexie database and outbox storage |
 | `src/lib/sync/` | Retry engine and Supabase remote adapter |
-| `src/lib/supabase/` | Auth callbacks, clients, middleware, mappers, generated types |
+| `src/lib/supabase/` | Auth callbacks, clients, middleware, mappers, database types |
 | `tests/` and `e2e/` | Vitest coverage and Playwright browser flows |
 
 Supabase is the source of truth for authenticated users. Dexie is a local cache and outbox so capture keeps working offline.
