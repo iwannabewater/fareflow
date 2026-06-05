@@ -29,6 +29,30 @@ describe("input schemas", () => {
     expect(parsed.success).toBe(false);
   });
 
+  it("validates optional trip budgets with the base currency exponent", () => {
+    expect(
+      createTripInputSchema.safeParse({
+        title: "Lisbon work week",
+        destination: "Lisbon",
+        baseCurrency: "CNY",
+        budgetMajor: "3500.50",
+        startDate: "2026-06-01",
+        endDate: "2026-06-08",
+      }).success,
+    ).toBe(true);
+
+    expect(
+      createTripInputSchema.safeParse({
+        title: "Tokyo spring loop",
+        destination: "Tokyo",
+        baseCurrency: "JPY",
+        budgetMajor: "120000.50",
+        startDate: "2026-06-01",
+        endDate: "2026-06-08",
+      }).success,
+    ).toBe(false);
+  });
+
   it("accepts an expense with a manual exchange rate", () => {
     const parsed = createExpenseInputSchema.safeParse({
       amountMajor: "17.42",

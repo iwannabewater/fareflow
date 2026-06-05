@@ -43,6 +43,11 @@ describe("trip analytics", () => {
     expect(pace.averagePerTripDay).toBe(76106);
     expect(pace.averagePerElapsedDay).toBe(167433);
     expect(pace.forecastTotal).toBe(1841763);
+    expect(pace.budgetAmount).toBe(980000);
+    expect(pace.budgetRemaining).toBe(142836);
+    expect(pace.budgetRunwayPerDay).toBe(20405);
+    expect(pace.forecastDelta).toBe(-861763);
+    expect(pace.budgetState).toBe("watch");
   });
 
   it("exports CSV with escaped human-entered text and readable money columns", () => {

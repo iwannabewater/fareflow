@@ -36,6 +36,7 @@ export const tripSchema = z.object({
   title: z.string().min(1).max(80),
   destination: z.string().min(1).max(80),
   baseCurrency: z.enum(currencyCodes),
+  budgetAmount: z.number().int().positive().nullable(),
   startDate: z.string().date(),
   endDate: z.string().date().nullable(),
   createdAt: z.string().datetime(),
@@ -72,19 +73,59 @@ export const createTripInputSchema = z
     title: z.string().trim().min(2, "Name this trip").max(80),
     destination: z.string().trim().min(2, "Add a destination").max(80),
     baseCurrency: z.enum(currencyCodes),
+    budgetMajor: z.string().trim().optional().or(z.literal("")),
     startDate: z.string().date("Use a valid start date"),
     endDate: z.string().date("Use a valid end date").optional().or(z.literal("")),
   })
-  .refine(
-    (value) =>
-      !value.endDate ||
-      value.endDate.length === 0 ||
-      value.endDate >= value.startDate,
-    {
-      message: "End date must be after the start date",
-      path: ["endDate"],
-    },
-  );
+  .superRefine((value, context) => {
+    if (
+      value.endDate &&
+      value.endDate.length > 0 &&
+      value.endDate < value.startDate
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "End date must be after the start date",
+        path: ["endDate"],
+      });
+    }
+
+    const budgetMajor = value.budgetMajor?.trim();
+    if (!budgetMajor) {
+      return;
+    }
+
+    if (!/^\d+(\.\d+)?$/.test(budgetMajor)) {
+      context.addIssue({
+        code: "custom",
+        message: "Use a valid budget",
+        path: ["budgetMajor"],
+      });
+      return;
+    }
+
+    const [major, fractional = ""] = budgetMajor.split(".");
+    if (Number.parseInt(major, 10) === 0 && !/[1-9]/.test(fractional)) {
+      context.addIssue({
+        code: "custom",
+        message: "Budget must be greater than zero",
+        path: ["budgetMajor"],
+      });
+      return;
+    }
+
+    const exponent = currencyMeta[value.baseCurrency].exponent;
+    if (fractional.length > exponent) {
+      context.addIssue({
+        code: "custom",
+        message:
+          exponent === 0
+            ? "Budget currency does not support decimal amounts"
+            : "Too many decimal places for budget currency",
+        path: ["budgetMajor"],
+      });
+    }
+  });
 
 export type CreateTripInput = z.infer<typeof createTripInputSchema>;
 

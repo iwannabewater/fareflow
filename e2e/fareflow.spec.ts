@@ -13,9 +13,11 @@ test("creates a trip, adds, edits, exports, and deletes an expense", async ({
   await expectNoHorizontalOverflow(page);
   await page.getByLabel("旅程名称").fill("首尔周末");
   await page.getByLabel("目的地").fill("首尔");
+  await page.getByLabel("旅程预算").fill("3500");
   await page.getByRole("button", { name: "创建旅程" }).click();
 
   await expectCurrentTrip(page, "首尔周末");
+  await expectVisibleText(page, "预算自动驾驶");
 
   await openExpenseDrawer(page);
   await expectNoHorizontalOverflow(page);
@@ -135,6 +137,15 @@ async function expectCurrentTrip(
 async function openTripDrawer(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "旅程" }).first().click();
   await expect(page.getByRole("heading", { name: "新建旅程" })).toBeVisible();
+}
+
+async function expectVisibleText(
+  page: import("@playwright/test").Page,
+  text: string,
+) {
+  await expect(
+    page.getByText(text).filter({ visible: true }).first(),
+  ).toBeVisible();
 }
 
 async function openExpenseDrawer(page: import("@playwright/test").Page) {

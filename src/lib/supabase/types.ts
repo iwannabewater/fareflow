@@ -17,6 +17,7 @@ export type Database = {
           title: string;
           destination: string;
           base_currency: string;
+          budget_amount: number | null;
           start_date: string;
           end_date: string | null;
           created_at: string;
@@ -28,6 +29,7 @@ export type Database = {
           title: string;
           destination: string;
           base_currency: string;
+          budget_amount?: number | null;
           start_date: string;
           end_date?: string | null;
           created_at?: string;
@@ -39,6 +41,7 @@ export type Database = {
           title?: string;
           destination?: string;
           base_currency?: string;
+          budget_amount?: number | null;
           start_date?: string;
           end_date?: string | null;
           created_at?: string;
@@ -117,4 +120,3 @@ export type Database = {
     CompositeTypes: Record<string, never>;
   };
 };
-

@@ -38,6 +38,12 @@ export type TripPaceBrief = {
   averagePerTripDay: number;
   averagePerElapsedDay: number;
   forecastTotal: number;
+  budgetAmount: number | null;
+  budgetRemaining: number | null;
+  budgetProgress: number | null;
+  budgetRunwayPerDay: number | null;
+  forecastDelta: number | null;
+  budgetState: "unset" | "under" | "watch" | "over";
 };
 
 export function buildTripAnalytics(expenses: Expense[]): TripAnalytics {
@@ -140,6 +146,35 @@ export function buildTripPaceBrief(
       : status === "complete"
         ? analytics.total
         : Math.round(averagePerElapsedDay * totalDays);
+  const spendableDays =
+    status === "upcoming"
+      ? totalDays
+      : status === "active"
+        ? remainingDays + 1
+        : 0;
+  const budgetAmount = trip.budgetAmount;
+  const budgetRemaining =
+    budgetAmount === null ? null : budgetAmount - analytics.total;
+  const budgetProgress =
+    budgetAmount === null
+      ? null
+      : Math.min(1, Math.max(0, analytics.total / budgetAmount));
+  const budgetRunwayPerDay =
+    budgetRemaining !== null && budgetRemaining > 0 && spendableDays > 0
+      ? Math.floor(budgetRemaining / spendableDays)
+      : budgetAmount === null
+        ? null
+        : 0;
+  const forecastDelta =
+    budgetAmount === null ? null : budgetAmount - forecastTotal;
+  const budgetState =
+    budgetAmount === null
+      ? "unset"
+      : analytics.total > budgetAmount
+        ? "over"
+        : forecastTotal > budgetAmount
+          ? "watch"
+          : "under";
 
   return {
     status,
@@ -156,6 +191,12 @@ export function buildTripPaceBrief(
     averagePerTripDay,
     averagePerElapsedDay,
     forecastTotal,
+    budgetAmount,
+    budgetRemaining,
+    budgetProgress,
+    budgetRunwayPerDay,
+    forecastDelta,
+    budgetState,
   };
 }
 
