@@ -23,7 +23,6 @@ import {
   Route,
   Rows3,
   SendHorizontal,
-  Sparkles,
   ReceiptText,
   TrendingUp,
   Trash2,
@@ -503,6 +502,7 @@ function QuickCaptureRail({
   const canSave = Boolean(
     trip && parsed?.isReady && rateIsValid && !createMutation.isPending,
   );
+  const hasDraft = draft.trim().length > 0;
   const examples = copy.home.quickCaptureExamples(
     trip?.baseCurrency ?? DEFAULT_BASE_CURRENCY,
   );
@@ -537,24 +537,31 @@ function QuickCaptureRail({
 
   if (!trip) {
     return (
-      <section className="relative overflow-hidden rounded-[1.35rem] bg-ink p-4 text-canvas shadow-[0_14px_32px_rgba(35,42,40,0.18)]">
+      <section className="relative overflow-hidden rounded-[1.15rem] border border-ink/10 bg-canvas p-4 text-ink shadow-soft">
         <QuickCaptureTexture />
         <div className="relative z-10">
-          <div className="flex items-center gap-2 text-xs font-medium text-canvas/70">
-            <Keyboard className="size-3.5" aria-hidden="true" />
-            {copy.home.quickCapture}
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-ink text-canvas">
+              <Keyboard className="size-4" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">{copy.home.quickCapture}</p>
+              <p className="mt-0.5 text-xs text-ink-muted">
+                {copy.home.quickCaptureBadge}
+              </p>
+            </div>
           </div>
           <h2 className="mt-4 text-xl font-semibold leading-7">
             {copy.home.quickCaptureEmptyTitle}
           </h2>
-          <p className="mt-2 text-sm leading-6 text-canvas/68">
+          <p className="mt-2 text-sm leading-6 text-ink-muted">
             {copy.home.quickCaptureEmptyDescription}
           </p>
-          <div className="mt-5 border-y border-dashed border-canvas/14 py-4">
-            <p className="font-casual text-2xl font-semibold text-mint-50">
+          <div className="mt-5 border-y border-dashed border-ink/12 py-4">
+            <p className="font-casual text-2xl font-semibold text-ink">
               {copy.home.quickCaptureSample}
             </p>
-            <p className="mt-2 text-xs leading-5 text-canvas/50">
+            <p className="mt-2 text-xs leading-5 text-ink-muted">
               {copy.home.quickCapturePlaceholder(DEFAULT_BASE_CURRENCY)}
             </p>
           </div>
@@ -583,25 +590,29 @@ function QuickCaptureRail({
         : savedMessage;
 
   return (
-    <section className="relative overflow-hidden rounded-[1.35rem] bg-ink p-4 text-canvas shadow-[0_14px_32px_rgba(35,42,40,0.18)]">
+    <section className="relative overflow-hidden rounded-[1.15rem] border border-ink/10 bg-canvas p-4 text-ink shadow-soft">
       <QuickCaptureTexture />
       <div className="relative z-10">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-xs font-medium text-canvas/70">
-              <Keyboard className="size-3.5" aria-hidden="true" />
-              {copy.home.quickCapture}
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-ink text-canvas">
+              <Keyboard className="size-4" aria-hidden="true" />
             </div>
-            <p className="mt-1 text-sm leading-5 text-canvas/58">
-              {copy.home.quickCaptureDescription}
-            </p>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold">
+                {copy.home.quickCapture}
+              </div>
+              <p className="mt-1 text-xs leading-5 text-ink-muted">
+                {copy.home.quickCaptureDescription}
+              </p>
+            </div>
           </div>
-          <span className="shrink-0 rounded-full bg-mint-50 px-2.5 py-1 text-xs font-semibold text-mint-900 shadow-[0_1px_2px_rgba(0,0,0,0.10)]">
+          <span className="shrink-0 rounded-full bg-mint-50 px-2.5 py-1 text-xs font-semibold text-mint-900 shadow-soft">
             {copy.home.quickCaptureBadge}
           </span>
         </div>
 
-        <div className="mt-4 rounded-[1rem] border border-canvas/10 bg-canvas/[0.08] p-3">
+        <div className="mt-4 border-y border-ink/10 py-3">
           <Textarea
             value={draft}
             onChange={(event) => {
@@ -611,14 +622,14 @@ function QuickCaptureRail({
             }}
             aria-label={copy.home.quickCapture}
             placeholder={copy.home.quickCapturePlaceholder(trip.baseCurrency)}
-            className="min-h-24 resize-none rounded-xl border-canvas/12 bg-canvas/95 px-3 py-2.5 text-sm leading-6 text-ink placeholder:text-ink-muted/70 focus-visible:ring-mint-100"
+            className="min-h-16 resize-none rounded-none border-0 bg-transparent px-0 py-0 text-base leading-7 text-ink shadow-none placeholder:text-ink-muted/70 focus-visible:ring-0"
           />
           <div className="mt-3 flex flex-wrap gap-2">
             {examples.map((example) => (
               <button
                 key={example}
                 type="button"
-                className="rounded-full border border-canvas/12 bg-canvas/[0.08] px-2.5 py-1 text-xs text-canvas/70 transition-colors hover:bg-canvas/[0.14] hover:text-canvas"
+                className="rounded-full border border-ink/10 bg-canvas-strong px-2.5 py-1 text-xs text-ink-muted transition-colors hover:border-ink/18 hover:bg-passport-50 hover:text-passport-900 active:scale-95"
                 onClick={() => {
                   setDraft(example);
                   setSavedMessage(null);
@@ -631,53 +642,53 @@ function QuickCaptureRail({
           </div>
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-[1rem] bg-mint-50 text-ink shadow-[0_12px_26px_rgba(0,0,0,0.18)]">
-          <div className="flex items-center justify-between gap-3 border-b border-ink/10 px-3 py-2.5">
-            <div className="flex items-center gap-2 text-xs font-semibold text-ink/55">
-              <Sparkles className="size-3.5" aria-hidden="true" />
-              {copy.home.quickCapturePreview}
-            </div>
-            <span className="rounded-full bg-ink px-2.5 py-1 text-xs font-semibold text-canvas">
-              {previewState}
-            </span>
-          </div>
-          <div className="grid gap-3 px-3 py-3">
-            <div>
-              <p className="text-[0.68rem] text-ink-muted">
-                {copy.home.quickCaptureAmount}
+        {hasDraft ? (
+          <div className="mt-3 rounded-xl border border-ink/10 bg-canvas-strong/70 px-3 py-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-medium text-ink-muted">
+                {copy.home.quickCapturePreview}
               </p>
-              <p className="mt-1 truncate text-2xl font-semibold tabular-nums">
-                {previewAmount}
-              </p>
+              <span className="rounded-full bg-canvas px-2.5 py-1 text-xs font-semibold text-ink shadow-soft">
+                {previewState}
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <QuickCapturePreviewItem
-                label={copy.home.quickCaptureCategory}
-                value={copy.categories[parsed?.category ?? "other"]}
-              />
-              <QuickCapturePreviewItem
-                label={copy.home.quickCaptureDate}
-                value={previewDate}
-              />
+            <div className="mt-2 grid gap-2">
+              <div className="flex min-w-0 items-baseline justify-between gap-3">
+                <span className="truncate text-sm text-ink-muted">
+                  {copy.categories[parsed?.category ?? "other"]}
+                  {previewNote !== copy.home.quickCaptureNoNote
+                    ? ` · ${previewNote}`
+                    : ""}
+                </span>
+                <span className="shrink-0 text-lg font-semibold tabular-nums">
+                  {previewAmount}
+                </span>
+              </div>
+              <div className="flex min-w-0 items-center justify-between gap-3 text-xs text-ink-muted">
+                <span className="truncate">{previewDate}</span>
+                <span className="truncate">
+                  {parsed?.currency ?? trip.baseCurrency}
+                </span>
+              </div>
             </div>
-            <QuickCapturePreviewItem
-              label={copy.home.quickCaptureNote}
-              value={previewNote}
-            />
           </div>
-        </div>
+        ) : (
+          <div className="mt-3 rounded-xl border border-dashed border-ink/12 px-3 py-2.5 text-xs leading-5 text-ink-muted">
+            {copy.home.quickCaptureIdle}
+          </div>
+        )}
 
         {requiresRate ? (
-          <label className="mt-3 grid gap-1.5 text-xs font-medium text-canvas/70">
+          <label className="mt-3 grid gap-1.5 text-xs font-medium text-ink-muted">
             <span>{copy.home.quickCaptureRate}</span>
             <Input
               value={exchangeRate}
               onChange={(event) => setExchangeRate(event.target.value)}
               inputMode="decimal"
               aria-label={copy.home.quickCaptureRate}
-              className="h-10 rounded-xl border-canvas/12 bg-canvas/95 text-sm text-ink focus-visible:ring-mint-100"
+              className="h-10 rounded-xl border-ink/12 bg-white text-sm text-ink focus-visible:ring-passport-100"
             />
-            <span className="text-canvas/45">
+            <span className="text-ink-muted/80">
               {copy.home.quickCaptureRateHelper(
                 parsed?.currency ?? trip.baseCurrency,
                 trip.baseCurrency,
@@ -688,7 +699,7 @@ function QuickCaptureRail({
 
         <Button
           type="button"
-          className="mt-4 h-10 w-full rounded-full bg-mint-50 text-ink shadow-[0_10px_22px_rgba(0,0,0,0.18)] active:scale-95 disabled:opacity-55"
+          className="mt-4 h-10 w-full rounded-full bg-ink text-canvas shadow-[0_10px_22px_rgba(35,42,40,0.18)] active:scale-95 disabled:bg-ink/35 disabled:opacity-100"
           disabled={!canSave}
           onClick={() => void saveQuickCapture()}
         >
@@ -702,8 +713,8 @@ function QuickCaptureRail({
           <p
             className={`mt-3 text-xs leading-5 ${
               createMutation.isError || parsed?.issues.includes("date")
-                ? "text-canvas/72"
-                : "text-mint-50"
+                ? "text-destructive"
+                : "text-mint-900"
             }`}
             role={
               createMutation.isError || parsed?.issues.includes("date")
@@ -719,29 +730,12 @@ function QuickCaptureRail({
   );
 }
 
-function QuickCapturePreviewItem({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="min-w-0">
-      <p className="truncate text-[0.68rem] text-ink-muted">{label}</p>
-      <p className="mt-1 truncate text-sm font-semibold tabular-nums">{value}</p>
-    </div>
-  );
-}
-
 function QuickCaptureTexture() {
   return (
-    <div className="pointer-events-none absolute inset-0 text-canvas" aria-hidden="true">
-      <div className="absolute inset-0 opacity-[0.055] [background-image:linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] [background-size:2.5rem_2.5rem]" />
-      <div className="absolute -right-7 top-8 size-24 rounded-full border border-mint-100/18" />
-      <div className="absolute -right-1 top-14 size-12 rounded-full bg-mint-100/10" />
-      <div className="absolute inset-x-4 bottom-24 border-t border-dashed border-canvas/14" />
-      <div className="absolute bottom-10 left-4 right-4 h-px bg-gradient-to-r from-transparent via-mint-100/45 to-transparent" />
+    <div className="pointer-events-none absolute inset-0 text-ink" aria-hidden="true">
+      <div className="absolute inset-y-4 left-0 w-0.5 rounded-r-full bg-ink/45" />
+      <div className="absolute inset-x-4 bottom-16 border-t border-dashed border-ink/8" />
+      <div className="absolute -right-12 top-6 size-28 rounded-full border border-ink/6" />
     </div>
   );
 }

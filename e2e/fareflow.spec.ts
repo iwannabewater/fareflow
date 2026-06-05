@@ -19,13 +19,13 @@ test("creates a trip, adds, edits, exports, and deletes an expense", async ({
   await expectCurrentTrip(page, "首尔周末");
   if (isDesktopViewport(page)) {
     await expectVisibleText(page, "随手记");
-    await page.getByLabel("随手记").fill("市区地铁 68 CNY 今天");
+    await page.getByLabel("随手记").fill("今天打车花了15元");
     await expectVisibleText(page, "识别结果");
     await expectVisibleText(page, "可入账");
     await page.getByRole("button", { name: "确认入账" }).click();
     await expectVisibleText(page, "已入账");
     await expect(
-      page.getByRole("article").filter({ hasText: "市区地铁" }),
+      page.getByRole("article").filter({ hasText: "打车" }),
     ).toBeVisible();
   }
   await expectVisibleText(page, "预算节奏");
