@@ -23,6 +23,23 @@ export type TripAnalytics = {
   dailyTotals: DailyTotal[];
 };
 
+export type TripPaceBrief = {
+  status: "upcoming" | "active" | "complete";
+  totalDays: number;
+  elapsedDays: number;
+  remainingDays: number;
+  daysUntilStart: number;
+  progress: number;
+  progressPercent: number;
+  loggedDayCount: number;
+  loggedWindowDays: number;
+  todayTotal: number;
+  todayHasExpense: boolean;
+  averagePerTripDay: number;
+  averagePerElapsedDay: number;
+  forecastTotal: number;
+};
+
 export function buildTripAnalytics(expenses: Expense[]): TripAnalytics {
   const categoryTotals = new Map<
     Expense["category"],
@@ -79,6 +96,69 @@ export function buildTripAnalytics(expenses: Expense[]): TripAnalytics {
   };
 }
 
+export function buildTripPaceBrief(
+  trip: Trip,
+  analytics: TripAnalytics,
+  todayDate: string,
+): TripPaceBrief {
+  const start = dateFromInput(trip.startDate);
+  const end = dateFromInput(trip.endDate ?? trip.startDate);
+  const today = dateFromInput(todayDate);
+  const totalDays = countTripDays(trip);
+  const status =
+    today < start ? "upcoming" : today > end ? "complete" : "active";
+  const elapsedDays =
+    status === "upcoming"
+      ? 0
+      : status === "complete"
+        ? totalDays
+        : Math.min(totalDays, daysBetween(start, today) + 1);
+  const remainingDays =
+    status === "active" ? Math.max(0, totalDays - elapsedDays) : 0;
+  const daysUntilStart =
+    status === "upcoming" ? Math.max(1, daysBetween(today, start)) : 0;
+  const progress = Math.min(1, Math.max(0, elapsedDays / totalDays));
+  const inRangeDailyTotals = analytics.dailyTotals.filter(
+    (item) =>
+      item.date >= trip.startDate &&
+      (!trip.endDate || item.date <= trip.endDate),
+  );
+  const todayTotal =
+    inRangeDailyTotals.find((item) => item.date === todayDate)?.total ?? 0;
+  const loggedDayCount = inRangeDailyTotals.filter(
+    (item) => item.total > 0,
+  ).length;
+  const loggedWindowDays =
+    status === "upcoming" ? totalDays : Math.max(1, elapsedDays);
+  const averagePerTripDay =
+    totalDays > 0 ? Math.round(analytics.total / totalDays) : 0;
+  const averagePerElapsedDay =
+    elapsedDays > 0 ? Math.round(analytics.total / elapsedDays) : 0;
+  const forecastTotal =
+    status === "upcoming"
+      ? 0
+      : status === "complete"
+        ? analytics.total
+        : Math.round(averagePerElapsedDay * totalDays);
+
+  return {
+    status,
+    totalDays,
+    elapsedDays,
+    remainingDays,
+    daysUntilStart,
+    progress,
+    progressPercent: Math.round(progress * 100),
+    loggedDayCount,
+    loggedWindowDays,
+    todayTotal,
+    todayHasExpense: todayTotal > 0,
+    averagePerTripDay,
+    averagePerElapsedDay,
+    forecastTotal,
+  };
+}
+
 export function expensesToCsv(
   expenses: Expense[],
   trip: Trip | null,
@@ -127,6 +207,21 @@ export function expensesToCsv(
   return [header, ...rows]
     .map((row) => row.map(escapeCsvCell).join(","))
     .join("\n");
+}
+
+function countTripDays(trip: Trip) {
+  const start = dateFromInput(trip.startDate);
+  const end = dateFromInput(trip.endDate ?? trip.startDate);
+  const days = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
+  return Math.max(1, days);
+}
+
+function daysBetween(start: Date, end: Date) {
+  return Math.round((end.getTime() - start.getTime()) / 86_400_000);
+}
+
+function dateFromInput(value: string) {
+  return new Date(`${value}T00:00:00+08:00`);
 }
 
 function escapeCsvCell(value: string): string {

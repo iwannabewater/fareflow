@@ -144,6 +144,23 @@ export const dictionaries = {
       journeyActive: "On route",
       journeyComplete: "Complete",
       noRhythm: "Create a trip to see its travel rhythm.",
+      todayRhythmBrief: "Today's pace brief",
+      paceForecast: "Forecast",
+      loggedCoverage: "Logged days",
+      journeyDay: (current: number, total: number) =>
+        current > 0 ? `Day ${current}/${total}` : `${total} days`,
+      journeyBriefUpcoming: (days: number) =>
+        `Starts in ${days} day${days === 1 ? "" : "s"}. Set the route now, then FareFlow will watch the pace once spending begins.`,
+      journeyBriefActiveEmpty: (day: number, total: number) =>
+        `Day ${day}/${total}, with no spend logged yet. Add the first receipt so the travel pace has something real to read.`,
+      journeyBriefActiveToday: (today: string, forecast: string) =>
+        `Today is at ${today}. At the current pace, this trip is tracking toward ${forecast}.`,
+      journeyBriefActiveQuiet: (forecast: string) =>
+        `No spend logged today yet. The current trip pace is tracking toward ${forecast}.`,
+      journeyBriefComplete: (pace: string) =>
+        `Trip complete. The final daily pace settled at ${pace}.`,
+      addTodayExpense: "Log today's spend",
+      reviewTodayExpenses: "Review today",
       averageDaily: "Daily average",
       expenseDayAverage: "Expense-day average",
       largestExpense: "Largest expense",
@@ -386,6 +403,23 @@ export const dictionaries = {
       journeyActive: "行程中",
       journeyComplete: "已完成",
       noRhythm: "创建旅程后即可查看行程节奏。",
+      todayRhythmBrief: "今日节奏简报",
+      paceForecast: "预计总额",
+      loggedCoverage: "记账覆盖",
+      journeyDay: (current: number, total: number) =>
+        current > 0 ? `第 ${current}/${total} 天` : `${total} 天行程`,
+      journeyBriefUpcoming: (days: number) =>
+        `还有 ${days} 天出发。先把行程建好，开始记录后 FareFlow 会自动看节奏。`,
+      journeyBriefActiveEmpty: (day: number, total: number) =>
+        `今天是第 ${day}/${total} 天，还没有记录支出。先记第一笔，后面的节奏才有参考。`,
+      journeyBriefActiveToday: (today: string, forecast: string) =>
+        `今天已记录 ${today}，按当前速度预计整段旅程会到 ${forecast}。`,
+      journeyBriefActiveQuiet: (forecast: string) =>
+        `今天还没有新支出。按当前速度，整段旅程预计会到 ${forecast}。`,
+      journeyBriefComplete: (pace: string) =>
+        `旅程已完成，最终日均节奏停在 ${pace}。`,
+      addTodayExpense: "记今日支出",
+      reviewTodayExpenses: "查看今日记录",
       averageDaily: "日均支出",
       expenseDayAverage: "记账日均",
       largestExpense: "最大单笔",
