@@ -2,6 +2,6 @@ allowBuilds:
   msw: true
   sharp: true
   unrs-resolver: true
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
+overrides:
+  postcss: 8.5.14
+  serialize-javascript: 7.0.5

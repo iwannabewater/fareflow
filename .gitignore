@@ -28,6 +28,7 @@
 # misc
 .DS_Store
 *.pem
+settings.local.json
 
 # debug
 npm-debug.log*
@@ -46,7 +47,6 @@ yarn-error.log*
 /supabase/.temp/
 
 # local agent context
-/AGENTS.md
 /CONTEXT.md
 /DESIGN.md
 
