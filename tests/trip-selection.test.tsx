@@ -398,7 +398,7 @@ describe("trip selection persistence", () => {
 
     render(<FareFlowApp />);
 
-    expect(await screen.findByText("医院·看病")).toBeInTheDocument();
+    expect(await screen.findByText("医院 · 看病")).toBeInTheDocument();
     expect(screen.queryByText("医院•看病")).not.toBeInTheDocument();
   });
 });

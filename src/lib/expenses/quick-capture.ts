@@ -130,6 +130,7 @@ const quickCaptureSpendVerbPattern =
   "(?:一共|总共|总计|合计|大概|大约|约|差不多|花了?|花费|消费|支付|付了?|付款|支出|用了?|用掉|costs?|spent|paid|pay)";
 const quickCaptureQuantityUnitPattern =
   "(?:个人|人|位|份|杯|碗|个|件|张|瓶|盒|客|晚|次|天|小时|公里|km|KM)";
+const quickCaptureNoteSeparator = " · ";
 const quickCaptureNoteSegmentPrefixes = [
   "7-11",
   "711",
@@ -704,12 +705,12 @@ function formatQuickCaptureNoteSegments(value: string) {
 
   const storeMatch = phrase.match(/^([A-Za-z0-9][A-Za-z0-9 -]{0,24})\s+([\u4e00-\u9fff].+)$/);
   if (storeMatch && /\d/.test(storeMatch[1])) {
-    return `${storeMatch[1].trim()}·${storeMatch[2].trim()}`;
+    return `${storeMatch[1].trim()}${quickCaptureNoteSeparator}${storeMatch[2].trim()}`;
   }
 
   for (const prefix of quickCaptureNoteSegmentPrefixes) {
     if (phrase.startsWith(prefix) && phrase.length > prefix.length) {
-      return `${prefix}·${phrase.slice(prefix.length).trim()}`;
+      return `${prefix}${quickCaptureNoteSeparator}${phrase.slice(prefix.length).trim()}`;
     }
   }
 
@@ -717,7 +718,10 @@ function formatQuickCaptureNoteSegments(value: string) {
 }
 
 export function normalizeQuickCaptureNoteSeparators(value: string) {
-  return value.replace(/\s*[•·]\s*/g, "·");
+  return value
+    .replace(/\s*[•·]\s*/g, quickCaptureNoteSeparator)
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function stripQuickCaptureDateTokens(value: string) {
