@@ -106,6 +106,12 @@ const quickCaptureCategoryKeywords = {
     "药",
     "药店",
     "医院",
+    "诊所",
+    "看病",
+    "挂号",
+    "问诊",
+    "检查",
+    "体检",
     "医疗",
     "保险",
     "pharmacy",
@@ -132,11 +138,12 @@ const quickCaptureNoteSegmentPrefixes = [
   "酒店",
   "旅馆",
   "民宿",
+  "医院",
+  "药店",
+  "诊所",
   "超市",
   "便利店",
   "商场",
-  "药店",
-  "医院",
 ] as const;
 
 export function parseQuickCaptureDraft(
@@ -582,7 +589,7 @@ function detectQuickCaptureDate(
     );
   }
 
-  return getDefaultExpenseDate(trip);
+  return getDefaultExpenseDate(trip, todayDate);
 }
 
 function formatLooseDate(year: number, month: number, day: number) {
@@ -681,32 +688,36 @@ function cleanQuickCapturePhrase(value: string) {
   phrase = phrase.replace(/钱$/i, "");
   phrase = phrase.replace(/ktv/gi, "KTV");
 
-  return formatQuickCaptureNoteSegments(
-    phrase
+  const compactPhrase = phrase
     .replace(/\s+/g, " ")
     .replace(/([\u4e00-\u9fff])\s+([\u4e00-\u9fff])/g, "$1$2")
-      .trim(),
-  );
+    .trim();
+
+  return formatQuickCaptureNoteSegments(compactPhrase);
 }
 
 function formatQuickCaptureNoteSegments(value: string) {
-  const phrase = value.replace(/·/g, "•").replace(/\s*•\s*/g, "•");
-  if (!phrase || phrase.includes("•")) {
+  const phrase = normalizeQuickCaptureNoteSeparators(value);
+  if (!phrase || phrase.includes("·")) {
     return phrase;
   }
 
   const storeMatch = phrase.match(/^([A-Za-z0-9][A-Za-z0-9 -]{0,24})\s+([\u4e00-\u9fff].+)$/);
   if (storeMatch && /\d/.test(storeMatch[1])) {
-    return `${storeMatch[1].trim()}•${storeMatch[2].trim()}`;
+    return `${storeMatch[1].trim()}·${storeMatch[2].trim()}`;
   }
 
   for (const prefix of quickCaptureNoteSegmentPrefixes) {
     if (phrase.startsWith(prefix) && phrase.length > prefix.length) {
-      return `${prefix}•${phrase.slice(prefix.length).trim()}`;
+      return `${prefix}·${phrase.slice(prefix.length).trim()}`;
     }
   }
 
   return phrase;
+}
+
+export function normalizeQuickCaptureNoteSeparators(value: string) {
+  return value.replace(/\s*[•·]\s*/g, "·");
 }
 
 function stripQuickCaptureDateTokens(value: string) {

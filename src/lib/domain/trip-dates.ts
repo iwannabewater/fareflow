@@ -13,8 +13,11 @@ export function isDateInTripRange(value: string, trip: Trip): boolean {
   return isDateInDateRange(value, trip.startDate, trip.endDate);
 }
 
-export function getDefaultExpenseDate(trip: Trip | null): string {
-  const today = getAppDateInputValue();
+export function getDefaultExpenseDate(
+  trip: Trip | null,
+  referenceDate = getAppDateInputValue(),
+): string {
+  const today = referenceDate;
 
   if (!trip) {
     return today;

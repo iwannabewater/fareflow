@@ -42,6 +42,8 @@ export type TripPaceBrief = {
   budgetRemaining: number | null;
   budgetProgress: number | null;
   budgetRunwayPerDay: number | null;
+  todayBudgetAllowance: number | null;
+  todayBudgetBalance: number | null;
   forecastDelta: number | null;
   budgetState: "unset" | "under" | "watch" | "over";
 };
@@ -136,6 +138,12 @@ export function buildTripPaceBrief(
   ).length;
   const loggedWindowDays =
     status === "upcoming" ? totalDays : Math.max(1, elapsedDays);
+  const spentBeforeToday =
+    status === "active"
+      ? inRangeDailyTotals
+          .filter((item) => item.date < todayDate)
+          .reduce((sum, item) => sum + item.total, 0)
+      : 0;
   const averagePerTripDay =
     totalDays > 0 ? Math.round(analytics.total / totalDays) : 0;
   const averagePerElapsedDay =
@@ -160,19 +168,28 @@ export function buildTripPaceBrief(
       ? null
       : Math.min(1, Math.max(0, analytics.total / budgetAmount));
   const budgetRunwayPerDay =
-    budgetRemaining !== null && budgetRemaining > 0 && spendableDays > 0
-      ? Math.floor(budgetRemaining / spendableDays)
-      : budgetAmount === null
-        ? null
-        : 0;
+    budgetAmount === null
+      ? null
+      : status === "upcoming"
+        ? Math.floor(budgetAmount / totalDays)
+        : status === "active" && spendableDays > 0
+          ? Math.max(
+              0,
+              Math.floor((budgetAmount - spentBeforeToday) / spendableDays),
+            )
+          : null;
+  const todayBudgetAllowance =
+    status === "active" ? budgetRunwayPerDay : null;
+  const todayBudgetBalance =
+    todayBudgetAllowance === null ? null : todayBudgetAllowance - todayTotal;
   const forecastDelta =
     budgetAmount === null ? null : budgetAmount - forecastTotal;
   const budgetState =
     budgetAmount === null
       ? "unset"
-      : analytics.total > budgetAmount
+      : budgetRemaining !== null && budgetRemaining < 0
         ? "over"
-        : forecastTotal > budgetAmount
+        : todayBudgetBalance !== null && todayBudgetBalance < 0
           ? "watch"
           : "under";
 
@@ -195,6 +212,8 @@ export function buildTripPaceBrief(
     budgetRemaining,
     budgetProgress,
     budgetRunwayPerDay,
+    todayBudgetAllowance,
+    todayBudgetBalance,
     forecastDelta,
     budgetState,
   };

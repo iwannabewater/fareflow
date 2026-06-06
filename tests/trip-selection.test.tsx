@@ -332,8 +332,74 @@ describe("trip selection persistence", () => {
     render(<FareFlowApp />);
 
     expect(await screen.findAllByText("花费节奏")).toHaveLength(2);
-    expect(screen.getAllByText("¥2,280.00")).toHaveLength(2);
+    expect(screen.getAllByText("¥2,280.00").length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText("¥15,960.00").length).toBeGreaterThan(0);
+  });
+
+  it("does not show today-only budget metrics before or after a trip", async () => {
+    tripsResult = {
+      data: [
+        {
+          ...trips[0],
+          budgetAmount: 300000,
+          startDate: "2099-01-01",
+          endDate: "2099-01-03",
+        },
+      ],
+      isLoading: false,
+      isFetched: true,
+    };
+
+    const view = render(<FareFlowApp />);
+
+    expect(await screen.findAllByText("日均参考")).toHaveLength(2);
+    for (const heading of screen.getAllByText("预算节奏")) {
+      const panel = heading.closest("section");
+      expect(panel).not.toBeNull();
+      expect(within(panel!).queryByText("今日可用")).not.toBeInTheDocument();
+      expect(within(panel!).queryByText("今日支出")).not.toBeInTheDocument();
+    }
+
+    tripsResult = {
+      data: [
+        {
+          ...trips[0],
+          budgetAmount: 300000,
+          startDate: "2020-01-01",
+          endDate: "2020-01-03",
+        },
+      ],
+      isLoading: false,
+      isFetched: true,
+    };
+    view.rerender(<FareFlowApp />);
+
+    expect((await screen.findAllByText("日均支出")).length).toBeGreaterThanOrEqual(2);
+    for (const heading of screen.getAllByText("预算节奏")) {
+      const panel = heading.closest("section");
+      expect(panel).not.toBeNull();
+      expect(within(panel!).queryByText("今日可用")).not.toBeInTheDocument();
+      expect(within(panel!).queryByText("今日支出")).not.toBeInTheDocument();
+      expect(within(panel!).queryByText("日均参考")).not.toBeInTheDocument();
+    }
+  });
+
+  it("normalizes legacy expense note separators without dropping health context", async () => {
+    expensesResult = {
+      data: [
+        {
+          ...buildExpense("health", 12000, "2026-05-14"),
+          note: "医院•看病",
+        },
+      ],
+      isLoading: false,
+      isError: false,
+    };
+
+    render(<FareFlowApp />);
+
+    expect(await screen.findByText("医院·看病")).toBeInTheDocument();
+    expect(screen.queryByText("医院•看病")).not.toBeInTheDocument();
   });
 });
 

@@ -11,7 +11,7 @@ FareFlow is a mobile-first, offline-first travel expense PWA. It lets travelers 
 - Fast trip and expense capture with local persistence before network sync.
 - Desktop quick capture with local parsing for amount, date, currency, category, and ledger notes.
 - Multi-currency expense storage with a base-currency exchange-rate snapshot per record.
-- Category breakdowns, daily trends, CSV export, and trip-level health indicators.
+- Category breakdowns, daily trends, grounded budget pacing, CSV export, and trip-level health indicators.
 - Supabase magic-link authentication with RLS-backed cloud data.
 - Simplified Chinese default UI with a persisted English switch.
 - Installable PWA behavior through a Workbox service worker.
