@@ -28,8 +28,8 @@ Narrow checks are `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and 
 
 - Preserve offline-first writes and idempotent synchronization.
 - Keep date-only defaults on the Beijing calendar date and inject reference dates into deterministic parsing and tests.
-- Use `·` as the canonical separator inside structured expense notes. Normalize legacy `•` only at parsing or display boundaries, without destructive migrations.
-- Preserve meaningful note context such as `医院·看病`; category detection must not remove ledger information.
+- Use the spaced ` · ` form as the canonical separator inside structured expense notes. Normalize compact `·` and legacy `•` only at parsing or display boundaries, without destructive migrations.
+- Preserve meaningful note context such as `医院 · 看病`; category detection must not remove ledger information.
 - Keep Simplified Chinese as the default language and maintain English parity.
 - Keep destructive actions behind explicit confirmation.
 - Avoid dependencies and broad refactors unless they remove demonstrated risk.
