@@ -21,21 +21,21 @@ test("creates a trip, adds, edits, exports, and deletes an expense", async ({
     await expectVisibleText(page, "随手记");
     await page.getByLabel("随手记").fill("我今天去食堂吃了一份饺子花了17块钱");
     await expectVisibleText(page, "识别结果");
-    await expectVisibleText(page, "食堂•饺子");
+    await expectVisibleText(page, "食堂·饺子");
     await expectVisibleText(page, "可入账");
     await page.getByRole("button", { name: "确认入账" }).click();
     await expectVisibleText(page, "已入账");
     await expect(
-      page.getByRole("article").filter({ hasText: "食堂•饺子" }),
+      page.getByRole("article").filter({ hasText: "食堂·饺子" }),
     ).toBeVisible();
     await page.getByLabel("随手记").fill("医院看病120元");
-    await expectVisibleText(page, "健康 · 看病");
+    await expectVisibleText(page, "健康 · 医院·看病");
     await page.getByRole("button", { name: "确认入账" }).click();
     await expectVisibleText(page, "已入账");
     await expect(
       page
         .getByRole("article")
-        .filter({ hasText: "看病" })
+        .filter({ hasText: "医院·看病" })
         .filter({ hasText: "健康" }),
     ).toBeVisible();
     await expect(

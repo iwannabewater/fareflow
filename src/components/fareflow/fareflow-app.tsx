@@ -74,6 +74,7 @@ import {
 import { type FareFlowCopy, type Locale, useCopy } from "@/lib/i18n";
 import {
   isValidQuickCaptureRate,
+  normalizeQuickCaptureNoteSeparators,
   parseQuickCaptureDraft,
 } from "@/lib/expenses/quick-capture";
 import {
@@ -1284,18 +1285,9 @@ function JourneyRhythmBrief({
         }`}
       >
         {rhythm.hasBudget ? (
-          <>
-            <RhythmStat
-              label={rhythm.budgetDeltaLabel}
-              value={rhythm.budgetDelta}
-            />
-            <RhythmStat label={copy.home.todaySpend} value={rhythm.todaySpend} />
-            <RhythmStat label={copy.home.budgetRunway} value={rhythm.budgetRunway} />
-            <RhythmStat
-              label={rhythm.budgetRemainingLabel}
-              value={rhythm.budgetRemaining}
-            />
-          </>
+          rhythm.budgetStats.map((stat) => (
+            <RhythmStat key={stat.label} label={stat.label} value={stat.value} />
+          ))
         ) : (
           <>
             <RhythmStat label={copy.home.todaySpend} value={rhythm.todaySpend} />
@@ -2595,36 +2587,13 @@ function ExpenseCategoryButton({
   );
 }
 
-const healthExpenseDisplayPrefixes = ["医院", "药店", "诊所"] as const;
-
 function getExpenseDisplayNote(expense: Expense, copy: FareFlowCopy) {
   const note = expense.note?.trim();
   if (!note) {
     return copy.categories[expense.category];
   }
 
-  if (expense.category !== "health") {
-    return note;
-  }
-
-  return stripHealthExpenseDisplayPrefix(note);
-}
-
-function stripHealthExpenseDisplayPrefix(note: string) {
-  for (const prefix of healthExpenseDisplayPrefixes) {
-    if (note.startsWith(prefix) && note.length > prefix.length) {
-      const stripped = note
-        .slice(prefix.length)
-        .replace(/^[\s•·-]+/, "")
-        .trim();
-
-      if (stripped) {
-        return stripped;
-      }
-    }
-  }
-
-  return note;
+  return normalizeQuickCaptureNoteSeparators(note);
 }
 
 function ExpenseRow({
@@ -2891,31 +2860,64 @@ function buildJourneyRhythm(
   );
   const budgetRemainingLabel =
     budgetRemainingValue < 0 ? copy.home.budgetSpentOver : copy.home.budgetRemaining;
-  const budgetRunway = formatMoney(
-    Math.max(0, pace.budgetRunwayPerDay ?? 0),
-    trip.baseCurrency,
-    copy.localeCode,
-  );
-  const todayBudgetBalanceValue = pace.todayBudgetBalance ?? 0;
-  const budgetDelta = formatBudgetDeltaValue(
-    todayBudgetBalanceValue,
-    trip.baseCurrency,
-    copy,
-  );
+  const budgetRunway =
+    pace.budgetRunwayPerDay === null
+      ? null
+      : formatMoney(
+          Math.max(0, pace.budgetRunwayPerDay),
+          trip.baseCurrency,
+          copy.localeCode,
+        );
+  const budgetDelta =
+    pace.todayBudgetBalance === null
+      ? null
+      : formatBudgetDeltaValue(
+          pace.todayBudgetBalance,
+          trip.baseCurrency,
+          copy,
+        );
   const budgetDeltaLabel =
-    todayBudgetBalanceValue >= 0
-      ? copy.home.budgetBuffer
-      : copy.home.budgetOverrun;
-  const budgetDeltaText = formatBudgetDeltaText(
-    todayBudgetBalanceValue,
-    trip.baseCurrency,
-    copy,
-  );
+    pace.todayBudgetBalance === null
+      ? null
+      : pace.todayBudgetBalance >= 0
+        ? copy.home.budgetBuffer
+        : copy.home.budgetOverrun;
+  const budgetDeltaText =
+    pace.todayBudgetBalance === null
+      ? null
+      : formatBudgetDeltaText(
+          pace.todayBudgetBalance,
+          trip.baseCurrency,
+          copy,
+        );
   const budgetResultText = formatBudgetResultText(
     budgetRemainingValue,
     trip.baseCurrency,
     copy,
   );
+  const budgetStats =
+    !hasBudget
+      ? []
+      : pace.status === "active"
+        ? [
+            ...(budgetDelta !== null && budgetDeltaLabel !== null
+              ? [{ label: budgetDeltaLabel, value: budgetDelta }]
+              : []),
+            { label: copy.home.todaySpend, value: todaySpend },
+            ...(budgetRunway !== null
+              ? [{ label: copy.home.budgetRunway, value: budgetRunway }]
+              : []),
+            { label: budgetRemainingLabel, value: budgetRemaining },
+          ]
+        : pace.status === "upcoming" && budgetRunway !== null
+          ? [
+              { label: copy.home.budgetRunway, value: budgetRunway },
+              { label: budgetRemainingLabel, value: budgetRemaining },
+            ]
+          : [
+              { label: copy.home.averageDaily, value: dailyPace },
+              { label: budgetRemainingLabel, value: budgetRemaining },
+            ];
 
   return {
     status,
@@ -2940,11 +2942,7 @@ function buildJourneyRhythm(
     forecastTotal,
     hasBudget,
     budgetLabel: hasBudget ? formatBudgetLabel(pace, copy) : null,
-    budgetRunway,
-    budgetRemaining,
-    budgetRemainingLabel,
-    budgetDeltaLabel,
-    budgetDelta,
+    budgetStats,
     loggedCoverage: `${pace.loggedDayCount}/${pace.loggedWindowDays}`,
     action:
       pace.status === "active"
@@ -2972,8 +2970,8 @@ function formatJourneyBrief({
   pace: TripPaceBrief;
   copy: FareFlowCopy;
   budgetAmount: string;
-  budgetRunway: string;
-  budgetDelta: string;
+  budgetRunway: string | null;
+  budgetDelta: string | null;
   budgetResult: string;
   todaySpend: string;
   forecastTotal: string;
@@ -2981,7 +2979,10 @@ function formatJourneyBrief({
 }) {
   if (pace.budgetAmount !== null) {
     if (pace.status === "upcoming") {
-      return copy.home.journeyBudgetBriefUpcoming(budgetAmount, budgetRunway);
+      return copy.home.journeyBudgetBriefUpcoming(
+        budgetAmount,
+        budgetRunway ?? copy.home.budgetPlaceholder,
+      );
     }
 
     if (pace.status === "complete") {
@@ -2991,19 +2992,22 @@ function formatJourneyBrief({
     if (pace.todayHasExpense) {
       return copy.home.journeyBudgetBriefActiveToday(
         todaySpend,
-        budgetRunway,
-        budgetDelta,
+        budgetRunway ?? copy.home.budgetPlaceholder,
+        budgetDelta ?? copy.home.budgetPlaceholder,
       );
     }
 
     if (pace.loggedDayCount > 0) {
-      return copy.home.journeyBudgetBriefActiveQuiet(budgetRunway, budgetResult);
+      return copy.home.journeyBudgetBriefActiveQuiet(
+        budgetRunway ?? copy.home.budgetPlaceholder,
+        budgetResult,
+      );
     }
 
     return copy.home.journeyBudgetBriefActiveEmpty(
       Math.max(1, pace.elapsedDays),
       pace.totalDays,
-      budgetRunway,
+      budgetRunway ?? copy.home.budgetPlaceholder,
     );
   }
 

@@ -127,7 +127,7 @@ Release smoke checks:
 5. Create two trips in a row and confirm the newly created trip becomes selected each time.
 6. Confirm both trips remain visible in the compact trip switcher and in the picker.
 7. Confirm new Trip and Expense forms default to CNY and the Beijing calendar date.
-8. On desktop, verify Quick Capture saves clean food and health notes such as `食堂•饺子` and `看病`.
+8. On desktop, verify Quick Capture saves clean food and health notes such as `食堂·饺子` and `医院·看病`, using `·` consistently.
 9. For a three-day budgeted trip, log a first-day expense above the daily guide and confirm Budget Pace shows today's guide, today's overage, and budget left without forecasted overage copy.
 10. Confirm Simplified Chinese is the default language, then toggle the language switch and confirm English remains available.
 11. Confirm Chinese copy and the New Trip date fields fit at `390px` width.

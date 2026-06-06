@@ -138,15 +138,13 @@ const quickCaptureNoteSegmentPrefixes = [
   "酒店",
   "旅馆",
   "民宿",
+  "医院",
+  "药店",
+  "诊所",
   "超市",
   "便利店",
   "商场",
 ] as const;
-const quickCaptureCategoryEvidencePrefixes: Partial<
-  Record<ExpenseCategory, readonly string[]>
-> = {
-  health: ["医院", "药店", "诊所"],
-};
 
 export function parseQuickCaptureDraft(
   draft: string,
@@ -180,7 +178,7 @@ export function parseQuickCaptureDraft(
   }
 
   const category = detectQuickCaptureCategory(normalized);
-  const note = buildQuickCaptureNote(normalized, amountEntity, category);
+  const note = buildQuickCaptureNote(normalized, amountEntity);
 
   return {
     amountMajor,
@@ -591,7 +589,7 @@ function detectQuickCaptureDate(
     );
   }
 
-  return getDefaultExpenseDate(trip);
+  return getDefaultExpenseDate(trip, todayDate);
 }
 
 function formatLooseDate(year: number, month: number, day: number) {
@@ -615,7 +613,6 @@ function formatLooseDate(year: number, month: number, day: number) {
 function buildQuickCaptureNote(
   value: string,
   amountEntity: QuickCaptureAmountEntity | null,
-  category: ExpenseCategory,
 ) {
   let note = value;
 
@@ -635,12 +632,12 @@ function buildQuickCaptureNote(
     " ",
   );
 
-  note = cleanQuickCapturePhrase(note, category);
+  note = cleanQuickCapturePhrase(note);
 
   return note.slice(0, 180);
 }
 
-function cleanQuickCapturePhrase(value: string, category: ExpenseCategory) {
+function cleanQuickCapturePhrase(value: string) {
   let phrase = value
     .replace(/[，,。.!！?？、；;:：]/g, " ")
     .replace(/\s+/g, " ")
@@ -696,50 +693,31 @@ function cleanQuickCapturePhrase(value: string, category: ExpenseCategory) {
     .replace(/([\u4e00-\u9fff])\s+([\u4e00-\u9fff])/g, "$1$2")
     .trim();
 
-  return formatQuickCaptureNoteSegments(
-    stripQuickCaptureCategoryEvidence(category, compactPhrase),
-  );
-}
-
-function stripQuickCaptureCategoryEvidence(
-  category: ExpenseCategory,
-  value: string,
-) {
-  const prefixes = quickCaptureCategoryEvidencePrefixes[category];
-  if (!prefixes) {
-    return value;
-  }
-
-  for (const prefix of prefixes) {
-    if (value.startsWith(prefix) && value.length > prefix.length) {
-      return value
-        .slice(prefix.length)
-        .replace(/^[\s•·-]+/, "")
-        .trim();
-    }
-  }
-
-  return value;
+  return formatQuickCaptureNoteSegments(compactPhrase);
 }
 
 function formatQuickCaptureNoteSegments(value: string) {
-  const phrase = value.replace(/·/g, "•").replace(/\s*•\s*/g, "•");
-  if (!phrase || phrase.includes("•")) {
+  const phrase = normalizeQuickCaptureNoteSeparators(value);
+  if (!phrase || phrase.includes("·")) {
     return phrase;
   }
 
   const storeMatch = phrase.match(/^([A-Za-z0-9][A-Za-z0-9 -]{0,24})\s+([\u4e00-\u9fff].+)$/);
   if (storeMatch && /\d/.test(storeMatch[1])) {
-    return `${storeMatch[1].trim()}•${storeMatch[2].trim()}`;
+    return `${storeMatch[1].trim()}·${storeMatch[2].trim()}`;
   }
 
   for (const prefix of quickCaptureNoteSegmentPrefixes) {
     if (phrase.startsWith(prefix) && phrase.length > prefix.length) {
-      return `${prefix}•${phrase.slice(prefix.length).trim()}`;
+      return `${prefix}·${phrase.slice(prefix.length).trim()}`;
     }
   }
 
   return phrase;
+}
+
+export function normalizeQuickCaptureNoteSeparators(value: string) {
+  return value.replace(/\s*[•·]\s*/g, "·");
 }
 
 function stripQuickCaptureDateTokens(value: string) {

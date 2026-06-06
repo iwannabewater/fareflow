@@ -98,7 +98,7 @@ describe("quick capture parser", () => {
     expect(parsed).toMatchObject({
       amountMajor: "200",
       category: "other",
-      note: "KTV•唱歌",
+      note: "KTV·唱歌",
       isReady: true,
     });
   });
@@ -108,19 +108,19 @@ describe("quick capture parser", () => {
       input: "我今天去食堂吃了一份饺子花了17块钱",
       amountMajor: "17",
       category: "food",
-      note: "食堂•饺子",
+      note: "食堂·饺子",
     },
     {
       input: "我今天去食堂吃了一份饺子花了十七块钱",
       amountMajor: "17",
       category: "food",
-      note: "食堂•饺子",
+      note: "食堂·饺子",
     },
     {
       input: "我今天在食堂吃饺子17块",
       amountMajor: "17",
       category: "food",
-      note: "食堂•饺子",
+      note: "食堂·饺子",
     },
     {
       input: "午餐一共花了45.5元",
@@ -156,37 +156,37 @@ describe("quick capture parser", () => {
       input: "便利店买水12",
       amountMajor: "12",
       category: "food",
-      note: "便利店•水",
+      note: "便利店·水",
     },
     {
       input: "超市买饮料12元",
       amountMajor: "12",
       category: "food",
-      note: "超市•饮料",
+      note: "超市·饮料",
     },
     {
       input: "药店买药36元",
       amountMajor: "36",
       category: "health",
-      note: "药",
+      note: "药店·药",
     },
     {
       input: "医院看病120元",
       amountMajor: "120",
       category: "health",
-      note: "看病",
+      note: "医院·看病",
     },
     {
       input: "今天去医院挂号花了20元",
       amountMajor: "20",
       category: "health",
-      note: "挂号",
+      note: "医院·挂号",
     },
     {
       input: "诊所看病80元",
       amountMajor: "80",
       category: "health",
-      note: "看病",
+      note: "诊所·看病",
     },
     {
       input: "看病120元",
@@ -198,13 +198,13 @@ describe("quick capture parser", () => {
       input: "医院•看病120元",
       amountMajor: "120",
       category: "health",
-      note: "看病",
+      note: "医院·看病",
     },
     {
       input: "支付酒店押金500元",
       amountMajor: "500",
       category: "lodging",
-      note: "酒店•押金",
+      note: "酒店·押金",
     },
     {
       input: "订酒店两晚600元",
@@ -270,7 +270,7 @@ describe("quick capture parser", () => {
       input: "7-11买水8元",
       amountMajor: "8",
       category: "food",
-      note: "7-11•水",
+      note: "7-11·水",
     },
     {
       input: "6/5 打车 20元",
@@ -306,7 +306,7 @@ describe("quick capture parser", () => {
       input: "食堂·饺子17元",
       amountMajor: "17",
       category: "food",
-      note: "食堂•饺子",
+      note: "食堂·饺子",
     },
     {
       input: "拉面JPY1800昨天",
@@ -412,7 +412,7 @@ describe("quick capture parser", () => {
     {
       input: "我今天在食堂吃了一份饺子花了",
       category: "food",
-      note: "食堂•饺子",
+      note: "食堂·饺子",
     },
     {
       input: "今天买了两张门票",
@@ -444,7 +444,7 @@ describe("quick capture parser", () => {
     expect(parsed).toMatchObject({
       amountMajor: null,
       category: "other",
-      note: "KTV•唱歌",
+      note: "KTV·唱歌",
       isReady: false,
     });
     expect(parsed?.issues).toContain("amount");
